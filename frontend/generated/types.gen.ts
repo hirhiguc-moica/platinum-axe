@@ -53,6 +53,177 @@ export type HttpValidationError = {
 };
 
 /**
+ * LatestPriceSchema
+ *
+ * 最新株価スキーマ
+ */
+export type LatestPriceSchema = {
+  /**
+   * Date
+   *
+   * 日付
+   */
+  date: string;
+  /**
+   * Open
+   *
+   * 始値
+   */
+  open?: number | null;
+  /**
+   * High
+   *
+   * 高値
+   */
+  high?: number | null;
+  /**
+   * Low
+   *
+   * 安値
+   */
+  low?: number | null;
+  /**
+   * Close
+   *
+   * 終値
+   */
+  close?: number | null;
+  /**
+   * Volume
+   *
+   * 出来高
+   */
+  volume?: number | null;
+};
+
+/**
+ * PaginationSchema
+ *
+ * ページング情報
+ */
+export type PaginationSchema = {
+  /**
+   * Page
+   *
+   * 現在のページ番号
+   */
+  page: number;
+  /**
+   * Limit
+   *
+   * 1ページあたりの件数
+   */
+  limit: number;
+  /**
+   * Total
+   *
+   * 総件数
+   */
+  total: number;
+  /**
+   * Total Pages
+   *
+   * 総ページ数
+   */
+  total_pages: number;
+};
+
+/**
+ * RecommendationHistoryItemSchema
+ *
+ * 推奨履歴アイテムスキーマ
+ */
+export type RecommendationHistoryItemSchema = {
+  /**
+   * Round Id
+   *
+   * ラウンドID（ビジネスキー）
+   */
+  round_id: string;
+  /**
+   * Round Type
+   *
+   * ラウンドタイプ（BUY / SELL）
+   */
+  round_type: string;
+  /**
+   * Start Date
+   *
+   * 開始日
+   */
+  start_date: string;
+  /**
+   * End Date
+   *
+   * 終了日
+   */
+  end_date: string;
+  /**
+   * Status
+   *
+   * ステータス
+   */
+  status: string;
+  /**
+   * Rank
+   *
+   * 推奨順位
+   */
+  rank: number;
+  /**
+   * Predicted Return
+   *
+   * 予測騰落率
+   */
+  predicted_return?: number | null;
+  /**
+   * Confidence Score
+   *
+   * 信頼度スコア
+   */
+  confidence_score?: number | null;
+  /**
+   * Actual Return
+   *
+   * 実際の騰落率
+   */
+  actual_return?: number | null;
+  /**
+   * Prediction Hit
+   *
+   * 予測が当たったか
+   */
+  prediction_hit?: boolean | null;
+  /**
+   * Start Price
+   *
+   * 開始時点の株価
+   */
+  start_price?: number | null;
+  /**
+   * End Price
+   *
+   * 終了時点の株価
+   */
+  end_price?: number | null;
+};
+
+/**
+ * RecommendationHistoryResponse
+ *
+ * 推奨履歴レスポンス
+ */
+export type RecommendationHistoryResponse = {
+  /**
+   * Items
+   *
+   * 推奨履歴データリスト
+   */
+  items: Array<RecommendationHistoryItemSchema>;
+  pagination: PaginationSchema;
+};
+
+/**
  * RoundRecommendationSchema
  *
  * ラウンド推奨銘柄スキーマ
@@ -171,6 +342,78 @@ export type RoundSchema = {
 };
 
 /**
+ * StockDetailResponse
+ *
+ * 銘柄詳細レスポンス
+ */
+export type StockDetailResponse = {
+  /**
+   * Stock Code
+   *
+   * 銘柄コード
+   */
+  stock_code: string;
+  /**
+   * Company Name
+   *
+   * 会社名
+   */
+  company_name: string;
+  /**
+   * Sector Code
+   *
+   * 業種コード
+   */
+  sector_code?: string | null;
+  /**
+   * Sector Name
+   *
+   * 業種名
+   */
+  sector_name?: string | null;
+  /**
+   * Market Code
+   *
+   * 市場コード
+   */
+  market_code?: string | null;
+  /**
+   * Market Name
+   *
+   * 市場名
+   */
+  market_name?: string | null;
+  /**
+   * Is Nikkei225
+   *
+   * 日経225構成銘柄
+   */
+  is_nikkei225: boolean;
+  /**
+   * Is Topix
+   *
+   * TOPIX構成銘柄
+   */
+  is_topix: boolean;
+  /**
+   * Is Topix Core30
+   *
+   * TOPIX Core30構成銘柄
+   */
+  is_topix_core30: boolean;
+  /**
+   * Is Jpx400
+   *
+   * JPX400構成銘柄
+   */
+  is_jpx400: boolean;
+  /**
+   * 最新株価
+   */
+  latest_price?: LatestPriceSchema | null;
+};
+
+/**
  * StockInfoSchema
  *
  * 銘柄情報スキーマ（推奨銘柄に含まれる）
@@ -200,6 +443,196 @@ export type StockInfoSchema = {
    * 市場名（プライム/スタンダード等）
    */
   market_name?: string | null;
+};
+
+/**
+ * StockPriceHistoryResponse
+ *
+ * 株価履歴レスポンス
+ */
+export type StockPriceHistoryResponse = {
+  /**
+   * Items
+   *
+   * 株価データリスト
+   */
+  items: Array<StockPriceItemSchema>;
+  pagination: PaginationSchema;
+};
+
+/**
+ * StockPriceItemSchema
+ *
+ * 株価履歴アイテムスキーマ
+ */
+export type StockPriceItemSchema = {
+  /**
+   * Date
+   *
+   * 日付
+   */
+  date: string;
+  /**
+   * Open
+   *
+   * 始値
+   */
+  open?: number | null;
+  /**
+   * High
+   *
+   * 高値
+   */
+  high?: number | null;
+  /**
+   * Low
+   *
+   * 安値
+   */
+  low?: number | null;
+  /**
+   * Close
+   *
+   * 終値
+   */
+  close?: number | null;
+  /**
+   * Volume
+   *
+   * 出来高
+   */
+  volume?: number | null;
+  /**
+   * Adjusted Close
+   *
+   * 調整後終値
+   */
+  adjusted_close?: number | null;
+};
+
+/**
+ * TechnicalIndicatorItemSchema
+ *
+ * テクニカル指標アイテムスキーマ（主要指標のみ）
+ */
+export type TechnicalIndicatorItemSchema = {
+  /**
+   * Date
+   *
+   * 日付
+   */
+  date: string;
+  /**
+   * Ma 5
+   *
+   * 5日移動平均
+   */
+  ma_5?: number | null;
+  /**
+   * Ma 25
+   *
+   * 25日移動平均
+   */
+  ma_25?: number | null;
+  /**
+   * Ma 75
+   *
+   * 75日移動平均
+   */
+  ma_75?: number | null;
+  /**
+   * Ema 12
+   *
+   * 12日指数移動平均
+   */
+  ema_12?: number | null;
+  /**
+   * Ema 26
+   *
+   * 26日指数移動平均
+   */
+  ema_26?: number | null;
+  /**
+   * Rsi 14
+   *
+   * 14日RSI
+   */
+  rsi_14?: number | null;
+  /**
+   * Macd
+   *
+   * MACD
+   */
+  macd?: number | null;
+  /**
+   * Macd Signal
+   *
+   * MACDシグナル
+   */
+  macd_signal?: number | null;
+  /**
+   * Macd Histogram
+   *
+   * MACDヒストグラム
+   */
+  macd_histogram?: number | null;
+  /**
+   * Bollinger Upper 2Sigma
+   *
+   * ボリンジャーバンド上限（2σ）
+   */
+  bollinger_upper_2sigma?: number | null;
+  /**
+   * Bollinger Middle
+   *
+   * ボリンジャーバンド中央線
+   */
+  bollinger_middle?: number | null;
+  /**
+   * Bollinger Lower 2Sigma
+   *
+   * ボリンジャーバンド下限（2σ）
+   */
+  bollinger_lower_2sigma?: number | null;
+  /**
+   * Atr 14
+   *
+   * 14日ATR
+   */
+  atr_14?: number | null;
+  /**
+   * Volume Ma 20
+   *
+   * 20日出来高移動平均
+   */
+  volume_ma_20?: number | null;
+  /**
+   * Obv
+   *
+   * OBV（On-Balance Volume）
+   */
+  obv?: number | null;
+  /**
+   * Adx 14
+   *
+   * 14日ADX
+   */
+  adx_14?: number | null;
+};
+
+/**
+ * TechnicalIndicatorResponse
+ *
+ * テクニカル指標履歴レスポンス
+ */
+export type TechnicalIndicatorResponse = {
+  /**
+   * Items
+   *
+   * テクニカル指標データリスト
+   */
+  items: Array<TechnicalIndicatorItemSchema>;
+  pagination: PaginationSchema;
 };
 
 /**
@@ -324,6 +757,224 @@ export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses
 
 export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponse =
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses[keyof GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses];
+
+export type GetStockDetailApiV1StocksStockCodeGetData = {
+  body?: never;
+  path: {
+    /**
+     * Stock Code
+     */
+    stock_code: string;
+  };
+  query?: never;
+  url: "/api/v1/stocks/{stock_code}";
+};
+
+export type GetStockDetailApiV1StocksStockCodeGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetStockDetailApiV1StocksStockCodeGetError =
+  GetStockDetailApiV1StocksStockCodeGetErrors[keyof GetStockDetailApiV1StocksStockCodeGetErrors];
+
+export type GetStockDetailApiV1StocksStockCodeGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StockDetailResponse;
+};
+
+export type GetStockDetailApiV1StocksStockCodeGetResponse =
+  GetStockDetailApiV1StocksStockCodeGetResponses[keyof GetStockDetailApiV1StocksStockCodeGetResponses];
+
+export type GetStockPriceHistoryApiV1StocksStockCodePricesGetData = {
+  body?: never;
+  path: {
+    /**
+     * Stock Code
+     */
+    stock_code: string;
+  };
+  query?: {
+    /**
+     * Page
+     *
+     * ページ番号（1始まり）
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * 1ページあたりの件数
+     */
+    limit?: number;
+  };
+  url: "/api/v1/stocks/{stock_code}/prices";
+};
+
+export type GetStockPriceHistoryApiV1StocksStockCodePricesGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetStockPriceHistoryApiV1StocksStockCodePricesGetError =
+  GetStockPriceHistoryApiV1StocksStockCodePricesGetErrors[keyof GetStockPriceHistoryApiV1StocksStockCodePricesGetErrors];
+
+export type GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: StockPriceHistoryResponse;
+};
+
+export type GetStockPriceHistoryApiV1StocksStockCodePricesGetResponse =
+  GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses[keyof GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses];
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Stock Code
+       */
+      stock_code: string;
+    };
+    query?: {
+      /**
+       * Page
+       *
+       * ページ番号（1始まり）
+       */
+      page?: number;
+      /**
+       * Limit
+       *
+       * 1ページあたりの件数
+       */
+      limit?: number;
+    };
+    url: "/api/v1/stocks/{stock_code}/technical-indicators";
+  };
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetError =
+  GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors[keyof GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors];
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: TechnicalIndicatorResponse;
+  };
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponse =
+  GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses[keyof GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses];
+
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Stock Code
+       */
+      stock_code: string;
+    };
+    query?: {
+      /**
+       * Page
+       *
+       * ページ番号（1始まり）
+       */
+      page?: number;
+      /**
+       * Limit
+       *
+       * 1ページあたりの件数
+       */
+      limit?: number;
+    };
+    url: "/api/v1/stocks/{stock_code}/technical-indicators/full";
+  };
+
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetError =
+  GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors[keyof GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors];
+
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+  };
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData =
+  {
+    body?: never;
+    path: {
+      /**
+       * Stock Code
+       */
+      stock_code: string;
+    };
+    query?: {
+      /**
+       * Page
+       *
+       * ページ番号（1始まり）
+       */
+      page?: number;
+      /**
+       * Limit
+       *
+       * 1ページあたりの件数
+       */
+      limit?: number;
+    };
+    url: "/api/v1/stocks/{stock_code}/recommendations";
+  };
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+  };
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetError =
+  GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors[keyof GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors];
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: RecommendationHistoryResponse;
+  };
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponse =
+  GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses[keyof GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses];
 
 export type RootGetData = {
   body?: never;

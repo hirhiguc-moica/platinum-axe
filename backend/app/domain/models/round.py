@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domain.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.domain.models.round_result import RoundResult
     from app.domain.models.stock import StockMaster
 
 
@@ -41,6 +42,9 @@ class Round(TimestampMixin, Base):
     # リレーション
     recommendations: Mapped[list["RoundRecommendation"]] = relationship(
         "RoundRecommendation", back_populates="round", cascade="all, delete-orphan"
+    )
+    results: Mapped[list["RoundResult"]] = relationship(
+        "RoundResult", back_populates="round", cascade="all, delete-orphan"
     )
 
     __table_args__ = ({"comment": "ラウンド管理"},)
