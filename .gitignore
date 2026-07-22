@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Frontend
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.env*.local
+
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.env
+backend/.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+dist/
+build/
+*.pyc
+*.pyo
+*.pyd
+
+# ML artifacts
+ml/models/*.pkl
+ml/models/*.joblib
+ml/notebooks/.ipynb_checkpoints/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
