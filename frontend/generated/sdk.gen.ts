@@ -3,6 +3,18 @@
 import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+  GetLatestResultsApiV1HistoryLatestGetData,
+  GetLatestResultsApiV1HistoryLatestGetErrors,
+  GetLatestResultsApiV1HistoryLatestGetResponses,
+  GetPerformanceSummaryApiV1HistorySummaryGetData,
+  GetPerformanceSummaryApiV1HistorySummaryGetErrors,
+  GetPerformanceSummaryApiV1HistorySummaryGetResponses,
+  GetRoundDetailApiV1HistoryRoundIdGetData,
+  GetRoundDetailApiV1HistoryRoundIdGetErrors,
+  GetRoundDetailApiV1HistoryRoundIdGetResponses,
+  GetRoundHistoryApiV1HistoryGetData,
+  GetRoundHistoryApiV1HistoryGetErrors,
+  GetRoundHistoryApiV1HistoryGetResponses,
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetData,
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors,
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses,
@@ -259,6 +271,107 @@ export const getStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGet
       GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors,
       ThrowOnError
     >({ url: "/api/v1/stocks/{stock_code}/recommendations", ...options });
+
+/**
+ * Get Latest Results
+ *
+ * 直近のラウンド結果を取得（BUY/SELL）
+ *
+ * Args:
+ * index_filter: all（全銘柄） | nikkei225（日経225のみ） | topix（TOPIXのみ）
+ * db: DBセッション
+ *
+ * Returns:
+ * 直近のBUY/SELLラウンド結果
+ */
+export const getLatestResultsApiV1HistoryLatestGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetLatestResultsApiV1HistoryLatestGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetLatestResultsApiV1HistoryLatestGetResponses,
+    GetLatestResultsApiV1HistoryLatestGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/history/latest", ...options });
+
+/**
+ * Get Performance Summary
+ *
+ * 全体のパフォーマンスサマリーを取得
+ *
+ * Args:
+ * index_filter: all（全銘柄） | nikkei225（日経225のみ） | topix（TOPIXのみ）
+ * db: DBセッション
+ *
+ * Returns:
+ * BUY/SELLの全体パフォーマンス統計
+ */
+export const getPerformanceSummaryApiV1HistorySummaryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetPerformanceSummaryApiV1HistorySummaryGetData,
+    ThrowOnError
+  >,
+) =>
+  (options?.client ?? client).get<
+    GetPerformanceSummaryApiV1HistorySummaryGetResponses,
+    GetPerformanceSummaryApiV1HistorySummaryGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/history/summary", ...options });
+
+/**
+ * Get Round History
+ *
+ * ラウンド履歴を取得（ページネーション付き）
+ *
+ * Args:
+ * round_type: BUY | SELL | None（全て）
+ * index_filter: all（全銘柄） | nikkei225（日経225のみ） | topix（TOPIXのみ）
+ * page: ページ番号（1始まり）
+ * limit: 1ページあたりの件数（1-100）
+ * db: DBセッション
+ *
+ * Returns:
+ * ラウンド履歴とページネーション情報
+ */
+export const getRoundHistoryApiV1HistoryGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<GetRoundHistoryApiV1HistoryGetData, ThrowOnError>,
+) =>
+  (options?.client ?? client).get<
+    GetRoundHistoryApiV1HistoryGetResponses,
+    GetRoundHistoryApiV1HistoryGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/history", ...options });
+
+/**
+ * Get Round Detail
+ *
+ * 特定ラウンドの詳細を取得（推奨銘柄 + 結果データ付き）
+ *
+ * Args:
+ * round_id: ラウンドID（例: 2026-W29-BUY）
+ * db: DBセッション
+ *
+ * Returns:
+ * ラウンド詳細 + 推奨銘柄 + 結果データ
+ *
+ * Raises:
+ * HTTPException: ラウンドが見つからない場合（404）
+ */
+export const getRoundDetailApiV1HistoryRoundIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetRoundDetailApiV1HistoryRoundIdGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetRoundDetailApiV1HistoryRoundIdGetResponses,
+    GetRoundDetailApiV1HistoryRoundIdGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/history/{round_id}", ...options });
 
 /**
  * Root

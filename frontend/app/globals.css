@@ -121,6 +121,18 @@ body {
     0 0 10px currentColor;
 }
 
+.neon-text-green-sm {
+  text-shadow:
+    0 0 5px rgba(16, 185, 129, 0.6),
+    0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.neon-text-red-sm {
+  text-shadow:
+    0 0 5px rgba(239, 68, 68, 0.6),
+    0 0 10px rgba(239, 68, 68, 0.4);
+}
+
 .neon-pulse {
   animation: neon-pulse 2s ease-in-out infinite;
 }
