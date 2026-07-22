@@ -31,21 +31,12 @@ J-Quants APIを活用した機械学習（勾配ブースティング）によ�
 ## 📸 スクリーンショット
 
 ### メインページ（推奨銘柄一覧）
+<img width="1526" height="1354" alt="image" src="https://github.com/user-attachments/assets/dadd909c-49c6-4841-8b9a-8588733f6fe9" />
 
-<!-- 画像を後から追加 -->
-![メインページ](./docs/images/screenshot-main.png)
 
 ### 銘柄詳細ページ（株価チャート）
+<img width="1543" height="1313" alt="image" src="https://github.com/user-attachments/assets/afe3edd8-ce29-4850-8258-1af9e748376a" />
 
-<!-- 画像を後から追加 -->
-![銘柄詳細 - チャート](./docs/images/screenshot-stock-chart.png)
-
-### 銘柄詳細ページ（推奨履歴）
-
-<!-- 画像を後から追加 -->
-![銘柄詳細 - 推奨履歴](./docs/images/screenshot-stock-recommendations.png)
-
----
 
 ## 🏗️ システム構成
 
