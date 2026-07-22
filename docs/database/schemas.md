@@ -39,23 +39,35 @@
 
 ```sql
 CREATE TABLE stock_prices_daily (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stock_code VARCHAR(10) NOT NULL,           -- 銘柄コード
     date DATE NOT NULL,                         -- 日付
+
+    -- 四本値（調整前）
     open DECIMAL(10,2),                         -- 始値
     high DECIMAL(10,2),                         -- 高値
     low DECIMAL(10,2),                          -- 安値
     close DECIMAL(10,2),                        -- 終値
     volume BIGINT,                              -- 出来高
     turnover_value DECIMAL(15,2),               -- 売買代金
+
+    -- 調整済み四本値
     adjusted_open DECIMAL(10,2),                -- 調整後始値
     adjusted_high DECIMAL(10,2),                -- 調整後高値
     adjusted_low DECIMAL(10,2),                 -- 調整後安値
     adjusted_close DECIMAL(10,2),               -- 調整後終値
     adjusted_volume BIGINT,                     -- 調整後出来高
+    adjustment_factor DECIMAL(10,6),            -- 調整係数
+
+    -- ストップ高/安フラグ
+    is_upper_limit BOOLEAN DEFAULT FALSE,       -- ストップ高
+    is_lower_limit BOOLEAN DEFAULT FALSE,       -- ストップ安
+
+    -- メタ情報
     fetched_at TIMESTAMP NOT NULL,              -- API取得日時
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     UNIQUE(stock_code, date)
 );
 
@@ -606,57 +618,267 @@ CREATE INDEX idx_trading_calendar_is_trading ON trading_calendar(is_trading_day,
 
 ```sql
 CREATE TABLE technical_indicators (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     stock_code VARCHAR(10) NOT NULL,
     date DATE NOT NULL,
 
-    -- 移動平均線
+    -- ==========================================
+    -- 1. 移動平均線
+    -- ==========================================
+    -- 単純移動平均（SMA）
     ma_5 DECIMAL(10,2),                         -- 5日移動平均
+    ma_10 DECIMAL(10,2),                        -- 10日移動平均
     ma_25 DECIMAL(10,2),                        -- 25日移動平均
+    ma_50 DECIMAL(10,2),                        -- 50日移動平均
     ma_75 DECIMAL(10,2),                        -- 75日移動平均
+    ma_100 DECIMAL(10,2),                       -- 100日移動平均
     ma_200 DECIMAL(10,2),                       -- 200日移動平均
 
-    -- 騰落率
+    -- 指数移動平均（EMA）
+    ema_5 DECIMAL(10,2),                        -- 5日指数移動平均
+    ema_12 DECIMAL(10,2),                       -- 12日指数移動平均
+    ema_26 DECIMAL(10,2),                       -- 26日指数移動平均
+    ema_50 DECIMAL(10,2),                       -- 50日指数移動平均
+    ema_200 DECIMAL(10,2),                      -- 200日指数移動平均
+
+    -- 加重移動平均（WMA）
+    wma_20 DECIMAL(10,2),                       -- 20日加重移動平均
+
+    -- ==========================================
+    -- 2. 移動平均の派生特徴量
+    -- ==========================================
+    -- 乖離率（Deviation）
+    deviation_from_ma5 DECIMAL(8,4),            -- (価格 - MA5) / MA5 × 100
+    deviation_from_ma25 DECIMAL(8,4),           -- (価格 - MA25) / MA25 × 100
+    deviation_from_ma75 DECIMAL(8,4),           -- (価格 - MA75) / MA75 × 100
+    deviation_from_ma200 DECIMAL(8,4),          -- (価格 - MA200) / MA200 × 100
+
+    -- 移動平均間の乖離率
+    ma_5_25_deviation DECIMAL(8,4),             -- (MA5 - MA25) / MA25 × 100
+    ma_25_75_deviation DECIMAL(8,4),            -- (MA25 - MA75) / MA75 × 100
+    ma_75_200_deviation DECIMAL(8,4),           -- (MA75 - MA200) / MA200 × 100
+
+    -- 移動平均の傾き（Slope）
+    ma_5_slope_5d DECIMAL(8,4),                 -- 直近5日のMA5の傾き
+    ma_25_slope_5d DECIMAL(8,4),                -- 直近5日のMA25の傾き
+    ma_75_slope_10d DECIMAL(8,4),               -- 直近10日のMA75の傾き
+
+    -- ゴールデンクロス/デッドクロスからの経過日数
+    days_since_gc_5_25 INT,                     -- MA5×MA25 GCからの日数（NULL = 未発生）
+    days_since_dc_5_25 INT,                     -- MA5×MA25 DCからの日数
+    days_since_gc_25_75 INT,                    -- MA25×MA75 GCからの日数
+    days_since_dc_25_75 INT,                    -- MA25×MA75 DCからの日数
+
+    -- 移動平均の並び順（パーフェクトオーダー判定）
+    is_perfect_order_bullish BOOLEAN,           -- MA5 > MA25 > MA75 > MA200
+    is_perfect_order_bearish BOOLEAN,           -- MA5 < MA25 < MA75 < MA200
+
+    -- ==========================================
+    -- 3. 騰落率（Return）
+    -- ==========================================
     return_1d DECIMAL(8,4),                     -- 1日騰落率
+    return_3d DECIMAL(8,4),                     -- 3日騰落率
     return_5d DECIMAL(8,4),                     -- 5日騰落率
+    return_10d DECIMAL(8,4),                    -- 10日騰落率
     return_20d DECIMAL(8,4),                    -- 20日騰落率
     return_60d DECIMAL(8,4),                    -- 60日騰落率
+    return_120d DECIMAL(8,4),                   -- 120日騰落率
 
-    -- モメンタム系
+    -- 対数収益率（Log Return）
+    log_return_1d DECIMAL(8,4),                 -- 1日対数収益率
+    log_return_5d DECIMAL(8,4),                 -- 5日対数収益率
+    log_return_20d DECIMAL(8,4),                -- 20日対数収益率
+
+    -- ==========================================
+    -- 4. モメンタム系
+    -- ==========================================
+    -- RSI（Relative Strength Index）
     rsi_9 DECIMAL(5,2),                         -- RSI(9日)
     rsi_14 DECIMAL(5,2),                        -- RSI(14日)
+    rsi_25 DECIMAL(5,2),                        -- RSI(25日)
+
+    -- MACD
     macd DECIMAL(10,4),                         -- MACD
     macd_signal DECIMAL(10,4),                  -- MACDシグナル
     macd_histogram DECIMAL(10,4),               -- MACDヒストグラム
 
-    -- ボリンジャーバンド
-    bollinger_upper_2sigma DECIMAL(10,2),       -- 上限2σ
-    bollinger_lower_2sigma DECIMAL(10,2),       -- 下限2σ
-    bollinger_width DECIMAL(10,4),              -- バンド幅
-
     -- ストキャスティクス
     stochastic_k DECIMAL(5,2),                  -- %K
     stochastic_d DECIMAL(5,2),                  -- %D
+    stochastic_slow_d DECIMAL(5,2),             -- Slow %D
 
-    -- ボラティリティ
+    -- ROC（Rate of Change）
+    roc_12 DECIMAL(8,4),                        -- 12日ROC
+    roc_25 DECIMAL(8,4),                        -- 25日ROC
+
+    -- モメンタム
+    momentum_10 DECIMAL(10,4),                  -- 10日モメンタム
+    momentum_20 DECIMAL(10,4),                  -- 20日モメンタム
+
+    -- CCI（Commodity Channel Index）
+    cci_14 DECIMAL(8,2),                        -- 14日CCI
+    cci_20 DECIMAL(8,2),                        -- 20日CCI
+
+    -- ウィリアムズ%R
+    williams_r_14 DECIMAL(5,2),                 -- 14日ウィリアムズ%R
+
+    -- MFI（Money Flow Index）
+    mfi_14 DECIMAL(5,2),                        -- 14日MFI
+
+    -- Ultimate Oscillator
+    ultimate_oscillator DECIMAL(5,2),           -- Ultimate Oscillator
+
+    -- ==========================================
+    -- 5. トレンド指標
+    -- ==========================================
+    -- ADX（Average Directional Index）
+    adx_14 DECIMAL(5,2),                        -- 14日ADX
+    plus_di_14 DECIMAL(5,2),                    -- +DI(14日)
+    minus_di_14 DECIMAL(5,2),                   -- -DI(14日)
+
+    -- パラボリックSAR
+    parabolic_sar DECIMAL(10,2),                -- パラボリックSAR値
+    sar_direction VARCHAR(10),                  -- 'LONG' or 'SHORT'
+
+    -- 一目均衡表（Ichimoku）
+    tenkan_sen DECIMAL(10,2),                   -- 転換線（9日）
+    kijun_sen DECIMAL(10,2),                    -- 基準線（26日）
+    senkou_span_a DECIMAL(10,2),                -- 先行スパンA
+    senkou_span_b DECIMAL(10,2),                -- 先行スパンB
+    chikou_span DECIMAL(10,2),                  -- 遅行スパン
+
+    -- 雲の厚さ
+    kumo_thickness DECIMAL(10,2),               -- |先行スパンA - 先行スパンB|
+    is_above_kumo BOOLEAN,                      -- 価格が雲の上
+    is_below_kumo BOOLEAN,                      -- 価格が雲の下
+
+    -- ==========================================
+    -- 6. ボラティリティ指標
+    -- ==========================================
+    -- ボリンジャーバンド
+    bollinger_upper_2sigma DECIMAL(10,2),       -- 上限2σ
+    bollinger_middle DECIMAL(10,2),             -- 中心線
+    bollinger_lower_2sigma DECIMAL(10,2),       -- 下限2σ
+    bollinger_width DECIMAL(10,4),              -- バンド幅
+    bollinger_position DECIMAL(8,4),            -- バンド内の位置（%B）
+
+    -- ATR（Average True Range）
+    atr_14 DECIMAL(10,4),                       -- 14日ATR
+    atr_20 DECIMAL(10,4),                       -- 20日ATR
+
+    -- ヒストリカル・ボラティリティ
+    volatility_10d DECIMAL(8,4),                -- 10日ボラティリティ
     volatility_20d DECIMAL(8,4),                -- 20日ボラティリティ
     volatility_60d DECIMAL(8,4),                -- 60日ボラティリティ
-    atr_14 DECIMAL(10,4),                       -- ATR(14日)
 
-    -- 出来高系
+    -- ケルトナーチャネル
+    keltner_upper DECIMAL(10,2),                -- ケルトナー上限
+    keltner_middle DECIMAL(10,2),               -- ケルトナー中心
+    keltner_lower DECIMAL(10,2),                -- ケルトナー下限
+
+    -- ==========================================
+    -- 7. 出来高系
+    -- ==========================================
+    -- 出来高移動平均
     volume_ma_5 BIGINT,                         -- 5日平均出来高
+    volume_ma_10 BIGINT,                        -- 10日平均出来高
     volume_ma_20 BIGINT,                        -- 20日平均出来高
-    volume_ratio DECIMAL(8,4),                  -- 出来高比率
+    volume_ma_60 BIGINT,                        -- 60日平均出来高
 
-    -- 価格帯
-    price_position DECIMAL(5,4),                -- 現在値の相対位置（52週高値/安値間）
+    -- 出来高比率
+    volume_ratio_5 DECIMAL(8,4),                -- 当日出来高 / 5日平均
+    volume_ratio_20 DECIMAL(8,4),               -- 当日出来高 / 20日平均
 
-    calculated_at TIMESTAMP DEFAULT NOW(),
-    created_at TIMESTAMP DEFAULT NOW(),
+    -- 出来高変化率
+    volume_change_1d DECIMAL(8,4),              -- 1日出来高変化率
+    volume_change_5d DECIMAL(8,4),              -- 5日出来高変化率
+
+    -- OBV（On-Balance Volume）
+    obv BIGINT,                                 -- OBV
+    obv_ma_20 BIGINT,                           -- 20日OBV移動平均
+
+    -- VWAP（Volume Weighted Average Price）
+    vwap DECIMAL(10,2),                         -- VWAP
+
+    -- 出来高加重移動平均
+    vwma_20 DECIMAL(10,2),                      -- 20日出来高加重移動平均
+
+    -- CMF（Chaikin Money Flow）
+    cmf_20 DECIMAL(8,4),                        -- 20日CMF
+
+    -- ==========================================
+    -- 8. 価格位置・高値安値
+    -- ==========================================
+    -- 高値・安値
+    high_5d DECIMAL(10,2),                      -- 5日高値
+    low_5d DECIMAL(10,2),                       -- 5日安値
+    high_20d DECIMAL(10,2),                     -- 20日高値
+    low_20d DECIMAL(10,2),                      -- 20日安値
+    high_60d DECIMAL(10,2),                     -- 60日高値
+    low_60d DECIMAL(10,2),                      -- 60日安値
+    high_52w DECIMAL(10,2),                     -- 52週高値
+    low_52w DECIMAL(10,2),                      -- 52週安値
+
+    -- 高値・安値からの乖離率
+    price_from_high_5d DECIMAL(8,4),            -- (価格 - 5日高値) / 5日高値
+    price_from_low_5d DECIMAL(8,4),             -- (価格 - 5日安値) / 5日安値
+    price_from_high_20d DECIMAL(8,4),           -- (価格 - 20日高値) / 20日高値
+    price_from_low_20d DECIMAL(8,4),            -- (価格 - 20日安値) / 20日安値
+    price_from_high_52w DECIMAL(8,4),           -- (価格 - 52週高値) / 52週高値
+    price_from_low_52w DECIMAL(8,4),            -- (価格 - 52週安値) / 52週安値
+
+    -- 価格の相対位置
+    price_position_20d DECIMAL(5,4),            -- (価格 - 20日安値) / (20日高値 - 20日安値)
+    price_position_52w DECIMAL(5,4),            -- (価格 - 52週安値) / (52週高値 - 52週安値)
+
+    -- 新高値・新安値判定
+    is_new_high_20d BOOLEAN,                    -- 20日新高値
+    is_new_low_20d BOOLEAN,                     -- 20日新安値
+    is_new_high_52w BOOLEAN,                    -- 52週新高値
+    is_new_low_52w BOOLEAN,                     -- 52週新安値
+
+    -- ==========================================
+    -- 9. ローソク足パターン
+    -- ==========================================
+    -- 基本パターン
+    is_doji BOOLEAN,                            -- 十字線
+    is_hammer BOOLEAN,                          -- ハンマー
+    is_inverted_hammer BOOLEAN,                 -- 逆ハンマー
+    is_shooting_star BOOLEAN,                   -- 流れ星
+    is_hanging_man BOOLEAN,                     -- 首吊り線
+
+    -- 連続パターン
+    consecutive_up_days INT,                    -- 連続陽線日数
+    consecutive_down_days INT,                  -- 連続陰線日数
+
+    -- 実体・ヒゲの比率
+    body_size DECIMAL(8,4),                     -- (終値 - 始値) / 始値
+    upper_shadow_ratio DECIMAL(8,4),            -- 上ヒゲの比率
+    lower_shadow_ratio DECIMAL(8,4),            -- 下ヒゲの比率
+
+    -- ==========================================
+    -- 10. その他の指標
+    -- ==========================================
+    -- Awesome Oscillator
+    awesome_oscillator DECIMAL(10,4),           -- Awesome Oscillator
+
+    -- Aroon Indicator
+    aroon_up DECIMAL(5,2),                      -- Aroon Up
+    aroon_down DECIMAL(5,2),                    -- Aroon Down
+    aroon_oscillator DECIMAL(5,2),              -- Aroon Oscillator
+
+    -- ==========================================
+    -- メタ情報
+    -- ==========================================
+    calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     UNIQUE(stock_code, date)
 );
 
 CREATE INDEX idx_technical_indicators_code_date ON technical_indicators(stock_code, date DESC);
+CREATE INDEX idx_technical_indicators_date ON technical_indicators(date DESC);
 ```
 
 ---
@@ -774,8 +996,8 @@ CREATE INDEX idx_round_recommendations_code ON round_recommendations(stock_code,
 
 ```sql
 CREATE TABLE round_results (
-    id BIGSERIAL PRIMARY KEY,
-    round_id VARCHAR(20) NOT NULL REFERENCES rounds(round_id),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    round_id UUID NOT NULL REFERENCES rounds(id),
     stock_code VARCHAR(10) NOT NULL,
 
     -- 価格情報
@@ -795,12 +1017,14 @@ CREATE TABLE round_results (
     profit_loss DECIMAL(10,2),                  -- 損益金額
     profit_loss_rate DECIMAL(8,4),              -- 損益率
 
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     UNIQUE(round_id, stock_code)
 );
 
 CREATE INDEX idx_round_results_round ON round_results(round_id);
-CREATE INDEX idx_round_results_code ON round_results(stock_code, round_id);
+CREATE INDEX idx_round_results_code ON round_results(stock_code);
 ```
 
 ### 14. daily_signals（デイリーシグナル）

@@ -9,6 +9,21 @@ import type {
   GetRoundsApiV1RoundsGetData,
   GetRoundsApiV1RoundsGetErrors,
   GetRoundsApiV1RoundsGetResponses,
+  GetStockDetailApiV1StocksStockCodeGetData,
+  GetStockDetailApiV1StocksStockCodeGetErrors,
+  GetStockDetailApiV1StocksStockCodeGetResponses,
+  GetStockPriceHistoryApiV1StocksStockCodePricesGetData,
+  GetStockPriceHistoryApiV1StocksStockCodePricesGetErrors,
+  GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses,
+  GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData,
+  GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors,
+  GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses,
+  GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData,
+  GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors,
+  GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses,
+  GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData,
+  GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors,
+  GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetResponses,
   HealthCheckApiV1HealthGetData,
   HealthCheckApiV1HealthGetResponses,
   RootGetData,
@@ -99,6 +114,151 @@ export const getRoundRecommendationsApiV1RoundsRoundIdRecommendationsGet = <
     GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors,
     ThrowOnError
   >({ url: "/api/v1/rounds/{round_id}/recommendations", ...options });
+
+/**
+ * Get Stock Detail
+ *
+ * 銘柄詳細取得
+ *
+ * 銘柄基本情報 + 最新株価を取得します。
+ *
+ * Args:
+ * stock_code: 銘柄コード（例: 7203）
+ *
+ * Returns:
+ * 銘柄詳細情報
+ */
+export const getStockDetailApiV1StocksStockCodeGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetStockDetailApiV1StocksStockCodeGetData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetStockDetailApiV1StocksStockCodeGetResponses,
+    GetStockDetailApiV1StocksStockCodeGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/stocks/{stock_code}", ...options });
+
+/**
+ * Get Stock Price History
+ *
+ * 株価履歴取得
+ *
+ * 指定銘柄の株価履歴をページング形式で取得します。
+ *
+ * Args:
+ * stock_code: 銘柄コード
+ * page: ページ番号（デフォルト: 1）
+ * limit: 1ページあたりの件数（デフォルト: 200、最大: 500）
+ *
+ * Returns:
+ * 株価履歴データ（ページング情報付き）
+ */
+export const getStockPriceHistoryApiV1StocksStockCodePricesGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetStockPriceHistoryApiV1StocksStockCodePricesGetData,
+    ThrowOnError
+  >,
+) =>
+  (options.client ?? client).get<
+    GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses,
+    GetStockPriceHistoryApiV1StocksStockCodePricesGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/stocks/{stock_code}/prices", ...options });
+
+/**
+ * Get Stock Technical Indicators
+ *
+ * テクニカル指標履歴取得
+ *
+ * 指定銘柄のテクニカル指標履歴をページング形式で取得します。
+ *
+ * 主要指標のみを返します（MA, RSI, MACD, Bollinger Bands等）。
+ *
+ * Args:
+ * stock_code: 銘柄コード
+ * page: ページ番号（デフォルト: 1）
+ * limit: 1ページあたりの件数（デフォルト: 200、最大: 500）
+ *
+ * Returns:
+ * テクニカル指標履歴データ（ページング情報付き）
+ */
+export const getStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGet =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData,
+      ThrowOnError
+    >,
+  ) =>
+    (options.client ?? client).get<
+      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses,
+      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors,
+      ThrowOnError
+    >({ url: "/api/v1/stocks/{stock_code}/technical-indicators", ...options });
+
+/**
+ * Get Stock Technical Indicators Full
+ *
+ * テクニカル指標完全履歴取得（全125指標）
+ *
+ * 指定銘柄のテクニカル指標履歴をページング形式で取得します。
+ *
+ * 全125個のテクニカル指標を返します。
+ * チャート描画や詳細分析に使用できます。
+ *
+ * Args:
+ * stock_code: 銘柄コード
+ * page: ページ番号（デフォルト: 1）
+ * limit: 1ページあたりの件数（デフォルト: 200、最大: 500）
+ *
+ * Returns:
+ * テクニカル指標完全履歴データ（ページング情報付き、全125指標）
+ */
+export const getStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGet =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData,
+      ThrowOnError
+    >,
+  ) =>
+    (options.client ?? client).get<
+      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetResponses,
+      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors,
+      ThrowOnError
+    >({
+      url: "/api/v1/stocks/{stock_code}/technical-indicators/full",
+      ...options,
+    });
+
+/**
+ * Get Stock Recommendation History
+ *
+ * 推奨履歴取得
+ *
+ * 指定銘柄の過去の推奨履歴をページング形式で取得します。
+ *
+ * Args:
+ * stock_code: 銘柄コード
+ * page: ページ番号（デフォルト: 1）
+ * limit: 1ページあたりの件数（デフォルト: 20、最大: 100）
+ *
+ * Returns:
+ * 推奨履歴データ（ページング情報付き）
+ */
+export const getStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGet =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData,
+      ThrowOnError
+    >,
+  ) =>
+    (options.client ?? client).get<
+      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses,
+      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors,
+      ThrowOnError
+    >({ url: "/api/v1/stocks/{stock_code}/recommendations", ...options });
 
 /**
  * Root

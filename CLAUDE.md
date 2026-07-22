@@ -619,7 +619,97 @@ docs/
     - neon-pulse アニメーション
     - card-hover 強化
 
-### 🎯 現在の状態（2026-07-22 深夜）
+✅ **2026-07-22 午後**: 銘柄詳細ページ向けBackend API実装完了
+  - **テクニカル指標テーブル追加**
+    - マイグレーション実行（125個の指標カラム追加）
+    - `technical_indicators`テーブル作成（130カラム = 125指標 + 5メタデータ）
+  - **モックデータ生成スクリプト作成**
+    - `backend/scripts/seed_stock_prices.py`作成
+    - トヨタ（7203）240日分の株価+テクニカル指標を生成
+    - 期間: 2025-11-24 〜 2026-10-23
+  - **カラム名不一致修正（73個）**
+    - スクリプトとモデル間のカラム名を統一
+    - Bollinger Bands, ADX/DI, Ichimoku, 価格位置指標等
+    - `backend/scripts/check_column_names.py`作成（検証ツール）
+  - **銘柄詳細API実装（4エンドポイント）**
+    - GET /api/v1/stocks/{stock_code}（銘柄基本情報）
+    - GET /api/v1/stocks/{stock_code}/prices（株価履歴）
+    - GET /api/v1/stocks/{stock_code}/technical-indicators（主要14指標）
+    - GET /api/v1/stocks/{stock_code}/recommendations（推奨履歴）
+  - **テクニカル指標full版エンドポイント追加**
+    - GET /api/v1/stocks/{stock_code}/technical-indicators/full（全125指標）
+    - チャート描画・詳細分析向け
+  - **動作確認完了**
+    - 全エンドポイント動作確認済み（Swagger UI経由）
+    - 240件のデータ取得成功、ページネーション正常動作
+
+✅ **2026-07-22 夕方〜夜**: 銘柄詳細ページFrontend実装完了 🎉
+  - **チャート機能実装**
+    - TradingView Lightweight Charts v5.2.0導入
+    - `app/stocks/[stock_code]/_components/StockChart.tsx`作成（チャートコンポーネント）
+    - `app/stocks/[stock_code]/_components/StockDataTabs.tsx`作成（タブ切り替えUI）
+    - `app/stocks/[stock_code]/page.tsx`修正（SSRでデータ取得）
+  - **チャート機能詳細**
+    - ローソク足チャート（240日分の四本値）
+    - 移動平均線3本（MA5/MA25/MA75）オーバーレイ表示
+    - 出来高ヒストグラム（下部に表示）
+    - ダークモード対応（VSCode風カラースキーム）
+    - レスポンシブ対応（ウィンドウリサイズ対応）
+  - **lightweight-charts v5 API対応**
+    - v5で変更されたAPIに対応（`addSeries()`メソッド使用）
+    - `CandlestickSeries`, `LineSeries`, `HistogramSeries`のインポート追加
+    - 型安全なチャート実装
+  - **タブUI実装**
+    - shadcn/ui Tabsコンポーネント使用
+    - 3タブ構成：チャート / 株価データ / テクニカル指標
+    - チャートタブをデフォルト表示
+    - 株価データ・テクニカル指標テーブルにSticky Header適用
+  - **銘柄詳細ページ完成**
+    - 銘柄基本情報表示（会社名、業種、市場、指数バッジ）
+    - 最新株価サマリー表示
+    - チャート/テーブルタブ切り替え
+    - 推奨履歴表示（予測 vs 実績）
+    - RecommendationCardからのリンク接続完了
+
+✅ **2026-07-22 夜**: 推奨履歴チャート機能実装 + UIブラッシュアップ 🎨
+  - **コンポーネント配置整理**
+    - `stocks/[stock_code]/_components/` ディレクトリ作成
+    - `StockChart.tsx`, `StockDataTabs.tsx` を `_components/` に移動
+    - 将来的に `stocks/_components/` への昇格が容易な構造
+    - プライベートコンポーネントも整理することで共通化しやすく
+  - **推奨履歴タブUI実装**
+    - `RecommendationTabs.tsx` 作成（タブ切り替えUI）
+    - `RecommendationAccuracyChart.tsx` 作成（折れ線グラフ）
+    - タブ1: 予測 vs 実績チャート（デフォルト）
+    - タブ2: 詳細リスト
+  - **予測 vs 実績の折れ線グラフ実装**
+    - TradingView Lightweight Charts使用
+    - 青線：予測騰落率の推移
+    - 橙線：実績騰落率の推移
+    - 予測精度が一目でわかる可視化
+    - 日付フォーマット：MM/dd形式（例: 07/20）
+  - **UIブラッシュアップ**
+    - 全セクションから件数表示を削除（「240件」等）
+    - タイトルを簡素化（情報過多を解消）
+    - よりシンプルで見やすいUIに改善
+
+✅ **2026-07-22 夜**: Headerシステム説明バナー追加 + 銘柄詳細ページv1完成 🎉
+  - **Headerにシステム説明バナー追加**
+    - `app/_components/Header.tsx` 修正
+    - バナーテキスト：「個人投資家に クオンツ分析 × AI によるデータ・ドリブンな株取引を」
+    - 非sticky配置（スクロールすると消える）
+    - グラデーション背景 + 「クオンツ分析 × AI」部分にグラデーションテキスト
+    - メインヘッダーはstickyのまま維持
+  - **ナビゲーション改善**
+    - 「About」→「使い方」に変更
+  - **銘柄詳細ページv1完成確認**
+    - 株価チャート（ローソク足 + MA + 出来高）
+    - 株価データ・テクニカル指標テーブル
+    - 推奨履歴（予測vs実績チャート + 詳細リスト）
+    - システム説明バナー
+    - 全機能正常動作確認
+
+### 🎯 現在の状態（2026-07-22 夜）
 
 **環境**:
 - ✅ DevContainer起動中
@@ -630,15 +720,21 @@ docs/
 - ✅ FE⇄BE API疎通確認済み
 
 **データベース**:
-- ✅ 5テーブル作成完了（markets, sectors, stock_master, rounds, round_recommendations）
+- ✅ 7テーブル作成完了（markets, sectors, stock_master, rounds, round_recommendations, stock_prices_daily, technical_indicators）
 - ✅ マスタデータ投入完了（市場6件、業種33件）
 - ✅ モックデータ投入完了（銘柄10件、ラウンド2件、推奨10件）
+- ✅ **株価+テクニカル指標240日分投入完了**（トヨタ7203）
 - ✅ sector/market正規化完了（外部キー設定）
 - ✅ 指数フラグ追加完了（is_nikkei225, is_topix等）
 
 **Backend API**:
 - ✅ GET /api/v1/rounds（全ラウンド一覧）
 - ✅ GET /api/v1/rounds/{round_id}/recommendations（推奨銘柄詳細）
+- ✅ **GET /api/v1/stocks/{stock_code}（銘柄基本情報）**
+- ✅ **GET /api/v1/stocks/{stock_code}/prices（株価履歴240日分）**
+- ✅ **GET /api/v1/stocks/{stock_code}/technical-indicators（主要14指標）**
+- ✅ **GET /api/v1/stocks/{stock_code}/technical-indicators/full（全125指標）**
+- ✅ **GET /api/v1/stocks/{stock_code}/recommendations（推奨履歴）**
 - ✅ sector_name, market_name正常表示
 
 **Frontend**:
@@ -648,46 +744,53 @@ docs/
 - ✅ shadcn/uiコンポーネント実装完了
 - ✅ VSCode風ダークモードUI完成
 - ✅ メインページ完成（BUY/SELL両方表示）
-- ✅ Header/RankBadge/RecommendationCard実装
+- ✅ Header実装（システム説明バナー + ナビゲーション）
+- ✅ RankBadge/RecommendationCard実装
 - ✅ 日付表示UX改善（曜日付き + 更新情報）
 - ✅ ネオン効果実装完了（グロー、パルスアニメーション）
 - ✅ クリック可能なカードUI実装
+- ✅ **銘柄詳細ページv1完成** 🎉
+  - 株価チャート（ローソク足 + 移動平均線 + 出来高）
+  - 株価データ・テクニカル指標テーブル
+  - 推奨履歴（予測vs実績チャート + 詳細リスト）
+  - タブ切り替えUI
+  - TradingView Lightweight Charts v5.2.0使用
 
-**ブランチ**: feature/design_docs_v1
+**ブランチ**: feature/stock_detail
 
 ### 📝 次のタスク
 
-**🎯 最優先: 銘柄詳細ページ実装**
-1. URL設計: `/stocks/[stock_code]`
-2. Backend API実装:
-   - GET /api/v1/stocks/{stock_code} （銘柄基本情報）
-   - GET /api/v1/stocks/{stock_code}/recommendations （過去の推奨履歴）
-3. Frontend ページ実装:
-   - 銘柄基本情報表示（会社名、業種、市場、指数所属等）
-   - 現在の推奨状況（BUY/SELL/なし）
-   - 過去の推奨履歴（予測 vs 実績）
-   - 信頼度スコアの推移
-4. RecommendationCard から詳細ページへのリンク追加
+**✅ フェーズ2完了: 銘柄詳細ページv1完成**
+- 株価チャート、テクニカル指標、推奨履歴の可視化
+- 予測vs実績の比較機能
+- タブ切り替えUI
 
-**フェーズ3: その他ページ追加**
+**🎯 フェーズ3: その他ページ追加**
 1. 過去のラウンド結果ページ（/history）
+   - 過去のラウンド一覧
+   - パフォーマンスサマリー
 2. Aboutページ（/about）
+   - システムの説明
+   - 使い方ガイド
 3. 404ページ
+4. 日経225/TOPIXフィルターページ（/nikkei225, /topix）
 
 **フェーズ4: 実データ連携（現在はモックデータ）**
 1. 「先週の実績」セクションを実データに接続
 2. round_resultsテーブルとの連携実装
 3. パフォーマンス計算ロジック実装
+4. 複数銘柄のモックデータ追加（推奨履歴を充実させる）
 
-**フェーズ5: J-Quants API + データ蓄積（後回し）**
+**フェーズ5: J-Quants API連携 + データ蓄積バッチ**
 - J-Quants APIクライアント実装
-- データ収集バッチ
-- テクニカル指標計算
+- データ収集バッチ（日次）
+- テクニカル指標計算バッチ
+- 週次ラウンド結果検証バッチ
 
-**フェーズ5: 機械学習実装（最後）**
+**フェーズ6: 機械学習実装（最終フェーズ）**
 - 特徴量エンジニアリング
 - モデル学習・評価
-- 推論パイプライン
+- 週次推論パイプライン
 
 ---
 
@@ -752,28 +855,38 @@ docs/
 
 ## 最終更新
 
-- **日時**: 2026-07-22 深夜（Frontend UI最終調整・ネオン効果実装完了）
+- **日時**: 2026-07-22 夜（銘柄詳細ページv1完成 + システム説明バナー追加）
 - **作業者**: Claude Code
-- **セッション**: feature/design_docs_v1ブランチでのフルスタック実装
+- **セッション**: feature/stock_detailブランチでの銘柄詳細ページ完全実装
 - **進捗**:
-  - ✅ Backend API実装完了（Rounds, Recommendations）
-  - ✅ Frontend SSR実装完了（OpenAPI型生成）
-  - ✅ Tailwind CSS v4 + shadcn/ui設定完了
-  - ✅ データベース再設計完了（Sector/Market正規化、指数フラグ追加）
-  - ✅ マイグレーション再実行成功（5テーブル作成）
-  - ✅ API動作確認成功（sector_name, market_name正常表示）
-  - ✅ **Frontend UI実装完了**（メインページ、Header、RecommendationCard等）
-  - ✅ **日付表示UX改善完了**（曜日付き + 更新情報表示）
-  - ✅ **ネオン効果実装完了**（グロー、パルスアニメーション、グラデーション背景）
-  - ✅ **クリック可能なカードUI実装**（ホバー効果、スケール変更、シャドウ強化）
+  - ✅ **株価チャート実装**（TradingView Lightweight Charts v5.2.0）
+    - ローソク足チャート + MA5/MA25/MA75 + 出来高ヒストグラム
+    - lightweight-charts v5 API対応（`addSeries()`メソッド使用）
+    - ダークモード対応、レスポンシブ対応
+  - ✅ **コンポーネント配置整理**
+    - `stocks/[stock_code]/_components/` ディレクトリ作成
+    - プライベートコンポーネントの整理（将来的な共通化を見据えて）
+  - ✅ **推奨履歴タブUI + 折れ線グラフ実装**
+    - タブ切り替え：予測vs実績チャート / 詳細リスト
+    - 予測騰落率と実績騰落率の推移を折れ線グラフで比較
+    - 予測精度が一目でわかる可視化
+    - 日付フォーマット：MM/dd形式（例: 07/20）
+  - ✅ **UIブラッシュアップ**
+    - 全セクションから件数表示を削除（情報過多を解消）
+    - タイトルを簡素化（シンプルで見やすいUI）
+  - ✅ **Headerにシステム説明バナー追加**
+    - 「個人投資家に クオンツ分析 × AI によるデータ・ドリブンな株取引を」
+    - 非sticky配置（スクロールで消える）、グラデーション装飾
+    - ナビゲーション「About」→「使い方」に変更
+  - ✅ **銘柄詳細ページv1完成**
+    - 銘柄基本情報、最新株価、株価チャート、テクニカル指標、推奨履歴
+    - タブ切り替えUI（株価：チャート/データ/テクニカル指標、推奨履歴：チャート/詳細）
+    - 予測vs実績の可視化
 - **重要な設計決定**:
-  - Sector/Market正規化（外部キー設定、market_name削除）
-  - market_code を意味のあるコードに変更（PRIME/STANDARD/GROWTH）
-  - 指数フラグ追加（is_nikkei225, is_topix, is_topix_core30, is_jpx400）
-  - **情報アーキテクチャ**: サイト説明（最上部） → タイトル → 実績 → 予測
-  - **日付表示**: 曜日付き + 予測ステータス + 次回更新日を明示
-  - **予測期間カード統合**: 買い推奨・売り推奨セクションに統合（グラデーション背景）
-  - **ネオン風デザイン**: クオンツ・AI感のある視覚表現
-  - **クリック可能性**: カードホバー時の立体感、カーソル変化、スケール変更
-- **今回の成果**: メインページの骨子が完成 🎉
-- **次回**: 銘柄詳細ページ実装（`/stocks/[stock_code]`）
+  - コンポーネント配置ルール確立（プライベートも `_components/` に配置）
+  - 推奨履歴の可視化方針確定（折れ線グラフ + 詳細リスト）
+  - lightweight-charts v5 API移行（v4からの破壊的変更に対応）
+  - UIの簡素化方針（件数表示削除、タイトル簡略化）
+  - システム説明バナーによる価値提案の明示化
+- **今回の成果**: 銘柄詳細ページv1完成 🎉
+- **次回**: フェーズ3（過去のラウンド結果ページ、使い方ページ等の追加）

@@ -1,5 +1,5 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,7 +28,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Platinum Axe API",
-        description="株式投資推奨システム - Backend API",
+        description="株式投資AIクォンツ分析システム - Backend API",
         version="0.1.0",
         docs_url=docs_url,
         redoc_url=redoc_url,
@@ -47,10 +47,11 @@ def create_app() -> FastAPI:
         )
 
     # ルーター登録
-    from app.presentation.api.v1 import health, rounds
+    from app.presentation.api.v1 import health, rounds, stocks
 
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(rounds.router, prefix="/api/v1", tags=["rounds"])
+    app.include_router(stocks.router, prefix="/api/v1", tags=["stocks"])
 
     @app.get("/")
     async def root() -> dict[str, str]:
