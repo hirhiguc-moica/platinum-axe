@@ -1,1 +1,1741 @@
-{"openapi":"3.1.0","info":{"title":"Platinum Axe API","description":"株式投資AIクォンツ分析システム - Backend API","version":"0.1.0"},"paths":{"/api/v1/health":{"get":{"tags":["health"],"summary":"Health Check","description":"ヘルスチェックエンドポイント\n\nシステムの稼働状況を確認します。","operationId":"health_check_api_v1_health_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"additionalProperties":{"type":"string"},"type":"object","title":"Response Health Check Api V1 Health Get"}}}}}}},"/api/v1/rounds":{"get":{"tags":["rounds"],"summary":"Get Rounds","description":"ラウンド一覧取得\n\nArgs:\n    limit: 取得件数（1〜100）\n    offset: オフセット\n    round_repository: RoundRepository\n\nReturns:\n    ラウンド一覧","operationId":"get_rounds_api_v1_rounds_get","parameters":[{"name":"limit","in":"query","required":false,"schema":{"type":"integer","maximum":100,"minimum":1,"description":"取得件数","default":50,"title":"Limit"},"description":"取得件数"},{"name":"offset","in":"query","required":false,"schema":{"type":"integer","minimum":0,"description":"オフセット","default":0,"title":"Offset"},"description":"オフセット"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GetRoundsResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/rounds/{round_id}/recommendations":{"get":{"tags":["rounds"],"summary":"Get Round Recommendations","description":"ラウンド推奨銘柄取得\n\nArgs:\n    round_id: ラウンドID（ビジネスキー、例: 2026-W30-BUY）\n    round_repository: RoundRepository\n    recommendation_repository: RoundRecommendationRepository\n\nReturns:\n    ラウンド + 推奨銘柄リスト\n\nRaises:\n    HTTPException: ラウンドが見つからない場合（404）","operationId":"get_round_recommendations_api_v1_rounds__round_id__recommendations_get","parameters":[{"name":"round_id","in":"path","required":true,"schema":{"type":"string","title":"Round Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/GetRoundRecommendationsResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/stocks/{stock_code}":{"get":{"tags":["stocks","stocks"],"summary":"Get Stock Detail","description":"銘柄詳細取得\n\n銘柄基本情報 + 最新株価を取得します。\n\nArgs:\n    stock_code: 銘柄コード（例: 7203）\n\nReturns:\n    銘柄詳細情報","operationId":"get_stock_detail_api_v1_stocks__stock_code__get","parameters":[{"name":"stock_code","in":"path","required":true,"schema":{"type":"string","title":"Stock Code"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/StockDetailResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/stocks/{stock_code}/prices":{"get":{"tags":["stocks","stocks"],"summary":"Get Stock Price History","description":"株価履歴取得\n\n指定銘柄の株価履歴をページング形式で取得します。\n\nArgs:\n    stock_code: 銘柄コード\n    page: ページ番号（デフォルト: 1）\n    limit: 1ページあたりの件数（デフォルト: 200、最大: 500）\n\nReturns:\n    株価履歴データ（ページング情報付き）","operationId":"get_stock_price_history_api_v1_stocks__stock_code__prices_get","parameters":[{"name":"stock_code","in":"path","required":true,"schema":{"type":"string","title":"Stock Code"}},{"name":"page","in":"query","required":false,"schema":{"type":"integer","minimum":1,"description":"ページ番号（1始まり）","default":1,"title":"Page"},"description":"ページ番号（1始まり）"},{"name":"limit","in":"query","required":false,"schema":{"type":"integer","maximum":500,"minimum":1,"description":"1ページあたりの件数","default":200,"title":"Limit"},"description":"1ページあたりの件数"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/StockPriceHistoryResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/stocks/{stock_code}/technical-indicators":{"get":{"tags":["stocks","stocks"],"summary":"Get Stock Technical Indicators","description":"テクニカル指標履歴取得\n\n指定銘柄のテクニカル指標履歴をページング形式で取得します。\n\n主要指標のみを返します（MA, RSI, MACD, Bollinger Bands等）。\n\nArgs:\n    stock_code: 銘柄コード\n    page: ページ番号（デフォルト: 1）\n    limit: 1ページあたりの件数（デフォルト: 200、最大: 500）\n\nReturns:\n    テクニカル指標履歴データ（ページング情報付き）","operationId":"get_stock_technical_indicators_api_v1_stocks__stock_code__technical_indicators_get","parameters":[{"name":"stock_code","in":"path","required":true,"schema":{"type":"string","title":"Stock Code"}},{"name":"page","in":"query","required":false,"schema":{"type":"integer","minimum":1,"description":"ページ番号（1始まり）","default":1,"title":"Page"},"description":"ページ番号（1始まり）"},{"name":"limit","in":"query","required":false,"schema":{"type":"integer","maximum":500,"minimum":1,"description":"1ページあたりの件数","default":200,"title":"Limit"},"description":"1ページあたりの件数"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TechnicalIndicatorResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/stocks/{stock_code}/technical-indicators/full":{"get":{"tags":["stocks","stocks"],"summary":"Get Stock Technical Indicators Full","description":"テクニカル指標完全履歴取得（全125指標）\n\n指定銘柄のテクニカル指標履歴をページング形式で取得します。\n\n全125個のテクニカル指標を返します。\nチャート描画や詳細分析に使用できます。\n\nArgs:\n    stock_code: 銘柄コード\n    page: ページ番号（デフォルト: 1）\n    limit: 1ページあたりの件数（デフォルト: 200、最大: 500）\n\nReturns:\n    テクニカル指標完全履歴データ（ページング情報付き、全125指標）","operationId":"get_stock_technical_indicators_full_api_v1_stocks__stock_code__technical_indicators_full_get","parameters":[{"name":"stock_code","in":"path","required":true,"schema":{"type":"string","title":"Stock Code"}},{"name":"page","in":"query","required":false,"schema":{"type":"integer","minimum":1,"description":"ページ番号（1始まり）","default":1,"title":"Page"},"description":"ページ番号（1始まり）"},{"name":"limit","in":"query","required":false,"schema":{"type":"integer","maximum":500,"minimum":1,"description":"1ページあたりの件数","default":200,"title":"Limit"},"description":"1ページあたりの件数"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/stocks/{stock_code}/recommendations":{"get":{"tags":["stocks","stocks"],"summary":"Get Stock Recommendation History","description":"推奨履歴取得\n\n指定銘柄の過去の推奨履歴をページング形式で取得します。\n\nArgs:\n    stock_code: 銘柄コード\n    page: ページ番号（デフォルト: 1）\n    limit: 1ページあたりの件数（デフォルト: 20、最大: 100）\n\nReturns:\n    推奨履歴データ（ページング情報付き）","operationId":"get_stock_recommendation_history_api_v1_stocks__stock_code__recommendations_get","parameters":[{"name":"stock_code","in":"path","required":true,"schema":{"type":"string","title":"Stock Code"}},{"name":"page","in":"query","required":false,"schema":{"type":"integer","minimum":1,"description":"ページ番号（1始まり）","default":1,"title":"Page"},"description":"ページ番号（1始まり）"},{"name":"limit","in":"query","required":false,"schema":{"type":"integer","maximum":100,"minimum":1,"description":"1ページあたりの件数","default":20,"title":"Limit"},"description":"1ページあたりの件数"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/RecommendationHistoryResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/":{"get":{"summary":"Root","description":"ルートエンドポイント","operationId":"root__get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"additionalProperties":{"type":"string"},"type":"object","title":"Response Root  Get"}}}}}}}},"components":{"schemas":{"GetRoundRecommendationsResponse":{"properties":{"round":{"$ref":"#/components/schemas/RoundSchema","description":"ラウンド情報"},"recommendations":{"items":{"$ref":"#/components/schemas/RoundRecommendationSchema"},"type":"array","title":"Recommendations","description":"推奨銘柄リスト"}},"type":"object","required":["round","recommendations"],"title":"GetRoundRecommendationsResponse","description":"ラウンド推奨銘柄レスポンス"},"GetRoundsResponse":{"properties":{"rounds":{"items":{"$ref":"#/components/schemas/RoundSchema"},"type":"array","title":"Rounds","description":"ラウンドリスト"},"total":{"type":"integer","title":"Total","description":"総件数"}},"type":"object","required":["rounds","total"],"title":"GetRoundsResponse","description":"ラウンド一覧レスポンス"},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"LatestPriceSchema":{"properties":{"date":{"type":"string","format":"date","title":"Date","description":"日付"},"open":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Open","description":"始値"},"high":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"High","description":"高値"},"low":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Low","description":"安値"},"close":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Close","description":"終値"},"volume":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Volume","description":"出来高"}},"type":"object","required":["date"],"title":"LatestPriceSchema","description":"最新株価スキーマ"},"PaginationSchema":{"properties":{"page":{"type":"integer","title":"Page","description":"現在のページ番号"},"limit":{"type":"integer","title":"Limit","description":"1ページあたりの件数"},"total":{"type":"integer","title":"Total","description":"総件数"},"total_pages":{"type":"integer","title":"Total Pages","description":"総ページ数"}},"type":"object","required":["page","limit","total","total_pages"],"title":"PaginationSchema","description":"ページング情報"},"RecommendationHistoryItemSchema":{"properties":{"round_id":{"type":"string","title":"Round Id","description":"ラウンドID（ビジネスキー）"},"round_type":{"type":"string","title":"Round Type","description":"ラウンドタイプ（BUY / SELL）"},"start_date":{"type":"string","format":"date","title":"Start Date","description":"開始日"},"end_date":{"type":"string","format":"date","title":"End Date","description":"終了日"},"status":{"type":"string","title":"Status","description":"ステータス"},"rank":{"type":"integer","title":"Rank","description":"推奨順位"},"predicted_return":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Predicted Return","description":"予測騰落率"},"confidence_score":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Confidence Score","description":"信頼度スコア"}},"type":"object","required":["round_id","round_type","start_date","end_date","status","rank"],"title":"RecommendationHistoryItemSchema","description":"推奨履歴アイテムスキーマ"},"RecommendationHistoryResponse":{"properties":{"items":{"items":{"$ref":"#/components/schemas/RecommendationHistoryItemSchema"},"type":"array","title":"Items","description":"推奨履歴データリスト"},"pagination":{"$ref":"#/components/schemas/PaginationSchema"}},"type":"object","required":["items","pagination"],"title":"RecommendationHistoryResponse","description":"推奨履歴レスポンス"},"RoundRecommendationSchema":{"properties":{"id":{"type":"string","format":"uuid","title":"Id","description":"UUID（主キー）"},"round_id":{"type":"string","format":"uuid","title":"Round Id","description":"ラウンドID（UUID）"},"stock_code":{"type":"string","title":"Stock Code","description":"銘柄コード"},"rank":{"type":"integer","title":"Rank","description":"推奨順位（1〜N位）"},"predicted_return":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Predicted Return","description":"予測騰落率"},"confidence_score":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Confidence Score","description":"信頼度スコア（0〜1）"},"reason_features":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}],"title":"Reason Features","description":"推奨理由となった特徴量"},"stock":{"anyOf":[{"$ref":"#/components/schemas/StockInfoSchema"},{"type":"null"}],"description":"銘柄情報"}},"type":"object","required":["id","round_id","stock_code","rank"],"title":"RoundRecommendationSchema","description":"ラウンド推奨銘柄スキーマ"},"RoundSchema":{"properties":{"id":{"type":"string","format":"uuid","title":"Id","description":"UUID（主キー）"},"round_id":{"type":"string","title":"Round Id","description":"ラウンドID（ビジネスキー、例: 2026-W30-BUY）"},"round_type":{"type":"string","title":"Round Type","description":"ラウンドタイプ（BUY / SELL）"},"start_date":{"type":"string","format":"date","title":"Start Date","description":"開始日（月曜）"},"end_date":{"type":"string","format":"date","title":"End Date","description":"終了日（金曜）"},"status":{"type":"string","title":"Status","description":"ステータス（ACTIVE / CLOSED）"},"model_version":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Model Version","description":"使用したモデルバージョン"},"feature_version":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Feature Version","description":"使用した特徴量バージョン"},"prediction_date":{"anyOf":[{"type":"string","format":"date"},{"type":"null"}],"title":"Prediction Date","description":"予測実施日"}},"type":"object","required":["id","round_id","round_type","start_date","end_date","status"],"title":"RoundSchema","description":"ラウンドスキーマ"},"StockDetailResponse":{"properties":{"stock_code":{"type":"string","title":"Stock Code","description":"銘柄コード"},"company_name":{"type":"string","title":"Company Name","description":"会社名"},"sector_code":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Sector Code","description":"業種コード"},"sector_name":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Sector Name","description":"業種名"},"market_code":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Market Code","description":"市場コード"},"market_name":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Market Name","description":"市場名"},"is_nikkei225":{"type":"boolean","title":"Is Nikkei225","description":"日経225構成銘柄"},"is_topix":{"type":"boolean","title":"Is Topix","description":"TOPIX構成銘柄"},"is_topix_core30":{"type":"boolean","title":"Is Topix Core30","description":"TOPIX Core30構成銘柄"},"is_jpx400":{"type":"boolean","title":"Is Jpx400","description":"JPX400構成銘柄"},"latest_price":{"anyOf":[{"$ref":"#/components/schemas/LatestPriceSchema"},{"type":"null"}],"description":"最新株価"}},"type":"object","required":["stock_code","company_name","is_nikkei225","is_topix","is_topix_core30","is_jpx400"],"title":"StockDetailResponse","description":"銘柄詳細レスポンス"},"StockInfoSchema":{"properties":{"stock_code":{"type":"string","title":"Stock Code","description":"銘柄コード"},"company_name":{"type":"string","title":"Company Name","description":"会社名"},"sector_name":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Sector Name","description":"業種名"},"market_name":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Market Name","description":"市場名（プライム/スタンダード等）"}},"type":"object","required":["stock_code","company_name"],"title":"StockInfoSchema","description":"銘柄情報スキーマ（推奨銘柄に含まれる）"},"StockPriceHistoryResponse":{"properties":{"items":{"items":{"$ref":"#/components/schemas/StockPriceItemSchema"},"type":"array","title":"Items","description":"株価データリスト"},"pagination":{"$ref":"#/components/schemas/PaginationSchema"}},"type":"object","required":["items","pagination"],"title":"StockPriceHistoryResponse","description":"株価履歴レスポンス"},"StockPriceItemSchema":{"properties":{"date":{"type":"string","format":"date","title":"Date","description":"日付"},"open":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Open","description":"始値"},"high":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"High","description":"高値"},"low":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Low","description":"安値"},"close":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Close","description":"終値"},"volume":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Volume","description":"出来高"},"adjusted_close":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Adjusted Close","description":"調整後終値"}},"type":"object","required":["date"],"title":"StockPriceItemSchema","description":"株価履歴アイテムスキーマ"},"TechnicalIndicatorItemSchema":{"properties":{"date":{"type":"string","format":"date","title":"Date","description":"日付"},"ma_5":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Ma 5","description":"5日移動平均"},"ma_25":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Ma 25","description":"25日移動平均"},"ma_75":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Ma 75","description":"75日移動平均"},"ema_12":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Ema 12","description":"12日指数移動平均"},"ema_26":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Ema 26","description":"26日指数移動平均"},"rsi_14":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Rsi 14","description":"14日RSI"},"macd":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Macd","description":"MACD"},"macd_signal":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Macd Signal","description":"MACDシグナル"},"macd_histogram":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Macd Histogram","description":"MACDヒストグラム"},"bollinger_upper_2sigma":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Bollinger Upper 2Sigma","description":"ボリンジャーバンド上限（2σ）"},"bollinger_middle":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Bollinger Middle","description":"ボリンジャーバンド中央線"},"bollinger_lower_2sigma":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Bollinger Lower 2Sigma","description":"ボリンジャーバンド下限（2σ）"},"atr_14":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Atr 14","description":"14日ATR"},"volume_ma_20":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Volume Ma 20","description":"20日出来高移動平均"},"obv":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Obv","description":"OBV（On-Balance Volume）"},"adx_14":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Adx 14","description":"14日ADX"}},"type":"object","required":["date"],"title":"TechnicalIndicatorItemSchema","description":"テクニカル指標アイテムスキーマ（主要指標のみ）"},"TechnicalIndicatorResponse":{"properties":{"items":{"items":{"$ref":"#/components/schemas/TechnicalIndicatorItemSchema"},"type":"array","title":"Items","description":"テクニカル指標データリスト"},"pagination":{"$ref":"#/components/schemas/PaginationSchema"}},"type":"object","required":["items","pagination"],"title":"TechnicalIndicatorResponse","description":"テクニカル指標履歴レスポンス"},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"},"input":{"title":"Input"},"ctx":{"type":"object","title":"Context"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Platinum Axe API",
+    "description": "\u682a\u5f0f\u6295\u8cc7AI\u30af\u30a9\u30f3\u30c4\u5206\u6790\u30b7\u30b9\u30c6\u30e0 - Backend API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8\n\n\u30b7\u30b9\u30c6\u30e0\u306e\u7a3c\u50cd\u72b6\u6cc1\u3092\u78ba\u8a8d\u3057\u307e\u3059\u3002",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Check Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rounds": {
+      "get": {
+        "tags": [
+          "rounds"
+        ],
+        "summary": "Get Rounds",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u4e00\u89a7\u53d6\u5f97\n\nArgs:\n    limit: \u53d6\u5f97\u4ef6\u6570\uff081\u301c100\uff09\n    offset: \u30aa\u30d5\u30bb\u30c3\u30c8\n    round_repository: RoundRepository\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u4e00\u89a7",
+        "operationId": "get_rounds_api_v1_rounds_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "\u53d6\u5f97\u4ef6\u6570",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "\u53d6\u5f97\u4ef6\u6570"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "\u30aa\u30d5\u30bb\u30c3\u30c8",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "\u30aa\u30d5\u30bb\u30c3\u30c8"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRoundsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rounds/{round_id}/recommendations": {
+      "get": {
+        "tags": [
+          "rounds"
+        ],
+        "summary": "Get Round Recommendations",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u53d6\u5f97\n\nArgs:\n    round_id: \u30e9\u30a6\u30f3\u30c9ID\uff08\u30d3\u30b8\u30cd\u30b9\u30ad\u30fc\u3001\u4f8b: 2026-W30-BUY\uff09\n    round_repository: RoundRepository\n    recommendation_repository: RoundRecommendationRepository\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9 + \u63a8\u5968\u9298\u67c4\u30ea\u30b9\u30c8\n\nRaises:\n    HTTPException: \u30e9\u30a6\u30f3\u30c9\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u5834\u5408\uff08404\uff09",
+        "operationId": "get_round_recommendations_api_v1_rounds__round_id__recommendations_get",
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRoundRecommendationsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/{stock_code}": {
+      "get": {
+        "tags": [
+          "stocks",
+          "stocks"
+        ],
+        "summary": "Get Stock Detail",
+        "description": "\u9298\u67c4\u8a73\u7d30\u53d6\u5f97\n\n\u9298\u67c4\u57fa\u672c\u60c5\u5831 + \u6700\u65b0\u682a\u4fa1\u3092\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\uff08\u4f8b: 7203\uff09\n\nReturns:\n    \u9298\u67c4\u8a73\u7d30\u60c5\u5831",
+        "operationId": "get_stock_detail_api_v1_stocks__stock_code__get",
+        "parameters": [
+          {
+            "name": "stock_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stock Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/{stock_code}/prices": {
+      "get": {
+        "tags": [
+          "stocks",
+          "stocks"
+        ],
+        "summary": "Get Stock Price History",
+        "description": "\u682a\u4fa1\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u682a\u4fa1\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u682a\u4fa1\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
+        "operationId": "get_stock_price_history_api_v1_stocks__stock_code__prices_get",
+        "parameters": [
+          {
+            "name": "stock_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stock Code"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockPriceHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/{stock_code}/technical-indicators": {
+      "get": {
+        "tags": [
+          "stocks",
+          "stocks"
+        ],
+        "summary": "Get Stock Technical Indicators",
+        "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\n\u4e3b\u8981\u6307\u6a19\u306e\u307f\u3092\u8fd4\u3057\u307e\u3059\uff08MA, RSI, MACD, Bollinger Bands\u7b49\uff09\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
+        "operationId": "get_stock_technical_indicators_api_v1_stocks__stock_code__technical_indicators_get",
+        "parameters": [
+          {
+            "name": "stock_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stock Code"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicalIndicatorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/{stock_code}/technical-indicators/full": {
+      "get": {
+        "tags": [
+          "stocks",
+          "stocks"
+        ],
+        "summary": "Get Stock Technical Indicators Full",
+        "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5b8c\u5168\u5c65\u6b74\u53d6\u5f97\uff08\u5168125\u6307\u6a19\uff09\n\n\u6307\u5b9a\u9298\u67c4\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\n\u5168125\u500b\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u3092\u8fd4\u3057\u307e\u3059\u3002\n\u30c1\u30e3\u30fc\u30c8\u63cf\u753b\u3084\u8a73\u7d30\u5206\u6790\u306b\u4f7f\u7528\u3067\u304d\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5b8c\u5168\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\u3001\u5168125\u6307\u6a19\uff09",
+        "operationId": "get_stock_technical_indicators_full_api_v1_stocks__stock_code__technical_indicators_full_get",
+        "parameters": [
+          {
+            "name": "stock_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stock Code"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/{stock_code}/recommendations": {
+      "get": {
+        "tags": [
+          "stocks",
+          "stocks"
+        ],
+        "summary": "Get Stock Recommendation History",
+        "description": "\u63a8\u5968\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u904e\u53bb\u306e\u63a8\u5968\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 20\u3001\u6700\u5927: 100\uff09\n\nReturns:\n    \u63a8\u5968\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
+        "operationId": "get_stock_recommendation_history_api_v1_stocks__stock_code__recommendations_get",
+        "parameters": [
+          {
+            "name": "stock_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Stock Code"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationHistoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/latest": {
+      "get": {
+        "tags": [
+          "history",
+          "history"
+        ],
+        "summary": "Get Latest Results",
+        "description": "\u76f4\u8fd1\u306e\u30e9\u30a6\u30f3\u30c9\u7d50\u679c\u3092\u53d6\u5f97\uff08BUY/SELL\uff09\n\nArgs:\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u76f4\u8fd1\u306eBUY/SELL\u30e9\u30a6\u30f3\u30c9\u7d50\u679c",
+        "operationId": "get_latest_results_api_v1_history_latest_get",
+        "parameters": [
+          {
+            "name": "index_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nikkei225",
+                "topix"
+              ],
+              "type": "string",
+              "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
+              "default": "all",
+              "title": "Index Filter"
+            },
+            "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/summary": {
+      "get": {
+        "tags": [
+          "history",
+          "history"
+        ],
+        "summary": "Get Performance Summary",
+        "description": "\u5168\u4f53\u306e\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u30b5\u30de\u30ea\u30fc\u3092\u53d6\u5f97\n\nArgs:\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    BUY/SELL\u306e\u5168\u4f53\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u7d71\u8a08",
+        "operationId": "get_performance_summary_api_v1_history_summary_get",
+        "parameters": [
+          {
+            "name": "index_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nikkei225",
+                "topix"
+              ],
+              "type": "string",
+              "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
+              "default": "all",
+              "title": "Index Filter"
+            },
+            "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history": {
+      "get": {
+        "tags": [
+          "history",
+          "history"
+        ],
+        "summary": "Get Round History",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u5c65\u6b74\u3092\u53d6\u5f97\uff08\u30da\u30fc\u30b8\u30cd\u30fc\u30b7\u30e7\u30f3\u4ed8\u304d\uff09\n\nArgs:\n    round_type: BUY | SELL | None\uff08\u5168\u3066\uff09\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff081-100\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u5c65\u6b74\u3068\u30da\u30fc\u30b8\u30cd\u30fc\u30b7\u30e7\u30f3\u60c5\u5831",
+        "operationId": "get_round_history_api_v1_history_get",
+        "parameters": [
+          {
+            "name": "round_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "BUY",
+                    "SELL"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "\u30e9\u30a6\u30f3\u30c9\u30bf\u30a4\u30d7\uff08\u672a\u6307\u5b9a\u3067\u5168\u3066\uff09",
+              "title": "Round Type"
+            },
+            "description": "\u30e9\u30a6\u30f3\u30c9\u30bf\u30a4\u30d7\uff08\u672a\u6307\u5b9a\u3067\u5168\u3066\uff09"
+          },
+          {
+            "name": "index_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "nikkei225",
+                "topix"
+              ],
+              "type": "string",
+              "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
+              "default": "all",
+              "title": "Index Filter"
+            },
+            "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "\u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/{round_id}": {
+      "get": {
+        "tags": [
+          "history",
+          "history"
+        ],
+        "summary": "Get Round Detail",
+        "description": "\u7279\u5b9a\u30e9\u30a6\u30f3\u30c9\u306e\u8a73\u7d30\u3092\u53d6\u5f97\uff08\u63a8\u5968\u9298\u67c4 + \u7d50\u679c\u30c7\u30fc\u30bf\u4ed8\u304d\uff09\n\nArgs:\n    round_id: \u30e9\u30a6\u30f3\u30c9ID\uff08\u4f8b: 2026-W29-BUY\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u8a73\u7d30 + \u63a8\u5968\u9298\u67c4 + \u7d50\u679c\u30c7\u30fc\u30bf\n\nRaises:\n    HTTPException: \u30e9\u30a6\u30f3\u30c9\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u5834\u5408\uff08404\uff09",
+        "operationId": "get_round_detail_api_v1_history__round_id__get",
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "\u30eb\u30fc\u30c8\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GetRoundRecommendationsResponse": {
+        "properties": {
+          "round": {
+            "$ref": "#/components/schemas/RoundSchema",
+            "description": "\u30e9\u30a6\u30f3\u30c9\u60c5\u5831"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/RoundRecommendationSchema"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "description": "\u63a8\u5968\u9298\u67c4\u30ea\u30b9\u30c8"
+          }
+        },
+        "type": "object",
+        "required": [
+          "round",
+          "recommendations"
+        ],
+        "title": "GetRoundRecommendationsResponse",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "GetRoundsResponse": {
+        "properties": {
+          "rounds": {
+            "items": {
+              "$ref": "#/components/schemas/RoundSchema"
+            },
+            "type": "array",
+            "title": "Rounds",
+            "description": "\u30e9\u30a6\u30f3\u30c9\u30ea\u30b9\u30c8"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "\u7dcf\u4ef6\u6570"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rounds",
+          "total"
+        ],
+        "title": "GetRoundsResponse",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u4e00\u89a7\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LatestPriceSchema": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date",
+            "description": "\u65e5\u4ed8"
+          },
+          "open": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open",
+            "description": "\u59cb\u5024"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High",
+            "description": "\u9ad8\u5024"
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low",
+            "description": "\u5b89\u5024"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close",
+            "description": "\u7d42\u5024"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume",
+            "description": "\u51fa\u6765\u9ad8"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "title": "LatestPriceSchema",
+        "description": "\u6700\u65b0\u682a\u4fa1\u30b9\u30ad\u30fc\u30de"
+      },
+      "PaginationSchema": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "\u73fe\u5728\u306e\u30da\u30fc\u30b8\u756a\u53f7"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "\u7dcf\u4ef6\u6570"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "\u7dcf\u30da\u30fc\u30b8\u6570"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "total_pages"
+        ],
+        "title": "PaginationSchema",
+        "description": "\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831"
+      },
+      "RecommendationHistoryItemSchema": {
+        "properties": {
+          "round_id": {
+            "type": "string",
+            "title": "Round Id",
+            "description": "\u30e9\u30a6\u30f3\u30c9ID\uff08\u30d3\u30b8\u30cd\u30b9\u30ad\u30fc\uff09"
+          },
+          "round_type": {
+            "type": "string",
+            "title": "Round Type",
+            "description": "\u30e9\u30a6\u30f3\u30c9\u30bf\u30a4\u30d7\uff08BUY / SELL\uff09"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date",
+            "description": "\u958b\u59cb\u65e5"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date",
+            "description": "\u7d42\u4e86\u65e5"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "\u30b9\u30c6\u30fc\u30bf\u30b9"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank",
+            "description": "\u63a8\u5968\u9806\u4f4d"
+          },
+          "predicted_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted Return",
+            "description": "\u4e88\u6e2c\u9a30\u843d\u7387"
+          },
+          "confidence_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Score",
+            "description": "\u4fe1\u983c\u5ea6\u30b9\u30b3\u30a2"
+          },
+          "actual_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Return",
+            "description": "\u5b9f\u969b\u306e\u9a30\u843d\u7387"
+          },
+          "prediction_hit": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prediction Hit",
+            "description": "\u4e88\u6e2c\u304c\u5f53\u305f\u3063\u305f\u304b"
+          },
+          "start_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Price",
+            "description": "\u958b\u59cb\u6642\u70b9\u306e\u682a\u4fa1"
+          },
+          "end_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Price",
+            "description": "\u7d42\u4e86\u6642\u70b9\u306e\u682a\u4fa1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "round_id",
+          "round_type",
+          "start_date",
+          "end_date",
+          "status",
+          "rank"
+        ],
+        "title": "RecommendationHistoryItemSchema",
+        "description": "\u63a8\u5968\u5c65\u6b74\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de"
+      },
+      "RecommendationHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationHistoryItemSchema"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "\u63a8\u5968\u5c65\u6b74\u30c7\u30fc\u30bf\u30ea\u30b9\u30c8"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationSchema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "title": "RecommendationHistoryResponse",
+        "description": "\u63a8\u5968\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "RoundRecommendationSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "UUID\uff08\u4e3b\u30ad\u30fc\uff09"
+          },
+          "round_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Round Id",
+            "description": "\u30e9\u30a6\u30f3\u30c9ID\uff08UUID\uff09"
+          },
+          "stock_code": {
+            "type": "string",
+            "title": "Stock Code",
+            "description": "\u9298\u67c4\u30b3\u30fc\u30c9"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank",
+            "description": "\u63a8\u5968\u9806\u4f4d\uff081\u301cN\u4f4d\uff09"
+          },
+          "predicted_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Predicted Return",
+            "description": "\u4e88\u6e2c\u9a30\u843d\u7387"
+          },
+          "confidence_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Score",
+            "description": "\u4fe1\u983c\u5ea6\u30b9\u30b3\u30a2\uff080\u301c1\uff09"
+          },
+          "reason_features": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Features",
+            "description": "\u63a8\u5968\u7406\u7531\u3068\u306a\u3063\u305f\u7279\u5fb4\u91cf"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StockInfoSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\u9298\u67c4\u60c5\u5831"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "round_id",
+          "stock_code",
+          "rank"
+        ],
+        "title": "RoundRecommendationSchema",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u30b9\u30ad\u30fc\u30de"
+      },
+      "RoundSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "UUID\uff08\u4e3b\u30ad\u30fc\uff09"
+          },
+          "round_id": {
+            "type": "string",
+            "title": "Round Id",
+            "description": "\u30e9\u30a6\u30f3\u30c9ID\uff08\u30d3\u30b8\u30cd\u30b9\u30ad\u30fc\u3001\u4f8b: 2026-W30-BUY\uff09"
+          },
+          "round_type": {
+            "type": "string",
+            "title": "Round Type",
+            "description": "\u30e9\u30a6\u30f3\u30c9\u30bf\u30a4\u30d7\uff08BUY / SELL\uff09"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date",
+            "description": "\u958b\u59cb\u65e5\uff08\u6708\u66dc\uff09"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date",
+            "description": "\u7d42\u4e86\u65e5\uff08\u91d1\u66dc\uff09"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "\u30b9\u30c6\u30fc\u30bf\u30b9\uff08ACTIVE / CLOSED\uff09"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version",
+            "description": "\u4f7f\u7528\u3057\u305f\u30e2\u30c7\u30eb\u30d0\u30fc\u30b8\u30e7\u30f3"
+          },
+          "feature_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Version",
+            "description": "\u4f7f\u7528\u3057\u305f\u7279\u5fb4\u91cf\u30d0\u30fc\u30b8\u30e7\u30f3"
+          },
+          "prediction_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prediction Date",
+            "description": "\u4e88\u6e2c\u5b9f\u65bd\u65e5"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "round_id",
+          "round_type",
+          "start_date",
+          "end_date",
+          "status"
+        ],
+        "title": "RoundSchema",
+        "description": "\u30e9\u30a6\u30f3\u30c9\u30b9\u30ad\u30fc\u30de"
+      },
+      "StockDetailResponse": {
+        "properties": {
+          "stock_code": {
+            "type": "string",
+            "title": "Stock Code",
+            "description": "\u9298\u67c4\u30b3\u30fc\u30c9"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name",
+            "description": "\u4f1a\u793e\u540d"
+          },
+          "sector_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Code",
+            "description": "\u696d\u7a2e\u30b3\u30fc\u30c9"
+          },
+          "sector_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Name",
+            "description": "\u696d\u7a2e\u540d"
+          },
+          "market_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Code",
+            "description": "\u5e02\u5834\u30b3\u30fc\u30c9"
+          },
+          "market_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Name",
+            "description": "\u5e02\u5834\u540d"
+          },
+          "is_nikkei225": {
+            "type": "boolean",
+            "title": "Is Nikkei225",
+            "description": "\u65e5\u7d4c225\u69cb\u6210\u9298\u67c4"
+          },
+          "is_topix": {
+            "type": "boolean",
+            "title": "Is Topix",
+            "description": "TOPIX\u69cb\u6210\u9298\u67c4"
+          },
+          "is_topix_core30": {
+            "type": "boolean",
+            "title": "Is Topix Core30",
+            "description": "TOPIX Core30\u69cb\u6210\u9298\u67c4"
+          },
+          "is_jpx400": {
+            "type": "boolean",
+            "title": "Is Jpx400",
+            "description": "JPX400\u69cb\u6210\u9298\u67c4"
+          },
+          "latest_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatestPriceSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\u6700\u65b0\u682a\u4fa1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stock_code",
+          "company_name",
+          "is_nikkei225",
+          "is_topix",
+          "is_topix_core30",
+          "is_jpx400"
+        ],
+        "title": "StockDetailResponse",
+        "description": "\u9298\u67c4\u8a73\u7d30\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "StockInfoSchema": {
+        "properties": {
+          "stock_code": {
+            "type": "string",
+            "title": "Stock Code",
+            "description": "\u9298\u67c4\u30b3\u30fc\u30c9"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name",
+            "description": "\u4f1a\u793e\u540d"
+          },
+          "sector_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector Name",
+            "description": "\u696d\u7a2e\u540d"
+          },
+          "market_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Name",
+            "description": "\u5e02\u5834\u540d\uff08\u30d7\u30e9\u30a4\u30e0/\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9\u7b49\uff09"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stock_code",
+          "company_name"
+        ],
+        "title": "StockInfoSchema",
+        "description": "\u9298\u67c4\u60c5\u5831\u30b9\u30ad\u30fc\u30de\uff08\u63a8\u5968\u9298\u67c4\u306b\u542b\u307e\u308c\u308b\uff09"
+      },
+      "StockPriceHistoryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StockPriceItemSchema"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "\u682a\u4fa1\u30c7\u30fc\u30bf\u30ea\u30b9\u30c8"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationSchema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "title": "StockPriceHistoryResponse",
+        "description": "\u682a\u4fa1\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "StockPriceItemSchema": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date",
+            "description": "\u65e5\u4ed8"
+          },
+          "open": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open",
+            "description": "\u59cb\u5024"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High",
+            "description": "\u9ad8\u5024"
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low",
+            "description": "\u5b89\u5024"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close",
+            "description": "\u7d42\u5024"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume",
+            "description": "\u51fa\u6765\u9ad8"
+          },
+          "adjusted_close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adjusted Close",
+            "description": "\u8abf\u6574\u5f8c\u7d42\u5024"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "title": "StockPriceItemSchema",
+        "description": "\u682a\u4fa1\u5c65\u6b74\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de"
+      },
+      "TechnicalIndicatorItemSchema": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date",
+            "description": "\u65e5\u4ed8"
+          },
+          "ma_5": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma 5",
+            "description": "5\u65e5\u79fb\u52d5\u5e73\u5747"
+          },
+          "ma_25": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma 25",
+            "description": "25\u65e5\u79fb\u52d5\u5e73\u5747"
+          },
+          "ma_75": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ma 75",
+            "description": "75\u65e5\u79fb\u52d5\u5e73\u5747"
+          },
+          "ema_12": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ema 12",
+            "description": "12\u65e5\u6307\u6570\u79fb\u52d5\u5e73\u5747"
+          },
+          "ema_26": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ema 26",
+            "description": "26\u65e5\u6307\u6570\u79fb\u52d5\u5e73\u5747"
+          },
+          "rsi_14": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsi 14",
+            "description": "14\u65e5RSI"
+          },
+          "macd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd",
+            "description": "MACD"
+          },
+          "macd_signal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd Signal",
+            "description": "MACD\u30b7\u30b0\u30ca\u30eb"
+          },
+          "macd_histogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Macd Histogram",
+            "description": "MACD\u30d2\u30b9\u30c8\u30b0\u30e9\u30e0"
+          },
+          "bollinger_upper_2sigma": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bollinger Upper 2Sigma",
+            "description": "\u30dc\u30ea\u30f3\u30b8\u30e3\u30fc\u30d0\u30f3\u30c9\u4e0a\u9650\uff082\u03c3\uff09"
+          },
+          "bollinger_middle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bollinger Middle",
+            "description": "\u30dc\u30ea\u30f3\u30b8\u30e3\u30fc\u30d0\u30f3\u30c9\u4e2d\u592e\u7dda"
+          },
+          "bollinger_lower_2sigma": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bollinger Lower 2Sigma",
+            "description": "\u30dc\u30ea\u30f3\u30b8\u30e3\u30fc\u30d0\u30f3\u30c9\u4e0b\u9650\uff082\u03c3\uff09"
+          },
+          "atr_14": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atr 14",
+            "description": "14\u65e5ATR"
+          },
+          "volume_ma_20": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Ma 20",
+            "description": "20\u65e5\u51fa\u6765\u9ad8\u79fb\u52d5\u5e73\u5747"
+          },
+          "obv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obv",
+            "description": "OBV\uff08On-Balance Volume\uff09"
+          },
+          "adx_14": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adx 14",
+            "description": "14\u65e5ADX"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "title": "TechnicalIndicatorItemSchema",
+        "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de\uff08\u4e3b\u8981\u6307\u6a19\u306e\u307f\uff09"
+      },
+      "TechnicalIndicatorResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TechnicalIndicatorItemSchema"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u30c7\u30fc\u30bf\u30ea\u30b9\u30c8"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationSchema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "pagination"
+        ],
+        "title": "TechnicalIndicatorResponse",
+        "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

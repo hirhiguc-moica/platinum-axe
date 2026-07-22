@@ -709,7 +709,40 @@ docs/
     - システム説明バナー
     - 全機能正常動作確認
 
-### 🎯 現在の状態（2026-07-22 夜）
+✅ **2026-07-23 深夜**: 過去のラウンド結果ページ（/history）実装完了 🎉
+  - **モックデータ生成**
+    - `backend/scripts/seed_round_history.py`作成
+    - 過去15週分 × BUY/SELL = **30ラウンド**のモックデータ
+    - 推奨銘柄300件、結果データ300件（予測vs実績）
+    - 的中率65%程度、予測騰落率±1-8%でリアルなデータ
+  - **Backend API実装（4エンドポイント）**
+    - `GET /api/v1/history/latest` - 直近BUY/SELL結果（メインページ用）
+    - `GET /api/v1/history` - ラウンド履歴（ページネーション、BUY/SELL/ALL、指数フィルター）
+    - `GET /api/v1/history/summary` - 全体パフォーマンスサマリー
+    - `GET /api/v1/history/{round_id}` - ラウンド詳細（推奨 + 結果）
+    - `RoundResultRepository`実装（パフォーマンス計算、統計集計）
+    - UseCaseレイヤー実装（4ユースケース）
+  - **Frontend _components実装（6コンポーネント）**
+    - `PerformanceSummary.tsx` - BUY/SELL全体統計（的中率、平均騰落率）
+    - `TypeFilterTabs.tsx` - すべて/買い推奨/売り推奨 切り替え
+    - `IndexFilterTabs.tsx` - 総合/NIKKEI225/TOPIX フィルター
+    - `RoundHistoryTable.tsx` - 履歴テーブル（予測vs実績）
+    - `RoundHistoryRow.tsx` - テーブル行（クリック可能、ホバー効果）
+    - `Pagination.tsx` - ページネーション（前後2ページ表示）
+  - **ページ実装**
+    - `app/history/page.tsx` - メインページ（SSR、タブ、サマリー、テーブル）
+    - `app/history/[round_id]/page.tsx` - ラウンド詳細（推奨銘柄 + 予測vs実績）
+  - **UI/UX改善**
+    - **絵文字削除**: 📈📉🎯✅❌ → BUY/SELLバッジ、「的中」/「外れ」テキスト
+    - **「乖離」→「予測誤差」**: 絶対値表示、小さいほど精度が高い
+    - **予測誤差の色分け**: 1%未満=緑、1-3%=通常、3%以上=赤
+    - **クリック可能な行**: ホバーで「→」アイコン表示、影付き強調
+    - **損益表示削除**: 単元株数未実装のため一旦削除
+    - **幅の統一**: `container mx-auto` でメインページと統一
+  - **OpenAPI型生成**: history APIの型をFrontendに反映
+  - **globals.css拡張**: `neon-text-green-sm`, `neon-text-red-sm`追加
+
+### 🎯 現在の状態（2026-07-23 深夜）
 
 **環境**:
 - ✅ DevContainer起動中
@@ -720,21 +753,29 @@ docs/
 - ✅ FE⇄BE API疎通確認済み
 
 **データベース**:
-- ✅ 7テーブル作成完了（markets, sectors, stock_master, rounds, round_recommendations, stock_prices_daily, technical_indicators）
+- ✅ 7テーブル作成完了（markets, sectors, stock_master, rounds, round_recommendations, stock_prices_daily, technical_indicators, **round_results**）
 - ✅ マスタデータ投入完了（市場6件、業種33件）
-- ✅ モックデータ投入完了（銘柄10件、ラウンド2件、推奨10件）
-- ✅ **株価+テクニカル指標240日分投入完了**（トヨタ7203）
+- ✅ モックデータ投入完了
+  - 銘柄10件
+  - **ラウンド32件**（BUY/SELL × 16週分）
+  - **推奨銘柄320件**
+  - **結果データ300件**（過去15週分）
+  - 株価+テクニカル指標240日分（トヨタ7203）
 - ✅ sector/market正規化完了（外部キー設定）
 - ✅ 指数フラグ追加完了（is_nikkei225, is_topix等）
 
 **Backend API**:
 - ✅ GET /api/v1/rounds（全ラウンド一覧）
 - ✅ GET /api/v1/rounds/{round_id}/recommendations（推奨銘柄詳細）
-- ✅ **GET /api/v1/stocks/{stock_code}（銘柄基本情報）**
-- ✅ **GET /api/v1/stocks/{stock_code}/prices（株価履歴240日分）**
-- ✅ **GET /api/v1/stocks/{stock_code}/technical-indicators（主要14指標）**
-- ✅ **GET /api/v1/stocks/{stock_code}/technical-indicators/full（全125指標）**
-- ✅ **GET /api/v1/stocks/{stock_code}/recommendations（推奨履歴）**
+- ✅ GET /api/v1/stocks/{stock_code}（銘柄基本情報）
+- ✅ GET /api/v1/stocks/{stock_code}/prices（株価履歴240日分）
+- ✅ GET /api/v1/stocks/{stock_code}/technical-indicators（主要14指標）
+- ✅ GET /api/v1/stocks/{stock_code}/technical-indicators/full（全125指標）
+- ✅ GET /api/v1/stocks/{stock_code}/recommendations（推奨履歴）
+- ✅ **GET /api/v1/history/latest**（直近結果）
+- ✅ **GET /api/v1/history**（履歴一覧、ページネーション）
+- ✅ **GET /api/v1/history/summary**（全体統計）
+- ✅ **GET /api/v1/history/{round_id}**（ラウンド詳細）
 - ✅ sector_name, market_name正常表示
 
 **Frontend**:
@@ -749,45 +790,46 @@ docs/
 - ✅ 日付表示UX改善（曜日付き + 更新情報）
 - ✅ ネオン効果実装完了（グロー、パルスアニメーション）
 - ✅ クリック可能なカードUI実装
-- ✅ **銘柄詳細ページv1完成** 🎉
+- ✅ **銘柄詳細ページv1完成**
   - 株価チャート（ローソク足 + 移動平均線 + 出来高）
   - 株価データ・テクニカル指標テーブル
   - 推奨履歴（予測vs実績チャート + 詳細リスト）
   - タブ切り替えUI
   - TradingView Lightweight Charts v5.2.0使用
+- ✅ **過去のラウンド結果ページv1完成** 🎉
+  - BUY/SELL全体パフォーマンスサマリー
+  - BUY/SELL/ALLタブ切り替え
+  - 総合/NIKKEI225/TOPIXフィルター
+  - 予測vs実績テーブル（予測誤差、的中率表示）
+  - ページネーション（10件ずつ、30ラウンド分）
+  - ラウンド詳細ページ（推奨銘柄 + 結果）
 
-**ブランチ**: feature/stock_detail
+**ブランチ**: feature/create_history_page
 
 ### 📝 次のタスク
 
 **✅ フェーズ2完了: 銘柄詳細ページv1完成**
-- 株価チャート、テクニカル指標、推奨履歴の可視化
-- 予測vs実績の比較機能
-- タブ切り替えUI
+**✅ フェーズ3完了: 過去のラウンド結果ページv1完成**
 
-**🎯 フェーズ3: その他ページ追加**
-1. 過去のラウンド結果ページ（/history）
-   - 過去のラウンド一覧
-   - パフォーマンスサマリー
-2. Aboutページ（/about）
+**🎯 フェーズ4: 残りのページ追加**
+1. Aboutページ（/about）
    - システムの説明
-   - 使い方ガイド
-3. 404ページ
-4. 日経225/TOPIXフィルターページ（/nikkei225, /topix）
+   - 使い方ガイド（docs/frontend/user-guide.mdを参考）
+2. 404ページ
+3. メインページ「先週の実績」を実データ（/api/v1/history/latest）に接続
 
-**フェーズ4: 実データ連携（現在はモックデータ）**
-1. 「先週の実績」セクションを実データに接続
-2. round_resultsテーブルとの連携実装
-3. パフォーマンス計算ロジック実装
-4. 複数銘柄のモックデータ追加（推奨履歴を充実させる）
+**フェーズ5: 実データ連携拡充（現在はモックデータ）**
+1. 複数銘柄のモックデータ追加（推奨履歴を充実させる）
+2. 銘柄マスタの拡充（現在10銘柄 → 100銘柄程度）
+3. 株価データの拡充（現在トヨタのみ → 全銘柄）
 
-**フェーズ5: J-Quants API連携 + データ蓄積バッチ**
+**フェーズ6: J-Quants API連携 + データ蓄積バッチ**
 - J-Quants APIクライアント実装
 - データ収集バッチ（日次）
 - テクニカル指標計算バッチ
 - 週次ラウンド結果検証バッチ
 
-**フェーズ6: 機械学習実装（最終フェーズ）**
+**フェーズ7: 機械学習実装（最終フェーズ）**
 - 特徴量エンジニアリング
 - モデル学習・評価
 - 週次推論パイプライン
@@ -855,38 +897,23 @@ docs/
 
 ## 最終更新
 
-- **日時**: 2026-07-22 夜（銘柄詳細ページv1完成 + システム説明バナー追加）
+- **日時**: 2026-07-23 深夜（過去のラウンド結果ページv1完成）
 - **作業者**: Claude Code
-- **セッション**: feature/stock_detailブランチでの銘柄詳細ページ完全実装
+- **セッション**: feature/create_history_pageブランチでの履歴ページ完全実装
 - **進捗**:
-  - ✅ **株価チャート実装**（TradingView Lightweight Charts v5.2.0）
-    - ローソク足チャート + MA5/MA25/MA75 + 出来高ヒストグラム
-    - lightweight-charts v5 API対応（`addSeries()`メソッド使用）
-    - ダークモード対応、レスポンシブ対応
-  - ✅ **コンポーネント配置整理**
-    - `stocks/[stock_code]/_components/` ディレクトリ作成
-    - プライベートコンポーネントの整理（将来的な共通化を見据えて）
-  - ✅ **推奨履歴タブUI + 折れ線グラフ実装**
-    - タブ切り替え：予測vs実績チャート / 詳細リスト
-    - 予測騰落率と実績騰落率の推移を折れ線グラフで比較
-    - 予測精度が一目でわかる可視化
-    - 日付フォーマット：MM/dd形式（例: 07/20）
-  - ✅ **UIブラッシュアップ**
-    - 全セクションから件数表示を削除（情報過多を解消）
-    - タイトルを簡素化（シンプルで見やすいUI）
-  - ✅ **Headerにシステム説明バナー追加**
-    - 「個人投資家に クオンツ分析 × AI によるデータ・ドリブンな株取引を」
-    - 非sticky配置（スクロールで消える）、グラデーション装飾
-    - ナビゲーション「About」→「使い方」に変更
-  - ✅ **銘柄詳細ページv1完成**
-    - 銘柄基本情報、最新株価、株価チャート、テクニカル指標、推奨履歴
-    - タブ切り替えUI（株価：チャート/データ/テクニカル指標、推奨履歴：チャート/詳細）
-    - 予測vs実績の可視化
+  - ✅ **モックデータ生成**（30ラウンド + 300件の結果データ）
+  - ✅ **Backend API実装**（4エンドポイント + Repository/UseCase）
+  - ✅ **Frontend実装**（6コンポーネント + 2ページ）
+  - ✅ **UI/UX改善**
+    - 絵文字削除 → BUY/SELLバッジ、テキスト表示
+    - 「乖離」→「予測誤差」（絶対値、色分け）
+    - クリック可能な行（ホバー効果、→アイコン）
+    - 損益表示削除（単元株数未実装のため）
 - **重要な設計決定**:
-  - コンポーネント配置ルール確立（プライベートも `_components/` に配置）
-  - 推奨履歴の可視化方針確定（折れ線グラフ + 詳細リスト）
-  - lightweight-charts v5 API移行（v4からの破壊的変更に対応）
-  - UIの簡素化方針（件数表示削除、タイトル簡略化）
-  - システム説明バナーによる価値提案の明示化
-- **今回の成果**: 銘柄詳細ページv1完成 🎉
-- **次回**: フェーズ3（過去のラウンド結果ページ、使い方ページ等の追加）
+  - コンポーネント化の徹底（`_components/`に6コンポーネント分離）
+  - 予測誤差の可視化方針（絶対値、3段階色分け）
+  - 絵文字を使わないプロフェッショナルなUI
+  - ページネーション実装（10件ずつ、前後2ページ表示）
+  - BUY/SELLバッジデザイン（背景色 + ボーダー）
+- **今回の成果**: 過去のラウンド結果ページv1完成 🎉
+- **次回**: フェーズ4（Aboutページ、404ページ、メインページの実績データ接続）

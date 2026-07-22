@@ -976,6 +976,146 @@ export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetR
 export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponse =
   GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses[keyof GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses];
 
+export type GetLatestResultsApiV1HistoryLatestGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Index Filter
+     *
+     * 指数フィルター
+     */
+    index_filter?: "all" | "nikkei225" | "topix";
+  };
+  url: "/api/v1/history/latest";
+};
+
+export type GetLatestResultsApiV1HistoryLatestGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetLatestResultsApiV1HistoryLatestGetError =
+  GetLatestResultsApiV1HistoryLatestGetErrors[keyof GetLatestResultsApiV1HistoryLatestGetErrors];
+
+export type GetLatestResultsApiV1HistoryLatestGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type GetPerformanceSummaryApiV1HistorySummaryGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Index Filter
+     *
+     * 指数フィルター
+     */
+    index_filter?: "all" | "nikkei225" | "topix";
+  };
+  url: "/api/v1/history/summary";
+};
+
+export type GetPerformanceSummaryApiV1HistorySummaryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetPerformanceSummaryApiV1HistorySummaryGetError =
+  GetPerformanceSummaryApiV1HistorySummaryGetErrors[keyof GetPerformanceSummaryApiV1HistorySummaryGetErrors];
+
+export type GetPerformanceSummaryApiV1HistorySummaryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type GetRoundHistoryApiV1HistoryGetData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Round Type
+     *
+     * ラウンドタイプ（未指定で全て）
+     */
+    round_type?: "BUY" | "SELL" | null;
+    /**
+     * Index Filter
+     *
+     * 指数フィルター
+     */
+    index_filter?: "all" | "nikkei225" | "topix";
+    /**
+     * Page
+     *
+     * ページ番号（1始まり）
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * 1ページあたりの件数
+     */
+    limit?: number;
+  };
+  url: "/api/v1/history";
+};
+
+export type GetRoundHistoryApiV1HistoryGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetRoundHistoryApiV1HistoryGetError =
+  GetRoundHistoryApiV1HistoryGetErrors[keyof GetRoundHistoryApiV1HistoryGetErrors];
+
+export type GetRoundHistoryApiV1HistoryGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
+export type GetRoundDetailApiV1HistoryRoundIdGetData = {
+  body?: never;
+  path: {
+    /**
+     * Round Id
+     */
+    round_id: string;
+  };
+  query?: never;
+  url: "/api/v1/history/{round_id}";
+};
+
+export type GetRoundDetailApiV1HistoryRoundIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetRoundDetailApiV1HistoryRoundIdGetError =
+  GetRoundDetailApiV1HistoryRoundIdGetErrors[keyof GetRoundDetailApiV1HistoryRoundIdGetErrors];
+
+export type GetRoundDetailApiV1HistoryRoundIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown;
+};
+
 export type RootGetData = {
   body?: never;
   path?: never;

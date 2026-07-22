@@ -47,11 +47,12 @@ def create_app() -> FastAPI:
         )
 
     # ルーター登録
-    from app.presentation.api.v1 import health, rounds, stocks
+    from app.presentation.api.v1 import health, history, rounds, stocks
 
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(rounds.router, prefix="/api/v1", tags=["rounds"])
     app.include_router(stocks.router, prefix="/api/v1", tags=["stocks"])
+    app.include_router(history.router, prefix="/api/v1", tags=["history"])
 
     @app.get("/")
     async def root() -> dict[str, str]:

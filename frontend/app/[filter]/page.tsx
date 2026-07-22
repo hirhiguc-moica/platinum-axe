@@ -7,6 +7,22 @@ import { RecommendationCard } from "@/app/_components/RecommendationCard";
 
 const API_URL = process.env.API_URL || "http://localhost:8000";
 
+// 直近のラウンド結果の型定義
+interface LatestRoundResult {
+  round_id: string;
+  start_date: string;
+  end_date: string;
+  avg_predicted_return: number;
+  avg_actual_return: number;
+  hit_rate: number;
+  total_recommendations: number;
+}
+
+interface GetLatestResultsResponse {
+  buy_latest: LatestRoundResult | null;
+  sell_latest: LatestRoundResult | null;
+}
+
 // 有効なフィルタ
 const VALID_FILTERS = ["all", "nikkei225", "topix"];
 
@@ -80,6 +96,23 @@ async function getRoundRecommendations(
   return res.json();
 }
 
+async function getLatestResults(
+  indexFilter: string
+): Promise<GetLatestResultsResponse> {
+  const res = await fetch(
+    `${API_URL}/api/v1/history/latest?index_filter=${indexFilter}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch latest results");
+  }
+
+  return res.json();
+}
+
 export default async function RecommendationPage({
   params,
 }: {
@@ -116,6 +149,9 @@ export default async function RecommendationPage({
   const sellRecommendationsData = await getRoundRecommendations(
     sellRound.round_id
   );
+
+  // 先週の実績取得
+  const latestResults = await getLatestResults(filter);
 
   // フィルタリング
   const filterRecommendations = (recommendations: any[]) => {
@@ -161,55 +197,99 @@ export default async function RecommendationPage({
       </div>
 
       {/* 先週の実績 */}
-      <section className="mb-8">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">📊 先週の実績</h2>
-            <a
-              href="/history"
-              className="text-sm text-accent hover:text-accent/80 underline"
-            >
-              過去の結果を見る →
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 買い推奨の実績 */}
-            <div className="space-y-3 bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-emerald-400">📈 買い推奨の実績</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">平均騰落率</span>
-                  <span className="text-2xl font-bold text-emerald-400 neon-text-sm">+3.2%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">的中率</span>
-                  <span className="text-lg font-bold text-foreground">4/5 <span className="text-emerald-400">(80%)</span></span>
-                </div>
-              </div>
+      {(latestResults.buy_latest || latestResults.sell_latest) && (
+        <section className="mb-8">
+          <div className="bg-card border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">📊 先週の実績</h2>
+              <a
+                href="/history"
+                className="text-sm text-accent hover:text-accent/80 underline"
+              >
+                過去の結果を見る →
+              </a>
             </div>
 
-            {/* 売り推奨の実績 */}
-            <div className="space-y-3 bg-red-950/20 border border-red-500/20 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-red-400">📉 売り推奨の実績</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">平均騰落率</span>
-                  <span className="text-2xl font-bold text-red-400 neon-text-sm">-2.8%</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 買い推奨の実績 */}
+              {latestResults.buy_latest && (
+                <div className="space-y-3 bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-emerald-400">
+                    買い推奨の実績
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        平均騰落率
+                      </span>
+                      <span className="text-2xl font-bold text-emerald-400 neon-text-sm">
+                        {latestResults.buy_latest.avg_actual_return >= 0
+                          ? "+"
+                          : ""}
+                        {latestResults.buy_latest.avg_actual_return.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        的中率
+                      </span>
+                      <span className="text-lg font-bold text-foreground">
+                        {(
+                          latestResults.buy_latest.hit_rate *
+                          latestResults.buy_latest.total_recommendations
+                        ).toFixed(0)}
+                        /{latestResults.buy_latest.total_recommendations}{" "}
+                        <span className="text-emerald-400">
+                          ({(latestResults.buy_latest.hit_rate * 100).toFixed(0)}
+                          %)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">的中率</span>
-                  <span className="text-lg font-bold text-foreground">3/5 <span className="text-red-400">(60%)</span></span>
+              )}
+
+              {/* 売り推奨の実績 */}
+              {latestResults.sell_latest && (
+                <div className="space-y-3 bg-red-950/20 border border-red-500/20 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-red-400">
+                    売り推奨の実績
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        平均騰落率
+                      </span>
+                      <span className="text-2xl font-bold text-red-400 neon-text-sm">
+                        {latestResults.sell_latest.avg_actual_return >= 0
+                          ? "+"
+                          : ""}
+                        {latestResults.sell_latest.avg_actual_return.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">
+                        的中率
+                      </span>
+                      <span className="text-lg font-bold text-foreground">
+                        {(
+                          latestResults.sell_latest.hit_rate *
+                          latestResults.sell_latest.total_recommendations
+                        ).toFixed(0)}
+                        /{latestResults.sell_latest.total_recommendations}{" "}
+                        <span className="text-red-400">
+                          ({(latestResults.sell_latest.hit_rate * 100).toFixed(0)}
+                          %)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-
-          <p className="text-xs text-muted-foreground mt-4">
-            ※ これはサンプルデータです。実際のデータは後日実装予定です。
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 買い推奨セクション */}
       <section className="mb-12">
