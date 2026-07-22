@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+:root {
+  /* VSCode風ダークモード専用 */
+  --background: hsl(217 19% 12%); /* #1e1e1e相当 */
+  --foreground: hsl(0 0% 80%); /* #cccccc相当 */
+  --card: hsl(220 13% 15%); /* #252526相当 */
+  --card-foreground: hsl(0 0% 100%);
+  --popover: hsl(217 19% 12%);
+  --popover-foreground: hsl(0 0% 100%);
+  --primary: hsl(217 19% 19%); /* #323233相当 */
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(217 19% 18%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(217 19% 18%);
+  --muted-foreground: hsl(0 0% 65%);
+  --accent: hsl(45 93% 47%); /* ゴールドアクセント */
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(217 19% 18%); /* #2d2d30相当 */
+  --input: hsl(217 19% 18%);
+  --ring: hsl(217 19% 27%);
+  --radius: 0.5rem;
+
+  /* カスタムカラー */
+  --buy: hsl(160 84% 39%); /* emerald-600 */
+  --sell: hsl(0 84% 60%); /* red-500 */
+  --gold: hsl(45 93% 47%); /* amber-500 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* グラデーション */
+.gradient-buy {
+  background: linear-gradient(135deg, rgb(16 185 129) 0%, rgb(5 150 105) 100%);
+}
+
+.gradient-sell {
+  background: linear-gradient(135deg, rgb(239 68 68) 0%, rgb(220 38 38) 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, rgb(245 158 11) 0%, rgb(217 119 6) 100%);
+}
+
+/* VSCode風のカードホバーエフェクト */
+.card-hover {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(245, 158, 11, 0.2);
+  border-color: var(--accent);
+}
+
+.card-hover:active {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 数字のモノスペースフォント */
+.font-mono-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ネオン効果 */
+.neon-text-green {
+  text-shadow:
+    0 0 10px rgba(16, 185, 129, 0.8),
+    0 0 20px rgba(16, 185, 129, 0.6),
+    0 0 30px rgba(16, 185, 129, 0.4);
+}
+
+.neon-text-red {
+  text-shadow:
+    0 0 10px rgba(239, 68, 68, 0.8),
+    0 0 20px rgba(239, 68, 68, 0.6),
+    0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+.neon-text-sm {
+  text-shadow:
+    0 0 5px currentColor,
+    0 0 10px currentColor;
+}
+
+.neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
+  50% {
+    box-shadow:
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 30px currentColor;
+  }
+}
