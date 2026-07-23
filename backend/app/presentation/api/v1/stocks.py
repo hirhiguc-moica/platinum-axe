@@ -8,15 +8,40 @@ from app.presentation.schemas.stock import (
     RecommendationHistoryResponse,
     StockDetailResponse,
     StockPriceHistoryResponse,
+    StockSearchResponse,
     TechnicalIndicatorResponse,
 )
 from app.usecase.stock_detail import GetStockDetailUseCase
 from app.usecase.stock_price_history import GetStockPriceHistoryUseCase
 from app.usecase.stock_recommendation_history import GetStockRecommendationHistoryUseCase
+from app.usecase.stock_search import SearchStocksUseCase
 from app.usecase.stock_technical_indicators import GetStockTechnicalIndicatorsUseCase
 from app.usecase.stock_technical_indicators_full import GetStockTechnicalIndicatorsFullUseCase
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
+
+
+@router.get("/search", response_model=StockSearchResponse)
+async def search_stocks(
+    q: str = Query(..., min_length=1, description="検索キーワード（銘柄コードまたは会社名）"),
+    limit: int = Query(10, ge=1, le=50, description="取得件数（デフォルト: 10、最大: 50）"),
+    db: AsyncSession = Depends(get_db),
+):
+    """銘柄検索
+
+    銘柄コードまたは会社名の部分一致検索を行います。
+
+    Args:
+        q: 検索キーワード（銘柄コードまたは会社名の一部）
+        limit: 取得件数（デフォルト: 10、最大: 50）
+
+    Returns:
+        検索結果リスト
+    """
+    usecase = SearchStocksUseCase(db)
+    stocks = await usecase.execute(query=q, limit=limit)
+
+    return {"stocks": stocks}
 
 
 @router.get("/{stock_code}", response_model=StockDetailResponse)

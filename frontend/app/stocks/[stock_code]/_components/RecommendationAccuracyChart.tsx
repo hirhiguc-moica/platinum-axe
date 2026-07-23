@@ -41,6 +41,16 @@ export function RecommendationAccuracyChart({
       (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
 
+    // start_dateでグループ化（重複除外）
+    // 同じ日付のBUY/SELLが複数ある場合、最初の1件のみ使用
+    const uniqueItemsMap = new Map<string, RecommendationHistoryItem>();
+    sortedItems.forEach((item) => {
+      if (!uniqueItemsMap.has(item.start_date)) {
+        uniqueItemsMap.set(item.start_date, item);
+      }
+    });
+    const uniqueItems = Array.from(uniqueItemsMap.values());
+
     // チャート作成
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -71,17 +81,17 @@ export function RecommendationAccuracyChart({
     chartRef.current = chart;
 
     // 予測騰落率データ
-    const predictedData = sortedItems
+    const predictedData = uniqueItems
       .filter((item) => item.predicted_return !== null)
-      .map((item, index) => ({
+      .map((item) => ({
         time: item.start_date as any, // YYYY-MM-DD形式の文字列
         value: (item.predicted_return! * 100), // パーセント表示
       }));
 
     // 実績騰落率データ（実績がある場合のみ）
-    const actualData = sortedItems
+    const actualData = uniqueItems
       .filter((item) => item.actual_return !== null)
-      .map((item, index) => ({
+      .map((item) => ({
         time: item.start_date as any, // YYYY-MM-DD形式の文字列
         value: (item.actual_return! * 100), // パーセント表示
       }));

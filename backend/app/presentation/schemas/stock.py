@@ -25,6 +25,26 @@ class LatestPriceSchema(BaseModel):
     volume: int | None = Field(None, description="出来高")
 
 
+class StockSearchItemSchema(BaseModel):
+    """銘柄検索結果アイテムスキーマ"""
+
+    stock_code: str = Field(..., description="銘柄コード")
+    company_name: str = Field(..., description="会社名")
+    sector_code: str | None = Field(None, description="業種コード")
+    sector_name: str | None = Field(None, description="業種名")
+    market_code: str | None = Field(None, description="市場コード")
+    market_name: str | None = Field(None, description="市場名")
+    market_abbreviation: str | None = Field(None, description="市場略称（PR/ST/GR）")
+    is_nikkei225: bool = Field(..., description="日経225構成銘柄")
+    is_topix: bool = Field(..., description="TOPIX構成銘柄")
+
+
+class StockSearchResponse(BaseModel):
+    """銘柄検索レスポンス"""
+
+    stocks: list[StockSearchItemSchema] = Field(..., description="検索結果")
+
+
 class StockDetailResponse(BaseModel):
     """銘柄詳細レスポンス"""
 
