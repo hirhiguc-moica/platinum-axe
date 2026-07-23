@@ -31,21 +31,13 @@ class StockPriceDaily(TimestampMixin, Base):
     adjusted_open: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後始値")
     adjusted_high: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後高値")
     adjusted_low: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後安値")
-    adjusted_close: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="調整後終値"
-    )
+    adjusted_close: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後終値")
     adjusted_volume: Mapped[int | None] = mapped_column(comment="調整後出来高")
-    adjustment_factor: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 6), comment="調整係数"
-    )
+    adjustment_factor: Mapped[Decimal | None] = mapped_column(Numeric(10, 6), comment="調整係数")
 
     # ストップ高/安フラグ
-    is_upper_limit: Mapped[bool] = mapped_column(
-        Boolean, default=False, comment="ストップ高フラグ"
-    )
-    is_lower_limit: Mapped[bool] = mapped_column(
-        Boolean, default=False, comment="ストップ安フラグ"
-    )
+    is_upper_limit: Mapped[bool] = mapped_column(Boolean, default=False, comment="ストップ高フラグ")
+    is_lower_limit: Mapped[bool] = mapped_column(Boolean, default=False, comment="ストップ安フラグ")
 
     # メタ情報
     fetched_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="API取得日時")
@@ -57,7 +49,4 @@ class StockPriceDaily(TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<StockPriceDaily(code={self.stock_code}, date={self.date}, "
-            f"close={self.close})>"
-        )
+        return f"<StockPriceDaily(code={self.stock_code}, date={self.date}, close={self.close})>"

@@ -17,10 +17,7 @@ interface PerformanceSummaryProps {
   };
 }
 
-export function PerformanceSummary({
-  buyPerformance,
-  sellPerformance,
-}: PerformanceSummaryProps) {
+export function PerformanceSummary({ buyPerformance, sellPerformance }: PerformanceSummaryProps) {
   const formatPercent = (value: number) => {
     const sign = value >= 0 ? "+" : "";
     return `${sign}${value.toFixed(2)}%`;
@@ -39,9 +36,7 @@ export function PerformanceSummary({
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">総ラウンド数</span>
-              <span className="font-mono font-semibold">
-                {buyPerformance.total_rounds}回
-              </span>
+              <span className="font-mono font-semibold">{buyPerformance.total_rounds}回</span>
             </div>
 
             <div className="flex justify-between items-center">
@@ -79,9 +74,7 @@ export function PerformanceSummary({
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">総ラウンド数</span>
-              <span className="font-mono font-semibold">
-                {sellPerformance.total_rounds}回
-              </span>
+              <span className="font-mono font-semibold">{sellPerformance.total_rounds}回</span>
             </div>
 
             <div className="flex justify-between items-center">

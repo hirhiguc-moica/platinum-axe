@@ -146,6 +146,7 @@ sequenceDiagram
 - **Data Fetching**: TanStack Query
 - **Charts**: TradingView Lightweight Charts v5.2.0
 - **API Client**: @hey-api/openapi-ts（OpenAPI自動生成）
+- **Linter/Formatter**: Biome 2.5+
 - **Package Manager**: pnpm
 
 ### Backend
@@ -154,6 +155,7 @@ sequenceDiagram
 - **ORM**: SQLAlchemy 2.0
 - **Migration**: Alembic
 - **Architecture**: Domain-Driven Design（4層構造）
+- **Linter/Formatter**: Ruff 0.8+
 - **Package Manager**: uv
 
 ### Database
@@ -394,6 +396,11 @@ uv run alembic revision --autogenerate -m "description"
 # マイグレーション実行
 uv run alembic upgrade head
 
+# Linter/Formatter（Ruff）
+uv run ruff check .              # Lintチェック
+uv run ruff check --fix .        # Lint自動修正
+uv run ruff format .             # フォーマット
+
 # テスト実行
 uv run pytest
 ```
@@ -412,12 +419,32 @@ pnpm dev
 # OpenAPI型生成（Backend起動後）
 pnpm openapi-ts
 
+# Linter/Formatter（Biome）
+pnpm lint                        # Lintチェック
+pnpm lint:fix                    # Lint自動修正
+pnpm format                      # フォーマットのみ
+pnpm typecheck                   # 型チェック
+pnpm check                       # Lint + 型チェック（commit前推奨）
+
 # ビルド
 pnpm build
-
-# Lintチェック
-pnpm lint
 ```
+
+### Container上からのコマンド実行
+
+DevContainer外（ホスト側）からコマンドを実行する場合：
+
+```bash
+# Backendコマンド（vscodeユーザーでログインシェル必須）
+docker exec -u vscode platinum-axe_devcontainer-app-1 bash -l -c "cd /workspace/backend && uv run ruff check --fix ."
+docker exec -u vscode platinum-axe_devcontainer-app-1 bash -l -c "cd /workspace/backend && uv run ruff format ."
+
+# Frontendコマンド（vscodeユーザーでログインシェル必須）
+docker exec -u vscode platinum-axe_devcontainer-app-1 bash -l -c "cd /workspace/frontend && pnpm lint:fix"
+docker exec -u vscode platinum-axe_devcontainer-app-1 bash -l -c "cd /workspace/frontend && pnpm check"
+```
+
+> **Note**: `bash -l` (ログインシェル) が必要です。これにより環境変数（PATH等）が正しく読み込まれます。
 
 ---
 

@@ -50,8 +50,10 @@ class GetStockRecommendationHistoryUseCase:
         rows = result.all()
 
         # 総件数取得
-        count_stmt = select(func.count()).select_from(RoundRecommendation).where(
-            RoundRecommendation.stock_code == stock_code
+        count_stmt = (
+            select(func.count())
+            .select_from(RoundRecommendation)
+            .where(RoundRecommendation.stock_code == stock_code)
         )
         count_result = await self.session.execute(count_stmt)
         total = count_result.scalar_one()
@@ -70,11 +72,17 @@ class GetStockRecommendationHistoryUseCase:
                 "confidence_score": float(rec.confidence_score) if rec.confidence_score else None,
                 # 実績データ（RoundResultが存在する場合のみ）
                 "actual_return": (
-                    float(result_data.actual_return) if result_data and result_data.actual_return else None
+                    float(result_data.actual_return)
+                    if result_data and result_data.actual_return
+                    else None
                 ),
                 "prediction_hit": result_data.prediction_hit if result_data else None,
-                "start_price": float(result_data.start_price) if result_data and result_data.start_price else None,
-                "end_price": float(result_data.end_price) if result_data and result_data.end_price else None,
+                "start_price": float(result_data.start_price)
+                if result_data and result_data.start_price
+                else None,
+                "end_price": float(result_data.end_price)
+                if result_data and result_data.end_price
+                else None,
             }
             items.append(item)
 

@@ -48,9 +48,7 @@ async def get_rounds(
     return GetRoundsResponse(rounds=output.rounds, total=output.total)
 
 
-@router.get(
-    "/rounds/{round_id}/recommendations", response_model=GetRoundRecommendationsResponse
-)
+@router.get("/rounds/{round_id}/recommendations", response_model=GetRoundRecommendationsResponse)
 async def get_round_recommendations(
     round_id: str,
     round_repository: RoundRepository = Depends(get_round_repository),

@@ -14,9 +14,7 @@ from app.infrastructure.repositories.round_result_repository import (
 class GetLatestRoundResultsUseCase:
     """直近のラウンド結果取得ユースケース"""
 
-    async def execute(
-        self, session: AsyncSession, index_filter: str = "all"
-    ) -> dict:
+    async def execute(self, session: AsyncSession, index_filter: str = "all") -> dict:
         """直近のBUY/SELLラウンド結果を取得
 
         Args:
@@ -38,9 +36,7 @@ class GetLatestRoundResultsUseCase:
 
         # BUYラウンドのパフォーマンス取得
         if buy_round:
-            buy_performance = await repo.get_round_performance(
-                buy_round.id, index_filter
-            )
+            buy_performance = await repo.get_round_performance(buy_round.id, index_filter)
             result["buy_latest"] = {
                 "round_id": buy_round.round_id,
                 "start_date": buy_round.start_date.isoformat(),
@@ -53,9 +49,7 @@ class GetLatestRoundResultsUseCase:
 
         # SELLラウンドのパフォーマンス取得
         if sell_round:
-            sell_performance = await repo.get_round_performance(
-                sell_round.id, index_filter
-            )
+            sell_performance = await repo.get_round_performance(sell_round.id, index_filter)
             result["sell_latest"] = {
                 "round_id": sell_round.round_id,
                 "start_date": sell_round.start_date.isoformat(),
@@ -144,9 +138,7 @@ class GetRoundHistoryUseCase:
 class GetOverallPerformanceUseCase:
     """全体パフォーマンス取得ユースケース"""
 
-    async def execute(
-        self, session: AsyncSession, index_filter: str = "all"
-    ) -> dict:
+    async def execute(self, session: AsyncSession, index_filter: str = "all") -> dict:
         """全体パフォーマンス統計を取得
 
         Args:
@@ -210,9 +202,7 @@ class GetRoundDetailWithResultsUseCase:
                 "stock_code": rec.stock_code,
                 "company_name": rec.stock.company_name if rec.stock else "",
                 "sector_name": (
-                    rec.stock.sector.sector_name
-                    if rec.stock and rec.stock.sector
-                    else ""
+                    rec.stock.sector.sector_name if rec.stock and rec.stock.sector else ""
                 ),
                 "predicted_return": float(rec.predicted_return or 0),
                 "confidence_score": float(rec.confidence_score or 0),

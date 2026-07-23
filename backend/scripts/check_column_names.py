@@ -35,9 +35,9 @@ print(f"スクリプトのテクニカル指標カラム数: {len(script_columns
 model_only = model_columns - script_columns
 script_only = script_columns - model_columns
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("不一致レポート")
-print(f"{'='*60}\n")
+print(f"{'=' * 60}\n")
 
 if model_only:
     print(f"❌ モデルにあるがスクリプトにない（{len(model_only)}個）:")
@@ -63,9 +63,9 @@ else:
     print(f"⚠️  合計 {len(model_only) + len(script_only)} 個の不一致があります")
 
 # 推測される対応関係を表示
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("推測される対応関係")
-print(f"{'='*60}\n")
+print(f"{'=' * 60}\n")
 
 # 類似カラム名を検出（末尾に数字がある/ない等）
 potential_matches = []

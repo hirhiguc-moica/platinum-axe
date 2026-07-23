@@ -736,24 +736,22 @@ export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetData = {
   url: "/api/v1/rounds/{round_id}/recommendations";
 };
 
-export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors =
-  {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-  };
+export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
 export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetError =
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors[keyof GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetErrors];
 
-export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: GetRoundRecommendationsResponse;
-  };
+export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: GetRoundRecommendationsResponse;
+};
 
 export type GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponse =
   GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses[keyof GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses];
@@ -835,87 +833,82 @@ export type GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses = {
 export type GetStockPriceHistoryApiV1StocksStockCodePricesGetResponse =
   GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses[keyof GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses];
 
-export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Stock Code
-       */
-      stock_code: string;
-    };
-    query?: {
-      /**
-       * Page
-       *
-       * ページ番号（1始まり）
-       */
-      page?: number;
-      /**
-       * Limit
-       *
-       * 1ページあたりの件数
-       */
-      limit?: number;
-    };
-    url: "/api/v1/stocks/{stock_code}/technical-indicators";
-  };
-
-export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors =
-  {
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Stock Code
      */
-    422: HttpValidationError;
+    stock_code: string;
   };
+  query?: {
+    /**
+     * Page
+     *
+     * ページ番号（1始まり）
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * 1ページあたりの件数
+     */
+    limit?: number;
+  };
+  url: "/api/v1/stocks/{stock_code}/technical-indicators";
+};
+
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
 export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetError =
   GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors[keyof GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors];
 
-export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: TechnicalIndicatorResponse;
-  };
+export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: TechnicalIndicatorResponse;
+};
 
 export type GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponse =
   GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses[keyof GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses];
 
-export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Stock Code
-       */
-      stock_code: string;
-    };
-    query?: {
-      /**
-       * Page
-       *
-       * ページ番号（1始まり）
-       */
-      page?: number;
-      /**
-       * Limit
-       *
-       * 1ページあたりの件数
-       */
-      limit?: number;
-    };
-    url: "/api/v1/stocks/{stock_code}/technical-indicators/full";
-  };
-
-export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors =
-  {
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Stock Code
      */
-    422: HttpValidationError;
+    stock_code: string;
   };
+  query?: {
+    /**
+     * Page
+     *
+     * ページ番号（1始まり）
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * 1ページあたりの件数
+     */
+    limit?: number;
+  };
+  url: "/api/v1/stocks/{stock_code}/technical-indicators/full";
+};
+
+export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
 export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetError =
   GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors[keyof GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors];
@@ -928,50 +921,47 @@ export type GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicato
     200: unknown;
   };
 
-export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData =
-  {
-    body?: never;
-    path: {
-      /**
-       * Stock Code
-       */
-      stock_code: string;
-    };
-    query?: {
-      /**
-       * Page
-       *
-       * ページ番号（1始まり）
-       */
-      page?: number;
-      /**
-       * Limit
-       *
-       * 1ページあたりの件数
-       */
-      limit?: number;
-    };
-    url: "/api/v1/stocks/{stock_code}/recommendations";
-  };
-
-export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors =
-  {
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData = {
+  body?: never;
+  path: {
     /**
-     * Validation Error
+     * Stock Code
      */
-    422: HttpValidationError;
+    stock_code: string;
   };
+  query?: {
+    /**
+     * Page
+     *
+     * ページ番号（1始まり）
+     */
+    page?: number;
+    /**
+     * Limit
+     *
+     * 1ページあたりの件数
+     */
+    limit?: number;
+  };
+  url: "/api/v1/stocks/{stock_code}/recommendations";
+};
+
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
 
 export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetError =
   GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors[keyof GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors];
 
-export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses =
-  {
-    /**
-     * Successful Response
-     */
-    200: RecommendationHistoryResponse;
-  };
+export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecommendationHistoryResponse;
+};
 
 export type GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponse =
   GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses[keyof GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses];

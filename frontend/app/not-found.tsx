@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "404 - ページが見つかりません | Platinum Axe",
@@ -16,9 +16,7 @@ export default function NotFoundPage() {
         </div>
 
         {/* タイトル */}
-        <h1 className="text-4xl font-bold mb-4 text-foreground">
-          404 - ページが見つかりません
-        </h1>
+        <h1 className="text-4xl font-bold mb-4 text-foreground">404 - ページが見つかりません</h1>
 
         {/* 説明文 */}
         <p className="text-lg text-muted-foreground mb-8">
@@ -39,22 +37,13 @@ export default function NotFoundPage() {
         <div className="mt-8 space-y-2">
           <p className="text-sm text-muted-foreground">または以下のページへ：</p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <Link
-              href="/all"
-              className="text-accent hover:text-accent/80 underline"
-            >
+            <Link href="/all" className="text-accent hover:text-accent/80 underline">
               総合ランキング
             </Link>
-            <Link
-              href="/history"
-              className="text-accent hover:text-accent/80 underline"
-            >
+            <Link href="/history" className="text-accent hover:text-accent/80 underline">
               過去の結果
             </Link>
-            <Link
-              href="/about"
-              className="text-accent hover:text-accent/80 underline"
-            >
+            <Link href="/about" className="text-accent hover:text-accent/80 underline">
               使い方
             </Link>
           </div>

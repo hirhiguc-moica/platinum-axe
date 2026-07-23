@@ -7,8 +7,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm lint && pnpm typecheck",
+    "format": "biome format --write .",
     "generate": "openapi-ts"
   },
   "dependencies": {
@@ -28,6 +31,7 @@
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
     "@hey-api/openapi-ts": "^0.90.0",
     "@tailwindcss/postcss": "4",
     "@tailwindcss/typography": "^0.5.10",

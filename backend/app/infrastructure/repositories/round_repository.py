@@ -26,12 +26,7 @@ class RoundRepository:
         Returns:
             ラウンドリスト
         """
-        stmt = (
-            select(Round)
-            .order_by(Round.start_date.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+        stmt = select(Round).order_by(Round.start_date.desc()).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 

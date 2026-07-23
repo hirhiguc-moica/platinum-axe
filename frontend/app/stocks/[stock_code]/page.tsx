@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { StockDataTabs } from "./_components/StockDataTabs";
+import { notFound } from "next/navigation";
 import { RecommendationTabs } from "./_components/RecommendationTabs";
+import { StockDataTabs } from "./_components/StockDataTabs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -27,12 +27,9 @@ async function getStockDetail(stockCode: string) {
 }
 
 async function getStockPrices(stockCode: string) {
-  const res = await fetch(
-    `${API_BASE_URL}/api/v1/stocks/${stockCode}/prices?limit=240`,
-    {
-      cache: "no-store",
-    }
-  );
+  const res = await fetch(`${API_BASE_URL}/api/v1/stocks/${stockCode}/prices?limit=240`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch stock prices: ${res.statusText}`);
@@ -57,12 +54,9 @@ async function getStockTechnicalIndicatorsFull(stockCode: string) {
 }
 
 async function getStockRecommendations(stockCode: string) {
-  const res = await fetch(
-    `${API_BASE_URL}/api/v1/stocks/${stockCode}/recommendations`,
-    {
-      cache: "no-store",
-    }
-  );
+  const res = await fetch(`${API_BASE_URL}/api/v1/stocks/${stockCode}/recommendations`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
@@ -75,13 +69,12 @@ export default async function StockDetailPage({ params }: StockDetailProps) {
   const { stock_code } = await params;
 
   // 並列データ取得
-  const [stockDetail, stockPrices, technicalIndicators, recommendations] =
-    await Promise.all([
-      getStockDetail(stock_code),
-      getStockPrices(stock_code),
-      getStockTechnicalIndicatorsFull(stock_code),
-      getStockRecommendations(stock_code),
-    ]);
+  const [stockDetail, stockPrices, technicalIndicators, recommendations] = await Promise.all([
+    getStockDetail(stock_code),
+    getStockPrices(stock_code),
+    getStockTechnicalIndicatorsFull(stock_code),
+    getStockRecommendations(stock_code),
+  ]);
 
   if (!stockDetail) {
     notFound();
@@ -98,9 +91,7 @@ export default async function StockDetailPage({ params }: StockDetailProps) {
           >
             ← 戻る
           </Link>
-          <h1 className="text-2xl font-bold text-[#cccccc] mb-1">
-            {stockDetail.company_name}
-          </h1>
+          <h1 className="text-2xl font-bold text-[#cccccc] mb-1">{stockDetail.company_name}</h1>
           <div className="flex items-center gap-3 text-xs text-[#858585]">
             <span className="font-mono text-sm">{stockDetail.stock_code}</span>
             {stockDetail.sector_name && <span>• {stockDetail.sector_name}</span>}
@@ -108,7 +99,10 @@ export default async function StockDetailPage({ params }: StockDetailProps) {
           </div>
 
           {/* 指数バッジ */}
-          {(stockDetail.is_nikkei225 || stockDetail.is_topix || stockDetail.is_topix_core30 || stockDetail.is_jpx400) && (
+          {(stockDetail.is_nikkei225 ||
+            stockDetail.is_topix ||
+            stockDetail.is_topix_core30 ||
+            stockDetail.is_jpx400) && (
             <div className="flex gap-2 mt-3">
               {stockDetail.is_nikkei225 && (
                 <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-medium rounded-full border border-blue-500/30">
@@ -184,10 +178,7 @@ export default async function StockDetailPage({ params }: StockDetailProps) {
 
         {/* タブ切り替え（チャート / 株価データ / テクニカル指標） */}
         <div className="mb-6">
-          <StockDataTabs
-            prices={stockPrices}
-            technicalIndicators={technicalIndicators}
-          />
+          <StockDataTabs prices={stockPrices} technicalIndicators={technicalIndicators} />
         </div>
 
         {/* 推奨履歴（タブ切り替え: チャート / 詳細） */}

@@ -18,9 +18,7 @@ router = APIRouter(prefix="/history", tags=["history"])
 
 @router.get("/latest")
 async def get_latest_results(
-    index_filter: Literal["all", "nikkei225", "topix"] = Query(
-        "all", description="指数フィルター"
-    ),
+    index_filter: Literal["all", "nikkei225", "topix"] = Query("all", description="指数フィルター"),
     db: AsyncSession = Depends(get_db),
 ):
     """直近のラウンド結果を取得（BUY/SELL）
@@ -39,9 +37,7 @@ async def get_latest_results(
 
 @router.get("/summary")
 async def get_performance_summary(
-    index_filter: Literal["all", "nikkei225", "topix"] = Query(
-        "all", description="指数フィルター"
-    ),
+    index_filter: Literal["all", "nikkei225", "topix"] = Query("all", description="指数フィルター"),
     db: AsyncSession = Depends(get_db),
 ):
     """全体のパフォーマンスサマリーを取得
@@ -63,9 +59,7 @@ async def get_round_history(
     round_type: Literal["BUY", "SELL"] | None = Query(
         None, description="ラウンドタイプ（未指定で全て）"
     ),
-    index_filter: Literal["all", "nikkei225", "topix"] = Query(
-        "all", description="指数フィルター"
-    ),
+    index_filter: Literal["all", "nikkei225", "topix"] = Query("all", description="指数フィルター"),
     page: int = Query(1, ge=1, description="ページ番号（1始まり）"),
     limit: int = Query(10, ge=1, le=100, description="1ページあたりの件数"),
     db: AsyncSession = Depends(get_db),

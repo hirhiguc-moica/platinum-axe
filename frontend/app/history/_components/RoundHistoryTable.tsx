@@ -21,9 +21,7 @@ interface RoundHistoryTableProps {
 export function RoundHistoryTable({ rounds }: RoundHistoryTableProps) {
   if (rounds.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        該当するラウンドがありません
-      </div>
+      <div className="text-center py-12 text-muted-foreground">該当するラウンドがありません</div>
     );
   }
 

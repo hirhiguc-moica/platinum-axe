@@ -54,10 +54,6 @@ class GetRoundRecommendationsUseCase:
             return None
 
         # 2. Round.id（UUID）でRoundRecommendationを検索
-        recommendations = await self.recommendation_repository.find_by_round_uuid(
-            round_entity.id
-        )
+        recommendations = await self.recommendation_repository.find_by_round_uuid(round_entity.id)
 
-        return GetRoundRecommendationsOutput(
-            round=round_entity, recommendations=recommendations
-        )
+        return GetRoundRecommendationsOutput(round=round_entity, recommendations=recommendations)

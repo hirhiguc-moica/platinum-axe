@@ -17,9 +17,8 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.models import StockMaster, StockPriceDaily, TechnicalIndicator
+from app.domain.models import StockPriceDaily, TechnicalIndicator
 from app.infrastructure.database import AsyncSessionLocal
 
 
@@ -76,15 +75,17 @@ def generate_realistic_ohlc(
         # 売買代金
         turnover = volume * close
 
-        data.append({
-            "date": dt,
-            "open": round(open_price, 2),
-            "high": round(high_price, 2),
-            "low": round(low_price, 2),
-            "close": round(close, 2),
-            "volume": volume,
-            "turnover_value": round(turnover, 2),
-        })
+        data.append(
+            {
+                "date": dt,
+                "open": round(open_price, 2),
+                "high": round(high_price, 2),
+                "low": round(low_price, 2),
+                "close": round(close, 2),
+                "volume": volume,
+                "turnover_value": round(turnover, 2),
+            }
+        )
 
     df = pd.DataFrame(data)
 
@@ -134,8 +135,7 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     result["ema_200"] = close.ewm(span=200, adjust=False).mean()
 
     result["wma_20"] = close.rolling(20).apply(
-        lambda x: (x * np.arange(1, len(x) + 1)).sum() / np.arange(1, len(x) + 1).sum(),
-        raw=True
+        lambda x: (x * np.arange(1, len(x) + 1)).sum() / np.arange(1, len(x) + 1).sum(), raw=True
     )
 
     # ==========================================
@@ -156,10 +156,18 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     result["ma_75_slope_10d"] = result["ma_75"].pct_change(10)
 
     # GC/DCからの経過日数（簡易版: クロス検出）
-    gc_5_25 = (result["ma_5"] > result["ma_25"]) & (result["ma_5"].shift(1) <= result["ma_25"].shift(1))
-    dc_5_25 = (result["ma_5"] < result["ma_25"]) & (result["ma_5"].shift(1) >= result["ma_25"].shift(1))
-    gc_25_75 = (result["ma_25"] > result["ma_75"]) & (result["ma_25"].shift(1) <= result["ma_75"].shift(1))
-    dc_25_75 = (result["ma_25"] < result["ma_75"]) & (result["ma_25"].shift(1) >= result["ma_75"].shift(1))
+    gc_5_25 = (result["ma_5"] > result["ma_25"]) & (
+        result["ma_5"].shift(1) <= result["ma_25"].shift(1)
+    )
+    dc_5_25 = (result["ma_5"] < result["ma_25"]) & (
+        result["ma_5"].shift(1) >= result["ma_25"].shift(1)
+    )
+    gc_25_75 = (result["ma_25"] > result["ma_75"]) & (
+        result["ma_25"].shift(1) <= result["ma_75"].shift(1)
+    )
+    dc_25_75 = (result["ma_25"] < result["ma_75"]) & (
+        result["ma_25"].shift(1) >= result["ma_75"].shift(1)
+    )
 
     result["days_since_gc_5_25"] = None
     result["days_since_dc_5_25"] = None
@@ -168,14 +176,14 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # パーフェクトオーダー
     result["is_perfect_order_bullish"] = (
-        (result["ma_5"] > result["ma_25"]) &
-        (result["ma_25"] > result["ma_75"]) &
-        (result["ma_75"] > result["ma_200"])
+        (result["ma_5"] > result["ma_25"])
+        & (result["ma_25"] > result["ma_75"])
+        & (result["ma_75"] > result["ma_200"])
     ).astype(int)
     result["is_perfect_order_bearish"] = (
-        (result["ma_5"] < result["ma_25"]) &
-        (result["ma_25"] < result["ma_75"]) &
-        (result["ma_75"] < result["ma_200"])
+        (result["ma_5"] < result["ma_25"])
+        & (result["ma_25"] < result["ma_75"])
+        & (result["ma_75"] < result["ma_200"])
     ).astype(int)
 
     # ==========================================
@@ -250,11 +258,9 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     plus_dm = high_diff.where((high_diff > low_diff) & (high_diff > 0), 0)
     minus_dm = low_diff.where((low_diff > high_diff) & (low_diff > 0), 0)
 
-    tr = pd.concat([
-        high - low,
-        (high - close.shift()).abs(),
-        (low - close.shift()).abs()
-    ], axis=1).max(axis=1)
+    tr = pd.concat(
+        [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
+    ).max(axis=1)
 
     atr_14 = tr.rolling(14).mean()
 
@@ -269,7 +275,9 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     # Parabolic SAR (簡易版: EMAで代用)
     result["parabolic_sar"] = close.ewm(span=20, adjust=False).mean()
     # SAR方向（LONG/SHORT）
-    result["sar_direction"] = (close > result["parabolic_sar"]).apply(lambda x: "LONG" if x else "SHORT")
+    result["sar_direction"] = (close > result["parabolic_sar"]).apply(
+        lambda x: "LONG" if x else "SHORT"
+    )
 
     # 一目均衡表
     high_9_ichi = high.rolling(9).max()
@@ -311,8 +319,12 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     result["bollinger_upper_2sigma"] = bb_ma + 2 * bb_std
     result["bollinger_middle"] = bb_ma
     result["bollinger_lower_2sigma"] = bb_ma - 2 * bb_std
-    result["bollinger_width"] = (result["bollinger_upper_2sigma"] - result["bollinger_lower_2sigma"]) / result["bollinger_middle"]
-    result["bollinger_position"] = (close - result["bollinger_lower_2sigma"]) / (result["bollinger_upper_2sigma"] - result["bollinger_lower_2sigma"])
+    result["bollinger_width"] = (
+        result["bollinger_upper_2sigma"] - result["bollinger_lower_2sigma"]
+    ) / result["bollinger_middle"]
+    result["bollinger_position"] = (close - result["bollinger_lower_2sigma"]) / (
+        result["bollinger_upper_2sigma"] - result["bollinger_lower_2sigma"]
+    )
 
     # ATR
     result["atr_14"] = atr_14
@@ -385,8 +397,12 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     result["is_new_low_52w"] = (close == result["low_52w"]).astype(int)
 
     # レンジ内の位置
-    result["price_position_20d"] = (close - result["low_20d"]) / (result["high_20d"] - result["low_20d"])
-    result["price_position_52w"] = (close - result["low_52w"]) / (result["high_52w"] - result["low_52w"])
+    result["price_position_20d"] = (close - result["low_20d"]) / (
+        result["high_20d"] - result["low_20d"]
+    )
+    result["price_position_52w"] = (close - result["low_52w"]) / (
+        result["high_52w"] - result["low_52w"]
+    )
 
     # ==========================================
     # 9. ローソク足パターン（10種）
@@ -406,30 +422,22 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # Hammer（ハンマー）
     result["is_hammer"] = (
-        (lower_shadow > 2 * body_abs) &
-        (upper_shadow < body_abs) &
-        (body > 0)  # 陽線
+        (lower_shadow > 2 * body_abs) & (upper_shadow < body_abs) & (body > 0)  # 陽線
     ).astype(int)
 
     # Hanging Man（首吊り線）
     result["is_hanging_man"] = (
-        (lower_shadow > 2 * body_abs) &
-        (upper_shadow < body_abs) &
-        (body < 0)  # 陰線
+        (lower_shadow > 2 * body_abs) & (upper_shadow < body_abs) & (body < 0)  # 陰線
     ).astype(int)
 
     # Inverted Hammer（逆ハンマー）
     result["is_inverted_hammer"] = (
-        (upper_shadow > 2 * body_abs) &
-        (lower_shadow < body_abs) &
-        (body > 0)  # 陽線
+        (upper_shadow > 2 * body_abs) & (lower_shadow < body_abs) & (body > 0)  # 陽線
     ).astype(int)
 
     # Shooting Star（流れ星）
     result["is_shooting_star"] = (
-        (upper_shadow > 2 * body_abs) &
-        (lower_shadow < body_abs) &
-        (body < 0)  # 陰線
+        (upper_shadow > 2 * body_abs) & (lower_shadow < body_abs) & (body < 0)  # 陰線
     ).astype(int)
 
     # Consecutive up/down days
@@ -437,7 +445,9 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     result["consecutive_up_days"] = is_up.groupby((is_up != is_up.shift()).cumsum()).cumsum()
 
     is_down = (close < close.shift(1)).astype(int)
-    result["consecutive_down_days"] = is_down.groupby((is_down != is_down.shift()).cumsum()).cumsum()
+    result["consecutive_down_days"] = is_down.groupby(
+        (is_down != is_down.shift()).cumsum()
+    ).cumsum()
 
     # ==========================================
     # 10. その他（5種）
@@ -448,11 +458,9 @@ def calculate_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # Ultimate Oscillator (簡易版)
     bp = close - pd.concat([low, close.shift()], axis=1).min(axis=1)
-    tr_uo = pd.concat([
-        high - low,
-        (high - close.shift()).abs(),
-        (low - close.shift()).abs()
-    ], axis=1).max(axis=1)
+    tr_uo = pd.concat(
+        [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
+    ).max(axis=1)
 
     avg7 = bp.rolling(7).sum() / tr_uo.rolling(7).sum()
     avg14 = bp.rolling(14).sum() / tr_uo.rolling(14).sum()
@@ -467,10 +475,10 @@ async def seed_stock_prices():
 
     stock_code = "7203"  # トヨタ自動車
 
-    print(f"\n{'='*60}")
-    print(f"株価モックデータ生成開始")
+    print(f"\n{'=' * 60}")
+    print("株価モックデータ生成開始")
     print(f"銘柄: {stock_code} (トヨタ自動車)")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # 1. 株価データ生成
     print("⏳ 株価データ生成中...")
@@ -480,7 +488,7 @@ async def seed_stock_prices():
     # 2. テクニカル指標計算
     print("\n⏳ テクニカル指標計算中（125項目）...")
     df_technical = calculate_technical_indicators(df_prices)
-    print(f"✅ テクニカル指標を計算しました")
+    print("✅ テクニカル指標を計算しました")
 
     # 3. DBに保存
     async with AsyncSessionLocal() as session:
@@ -488,9 +496,15 @@ async def seed_stock_prices():
         await session.execute(
             select(StockPriceDaily).where(StockPriceDaily.stock_code == stock_code)
         )
-        existing_prices = (await session.execute(
-            select(StockPriceDaily).where(StockPriceDaily.stock_code == stock_code)
-        )).scalars().all()
+        existing_prices = (
+            (
+                await session.execute(
+                    select(StockPriceDaily).where(StockPriceDaily.stock_code == stock_code)
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         for price in existing_prices:
             await session.delete(price)
@@ -498,18 +512,24 @@ async def seed_stock_prices():
         await session.execute(
             select(TechnicalIndicator).where(TechnicalIndicator.stock_code == stock_code)
         )
-        existing_indicators = (await session.execute(
-            select(TechnicalIndicator).where(TechnicalIndicator.stock_code == stock_code)
-        )).scalars().all()
+        existing_indicators = (
+            (
+                await session.execute(
+                    select(TechnicalIndicator).where(TechnicalIndicator.stock_code == stock_code)
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         for indicator in existing_indicators:
             await session.delete(indicator)
 
         await session.commit()
-        print(f"\n⏳ 既存データを削除しました")
+        print("\n⏳ 既存データを削除しました")
 
         # 株価データ保存
-        print(f"⏳ 株価データをDBに保存中...")
+        print("⏳ 株価データをDBに保存中...")
         fetched_at = datetime.now()
 
         for _, row in df_prices.iterrows():
@@ -538,7 +558,7 @@ async def seed_stock_prices():
         print(f"✅ 株価データをDBに保存しました（{len(df_prices)}件）")
 
         # テクニカル指標保存
-        print(f"\n⏳ テクニカル指標をDBに保存中...")
+        print("\n⏳ テクニカル指標をDBに保存中...")
 
         saved_count = 0
         error_count = 0
@@ -603,9 +623,9 @@ async def seed_stock_prices():
             await session.rollback()
             raise
 
-    print(f"\n{'='*60}")
-    print(f"✅ モックデータ生成完了！")
-    print(f"{'='*60}\n")
+    print(f"\n{'=' * 60}")
+    print("✅ モックデータ生成完了！")
+    print(f"{'=' * 60}\n")
 
     # サマリー表示
     print("📊 データサマリー:")
@@ -614,11 +634,13 @@ async def seed_stock_prices():
     print(f"  営業日数: {len(df_prices)}日")
     print(f"  株価データ: {len(df_prices)}件")
     print(f"  テクニカル指標: {len(df_technical)}件 × 125項目")
-    print(f"\n  株価範囲:")
+    print("\n  株価範囲:")
     print(f"    最高値: ¥{df_prices['high'].max():,.2f}")
     print(f"    最安値: ¥{df_prices['low'].min():,.2f}")
     print(f"    最新終値: ¥{df_prices['close'].iloc[-1]:,.2f}")
-    print(f"    期間騰落率: {((df_prices['close'].iloc[-1] / df_prices['close'].iloc[0]) - 1) * 100:+.2f}%")
+    print(
+        f"    期間騰落率: {((df_prices['close'].iloc[-1] / df_prices['close'].iloc[0]) - 1) * 100:+.2f}%"
+    )
 
 
 if __name__ == "__main__":

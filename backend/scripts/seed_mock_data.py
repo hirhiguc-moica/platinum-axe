@@ -294,7 +294,7 @@ async def seed_data():
 
         print("✅ モックデータ投入完了")
         print(f"   - 銘柄マスタ: {len(stock_master_data)}件")
-        print(f"   - ラウンド: 2件（BUY/SELL）")
+        print("   - ラウンド: 2件（BUY/SELL）")
         print(f"   - 推奨銘柄: {len(buy_recommendations + sell_recommendations)}件")
 
     await engine.dispose()

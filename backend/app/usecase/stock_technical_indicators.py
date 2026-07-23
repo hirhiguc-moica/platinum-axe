@@ -59,11 +59,13 @@ class GetStockTechnicalIndicatorsUseCase:
                 "macd_signal": float(ind.macd_signal) if ind.macd_signal else None,
                 "macd_histogram": float(ind.macd_histogram) if ind.macd_histogram else None,
                 # ボラティリティ
-                "bollinger_upper_2sigma": float(ind.bollinger_upper_2sigma) if ind.bollinger_upper_2sigma else None,
-                "bollinger_middle": float(ind.bollinger_middle)
-                if ind.bollinger_middle
+                "bollinger_upper_2sigma": float(ind.bollinger_upper_2sigma)
+                if ind.bollinger_upper_2sigma
                 else None,
-                "bollinger_lower_2sigma": float(ind.bollinger_lower_2sigma) if ind.bollinger_lower_2sigma else None,
+                "bollinger_middle": float(ind.bollinger_middle) if ind.bollinger_middle else None,
+                "bollinger_lower_2sigma": float(ind.bollinger_lower_2sigma)
+                if ind.bollinger_lower_2sigma
+                else None,
                 "atr_14": float(ind.atr_14) if ind.atr_14 else None,
                 # 出来高
                 "volume_ma_20": float(ind.volume_ma_20) if ind.volume_ma_20 else None,

@@ -61,17 +61,12 @@ export function StockDataTabs({ prices, technicalIndicators }: StockDataTabsProp
       <TabsContent value="chart" className="mt-4">
         <div className="bg-[#252526] border border-[#3e3e42] rounded-lg p-4">
           <div className="mb-4">
-            <h2 className="text-sm font-semibold text-[#cccccc]">
-              株価チャート
-            </h2>
+            <h2 className="text-sm font-semibold text-[#cccccc]">株価チャート</h2>
             <p className="text-xs text-[#858585] mt-1">
               ローソク足 + 移動平均線（MA5/MA25/MA75）+ 出来高
             </p>
           </div>
-          <StockChart
-            prices={prices.items}
-            technicalIndicators={technicalIndicators.items}
-          />
+          <StockChart prices={prices.items} technicalIndicators={technicalIndicators.items} />
         </div>
       </TabsContent>
 
@@ -79,12 +74,8 @@ export function StockDataTabs({ prices, technicalIndicators }: StockDataTabsProp
       <TabsContent value="prices" className="mt-4">
         <div className="bg-[#252526] border border-[#3e3e42] rounded-lg">
           <div className="p-4 border-b border-[#3e3e42]">
-            <h2 className="text-sm font-semibold text-[#cccccc]">
-              株価データ
-            </h2>
-            <p className="text-xs text-[#858585] mt-1">
-              時系列順（新しい順）
-            </p>
+            <h2 className="text-sm font-semibold text-[#cccccc]">株価データ</h2>
+            <p className="text-xs text-[#858585] mt-1">時系列順（新しい順）</p>
           </div>
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <table className="w-full text-xs">
@@ -152,9 +143,7 @@ export function StockDataTabs({ prices, technicalIndicators }: StockDataTabsProp
       <TabsContent value="technical" className="mt-4">
         <div className="bg-[#252526] border border-[#3e3e42] rounded-lg">
           <div className="p-4 border-b border-[#3e3e42]">
-            <h2 className="text-sm font-semibold text-[#cccccc]">
-              テクニカル指標
-            </h2>
+            <h2 className="text-sm font-semibold text-[#cccccc]">テクニカル指標</h2>
             <p className="text-xs text-[#858585] mt-1">
               時系列順（新しい順）• 主要16指標 • 横スクロール可能
             </p>

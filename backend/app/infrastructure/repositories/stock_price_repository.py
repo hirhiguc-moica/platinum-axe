@@ -1,7 +1,7 @@
 """株価データリポジトリ"""
 
+from collections.abc import Sequence
 from datetime import date
-from typing import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,8 +50,10 @@ class StockPriceRepository:
         Returns:
             件数
         """
-        stmt = select(func.count()).select_from(StockPriceDaily).where(
-            StockPriceDaily.stock_code == stock_code
+        stmt = (
+            select(func.count())
+            .select_from(StockPriceDaily)
+            .where(StockPriceDaily.stock_code == stock_code)
         )
         result = await self.session.execute(stmt)
         return result.scalar_one()

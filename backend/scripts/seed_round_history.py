@@ -107,10 +107,14 @@ def generate_round_data(
         # 期間中の最高値・最安値（start/endの±5%程度）
         price_range = float(start_price) * 0.05
         highest_price = Decimal(
-            str(round(max(float(start_price), float(end_price)) + random.uniform(0, price_range), 2))
+            str(
+                round(max(float(start_price), float(end_price)) + random.uniform(0, price_range), 2)
+            )
         )
         lowest_price = Decimal(
-            str(round(min(float(start_price), float(end_price)) - random.uniform(0, price_range), 2))
+            str(
+                round(min(float(start_price), float(end_price)) - random.uniform(0, price_range), 2)
+            )
         )
 
         # 損益計算（100株投資と仮定）

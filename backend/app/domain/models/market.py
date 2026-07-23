@@ -30,7 +30,9 @@ class Market(TimestampMixin, Base):
     )
     market_name: Mapped[str] = mapped_column(String(100), nullable=False, comment="市場名")
     market_short_name: Mapped[str] = mapped_column(String(50), nullable=False, comment="短縮名")
-    market_abbreviation: Mapped[str] = mapped_column(String(10), nullable=False, comment="略号（PR/ST/GR等）")
+    market_abbreviation: Mapped[str] = mapped_column(
+        String(10), nullable=False, comment="略号（PR/ST/GR等）"
+    )
     market_category: Mapped[str] = mapped_column(
         String(50), nullable=False, index=True, comment="カテゴリ（PRIME/STANDARD/GROWTH）"
     )
