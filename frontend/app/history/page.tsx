@@ -3,6 +3,7 @@ import { TypeFilterTabs } from "./_components/TypeFilterTabs";
 import { IndexFilterTabs } from "./_components/IndexFilterTabs";
 import { RoundHistoryTable } from "./_components/RoundHistoryTable";
 import { Pagination } from "./_components/Pagination";
+import { StockSearch } from "@/app/_components/StockSearch";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -75,6 +76,11 @@ export default async function HistoryPage({
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto space-y-6">
+        {/* SP用検索ボックス */}
+        <div className="block md:hidden">
+          <StockSearch />
+        </div>
+
         {/* ヘッダー */}
         <div>
           <h1 className="text-4xl font-bold mb-2 bg-gradient-gold bg-clip-text text-transparent">

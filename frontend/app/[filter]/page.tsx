@@ -4,6 +4,7 @@ import type {
   GetRoundRecommendationsResponse,
 } from "@/generated/types.gen";
 import { RecommendationCard } from "@/app/_components/RecommendationCard";
+import { StockSearch } from "@/app/_components/StockSearch";
 
 const API_URL = process.env.API_URL || "http://localhost:8000";
 
@@ -172,6 +173,11 @@ export default async function RecommendationPage({
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* SP用検索ボックス */}
+      <div className="block md:hidden mb-6">
+        <StockSearch />
+      </div>
+
       {/* サイト説明 */}
       <div className="mb-6">
         <div className="bg-card/50 border border-border rounded-lg p-4 text-sm">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { StockSearch } from "./StockSearch";
 
 export function Header() {
   const pathname = usePathname();
@@ -39,17 +40,40 @@ export function Header() {
 
       {/* メインヘッダー（sticky） */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 flex h-14 items-center">
-          <div className="mr-4 flex">
-            <Link href="/all" className="mr-6 flex items-center space-x-2">
-              <span className="text-xl">🪓</span>
-              <span className="hidden font-bold sm:inline-block">
-                Platinum Axe
-              </span>
-            </Link>
+        <div className="container mx-auto px-4 flex h-14 items-center justify-between gap-4">
+          {/* 左側: ロゴ + ナビゲーション */}
+          <div className="flex items-center gap-4">
+            <div className="flex">
+              <Link href="/all" className="mr-6 flex items-center space-x-2">
+                <span className="text-xl">🪓</span>
+                <span className="hidden font-bold sm:inline-block">
+                  Platinum Axe
+                </span>
+              </Link>
+            </div>
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`transition-colors hover:text-foreground/80 ${
+                    isActive(item.href) ? "text-foreground" : "text-foreground/60"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
           </div>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navItems.map((item) => (
+
+          {/* 右側: 検索ボックス（PC用） */}
+          <div className="hidden md:flex">
+            <StockSearch />
+          </div>
+
+          {/* SP用: ハンバーガーメニュー（将来的に実装） */}
+          <nav className="flex md:hidden items-center space-x-4 text-sm font-medium">
+            {navItems.slice(0, 2).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
