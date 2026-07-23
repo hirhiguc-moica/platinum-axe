@@ -97,7 +97,7 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ---
 
-## 現在の状態（2026-07-23 午前）
+## 現在の状態（2026-07-23 深夜）
 
 ### 環境
 
@@ -107,6 +107,12 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 - ✅ Backend起動中（http://localhost:8000）
 - ✅ Frontend起動中（http://localhost:3000）
 - ✅ FE⇄BE API疎通確認済み
+
+### コード品質ツール
+
+- ✅ **Frontend**: Biome 2.5.5導入済み（46ファイルフォーマット完了）
+- ✅ **Backend**: Ruff 0.15.22動作確認済み（22ファイルフォーマット完了）
+- ✅ README.md更新（Linter/Formatterコマンド、Container上実行方法記載）
 
 ### データベース
 
@@ -161,6 +167,39 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 - レスポンシブ対応（PC/SP）
 - 銘柄検索機能（オートコンプリート、Debounce処理、PC: Header / SP: ページ本文）
 
+### ディレクトリ構成
+
+**✅ フェーズ5完了: ローカル専用スクリプトと本番バッチジョブを明確に分離**
+
+```
+backend/
+├── scripts/
+│   ├── check_column_names.py       # DB確認ツール
+│   └── seeds/                      # ローカル専用シードデータ
+│       ├── seed_mock_data.py
+│       ├── seed_sectors.py
+│       ├── seed_markets.py
+│       ├── seed_stock_prices.py
+│       ├── seed_round_history.py
+│       └── temp/                   # 一時的なスクリプト
+│           ├── clean_alembic.py
+│           └── reset_db.py
+│
+└── jobs/                           # GCP Cloud Run Jobsで実行
+    ├── collectors/                 # データ収集（J-Quants API）
+    │   └── .gitkeep
+    ├── preprocessors/              # 前処理・指標計算
+    │   └── .gitkeep
+    └── predictors/                 # 推論
+        └── .gitkeep
+
+ml/                                 # 機械学習開発
+├── notebooks/                      # Jupyter Notebook（探索的分析）
+├── training/                       # モデル学習パイプライン
+└── models/                         # 学習済みモデル保存先
+    └── .gitkeep
+```
+
 ### ブランチ
 
 `main`
@@ -172,25 +211,307 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 **✅ フェーズ2完了: 銘柄詳細ページv1完成**
 **✅ フェーズ3完了: 過去のラウンド結果ページv1完成**
 **✅ フェーズ4完了: 残りのページ追加完了** 🎉
+**✅ Linter/Formatter導入完了（Biome + Ruff）**
+**✅ フェーズ5完了: ディレクトリ構成リファクタリング完了**
+**✅ フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化完了** 🎉
 
-### 🎯 フェーズ5: 実データ連携拡充（現在はモックデータ）
+### 🎯 フェーズ6: J-Quants API連携 + データ蓄積バッチ（進行中）
 
-1. 複数銘柄のモックデータ追加（推奨履歴を充実させる）
-2. 銘柄マスタの拡充（現在10銘柄 → 100銘柄程度）
-3. 株価データの拡充（現在トヨタのみ → 全銘柄）
+#### ✅ 6-1. J-Quants API仕様調査（完了）
 
-### フェーズ6: J-Quants API連携 + データ蓄積バッチ
+**成果物**:
+- ✅ `docs/batch/jquants-api.md` 作成完了
+  - Standardプラン全17種のAPI詳細
+  - APIとDBテーブルの対応表
+  - レート制限、認証方法、バッチ処理設計
+- ✅ `docs/database/overview.md` 作成完了
+  - Layer構造の説明
+  - APIとDBテーブルの対応表（更新頻度・更新時刻・更新ジョブ列付き）
+  - 実装状況の可視化
+- ✅ `docs/database/schemas/` 作成完了（8テーブル個別ドキュメント化）
+  - markets.md, sectors.md, stock_master.md
+  - stock_prices_daily.md, technical_indicators.md
+  - rounds.md, round_recommendations.md, round_results.md
+  - 各テーブルにソースコードへのリンク追加
 
-- J-Quants APIクライアント実装
-- データ収集バッチ（日次）
-- テクニカル指標計算バッチ
-- 週次ラウンド結果検証バッチ
+**アカウント登録**: 開発者が実施（Standardプラン：¥3,300/月）
+
+---
+
+#### 🔄 6-2. 銘柄マスタ取得（次の作業）
+
+**前提条件**:
+- ❌ J-Quants API アカウント登録（開発者が実施）
+- ❌ APIキー取得（開発者から提供予定）
+
+**環境変数設定**:
+
+`backend/.env` に追加：
+```bash
+# J-Quants API
+JQUANTS_API_KEY=your_api_key_here  # 開発者から提供されるAPIキー
+```
+
+`backend/.env.example` を更新：
+```bash
+# J-Quants API
+JQUANTS_API_KEY=  # J-Quants API Standardプランのキー
+```
+
+**実装計画**:
+
+**Step 1: APIクライアント実装**
+
+`backend/jobs/collectors/jquants_client.py` を新規作成：
+
+```python
+"""J-Quants API V2クライアント"""
+import os
+from typing import Optional
+import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class JQuantsClient:
+    """J-Quants API V2クライアント"""
+
+    BASE_URL = "https://api.jquants.com/v2"
+
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or os.getenv("JQUANTS_API_KEY")
+        if not self.api_key:
+            raise ValueError("JQUANTS_API_KEY is required")
+
+        self.client = httpx.Client(
+            base_url=self.BASE_URL,
+            headers={
+                "Authorization": f"Bearer {self.api_key}"
+            },
+            timeout=30.0
+        )
+
+    def get_equities_master(self) -> dict:
+        """銘柄マスタ取得
+
+        エンドポイント: GET /v2/equities/master
+        API仕様: docs/batch/jquants-api.md 参照
+        DBテーブル: docs/database/schemas/stock_master.md 参照
+
+        Returns:
+            dict: 銘柄マスタデータ（JSON）
+        """
+        response = self.client.get("/equities/master")
+        response.raise_for_status()
+        return response.json()
+```
+
+**Step 2: データ取得・保存スクリプト実装**
+
+`backend/jobs/collectors/fetch_stock_master.py` を新規作成：
+
+```python
+"""銘柄マスタ取得スクリプト"""
+from jquants_client import JQuantsClient
+# TODO: SQLAlchemyでDB保存処理を実装
+
+def fetch_and_save_stock_master():
+    """銘柄マスタを取得してDBに保存"""
+
+    # 1. APIから取得
+    client = JQuantsClient()
+    data = client.get_equities_master()
+
+    # 2. DB保存（TODO: 実装）
+    # ... SQLAlchemyでinsert/update
+
+    print(f"取得完了: {len(data.get('stocks', []))}銘柄")
+
+if __name__ == "__main__":
+    fetch_and_save_stock_master()
+```
+
+**Step 3: 実行**
+
+```bash
+# DevContainer内で実行
+cd /workspaces/platinum-axe
+uv run python backend/jobs/collectors/fetch_stock_master.py
+```
+
+**Step 4: 動作確認**
+
+- [ ] APIキー設定確認
+- [ ] APIリクエスト成功確認
+- [ ] レスポンスデータ確認
+- [ ] DB保存確認（全銘柄約3800件）
+
+**参考ドキュメント**:
+- API仕様: `docs/batch/jquants-api.md` - 「1. 銘柄マスタ取得」セクション
+- DBテーブル: `docs/database/schemas/stock_master.md`
+- API対応表: `docs/database/overview.md` - Layer 1
+
+---
+
+#### 6-3. 株価データ取得（銘柄マスタ取得後）
+
+**目的**: 過去10年分（2015〜2025）の全銘柄株価データを取得
+
+**実装予定**: 銘柄マスタ取得完了後に着手
+2. 各銘柄ループ
+   - 株価データ取得（10年分）
+   - DB保存（`stock_prices_daily`）
+   - 進捗保存（JSON）
+   - レート制限対策（sleep）
+3. 完了通知
+
+---
+
+#### 6-4. 日次差分データ取得
+
+**ファイル**: `backend/jobs/collectors/collect_daily_data.py`
+
+**目的**: 毎営業日の最新データを取得
+
+**仕様**:
+- **実行タイミング**: 毎営業日17:30（Cloud Schedulerで自動実行）
+- **対象期間**: 前営業日1日分
+- **対象銘柄**: 全銘柄（約3000銘柄）
+- **所要時間**: 5〜10分
+- **エラー対策**: リトライ + Slack通知
+
+**コマンド例**:
+```bash
+# ローカルテスト時
+uv run python backend/jobs/collectors/collect_daily_data.py \
+  --date 2025-12-23  # 省略時は前営業日
+```
+
+**処理フロー**:
+1. 対象日付決定（前営業日）
+2. 銘柄一覧取得
+3. 各銘柄の株価取得
+4. DB保存（`stock_prices_daily`）
+5. テクニカル指標計算トリガー
+6. 完了通知
+
+---
+
+#### 6-5. テクニカル指標計算バッチ
+
+**ファイル**: `backend/jobs/preprocessors/calculate_technical_indicators.py`
+
+**目的**: 株価データから125種類のテクニカル指標を計算
+
+**実行タイミング**:
+- 初回: 全期間・全銘柄を一括計算
+- 日次: 前営業日分のみ追加計算
+
+---
+
+#### 6-6. GCPデプロイ
+
+**タイミング**: ローカルで動作確認後
+
+**サービス構成**:
+```
+Cloud Scheduler
+  └─> Cloud Run Jobs (collect_daily_data)
+        └─> Cloud SQL (PostgreSQL)
+```
+
+**デプロイ手順**:
+1. Dockerfile作成（DevContainer用を流用）
+2. Container Registry登録
+3. Cloud Run Jobs作成
+4. Cloud Scheduler設定（cron: 0 17 * * 1-5）
+5. 環境変数設定（J-Quants API Key等）
+
+---
 
 ### フェーズ7: 機械学習実装（最終フェーズ）
 
-- 特徴量エンジニアリング
-- モデル学習・評価
-- 週次推論パイプライン
+#### 7-1. ローカルでモデル構築
+
+**場所**: `ml/notebooks/`
+
+**開発方針**:
+- ✅ **最初はローカル（Jupyter Notebook）で試行錯誤**
+- ✅ LightGBMは軽量なのでローカルで十分（GPU不要）
+- ✅ 全銘柄×10年データでも数分〜数十分で学習完了
+- ❌ GCPは不要（週次再学習の自動化時のみ使用）
+
+**実装ステップ**:
+1. **データ探索**（`01_data_exploration.ipynb`）
+   - トヨタ1銘柄で分析
+   - 株価・テクニカル指標の可視化
+   - 欠損値確認
+
+2. **特徴量エンジニアリング**（`02_feature_engineering.ipynb`）
+   - 125項目の特徴量設計
+   - 相関分析
+   - 特徴量重要度確認
+
+3. **モデル学習・評価**（`03_model_training.ipynb`）
+   - LightGBMで翌週騰落率予測（回帰）
+   - 訓練/検証/テストデータ分割
+   - ハイパーパラメータ調整
+   - 予測精度評価（RMSE, MAE, R²）
+
+4. **Pythonスクリプト化**
+   - `ml/training/train_model.py` 作成
+   - コマンドラインから実行可能に
+
+---
+
+#### 7-2. 週次推論パイプライン
+
+**ファイル**: `backend/jobs/predictors/generate_weekly_predictions.py`
+
+**目的**: 週末に翌週の推奨銘柄（買い/売り Top10）を算出
+
+**実行タイミング**: 毎週土曜朝（Cloud Schedulerで自動実行）
+
+**処理フロー**:
+1. 全銘柄の最新特徴量取得
+2. 学習済みモデルで翌週騰落率予測
+3. 予測値上位/下位Top10抽出
+4. `rounds`, `round_recommendations`に保存
+5. 月曜朝のWebサイト表示に反映
+
+---
+
+### 実装優先順位まとめ
+
+**重要**: Jupyter Notebookでモデル検証するには**実データが必須**なので、データ取得を最優先する。
+
+```
+✅ 完了:
+  1. フェーズ5: ディレクトリリファクタリング完了
+  2. フェーズ6-1: J-Quants API仕様調査 + ドキュメント化完了
+
+次のセッション（APIキー受領後）:
+  3. フェーズ6-2: 銘柄マスタ取得（最優先！）
+     - APIクライアント実装
+     - 銘柄マスタ取得スクリプト実装
+     - 全銘柄約3800件のデータ取得
+
+その後:
+  4. フェーズ6-3: 株価データ取得（過去10年分）
+     - 初回全件データ取得（2015〜2025）
+     - 少なくとも数銘柄×1年分のデータがあればJupyter Notebook開始可能
+  5. フェーズ7-1: Jupyter Notebookでモデル構築（データ探索から開始）
+  6. フェーズ6-4: 日次差分取得実装
+  7. フェーズ6-5: テクニカル指標計算バッチ
+  8. フェーズ7-2: 週次推論パイプライン
+  9. フェーズ6-6: GCPデプロイ（自動化）
+```
+
+**段階的アプローチ**:
+- まず銘柄マスタ取得で全銘柄情報を確保
+- 株価データは1〜2銘柄の過去1年分で動作確認
+- Jupyter Notebookでプロトタイプ検証可能になったら並行作業
+- バックグラウンドで全銘柄×10年データ取得継続
 
 ---
 
@@ -240,14 +561,26 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ## 最終更新
 
-- **日時**: 2026-07-23 午後（銘柄検索機能実装完了）
+- **日時**: 2026-07-23 深夜（フェーズ6-1：J-Quants API仕様調査 + ドキュメント化完了）
 - **作業者**: Claude Code
 - **変更内容**:
-  - ✅ **銘柄検索機能実装**（Backend API + Frontend コンポーネント）
-    - `GET /api/v1/stocks/search` エンドポイント追加（銘柄コード・会社名の部分一致検索）
-    - `StockSearch.tsx` コンポーネント作成（オートコンプリート、Debounce 300ms）
-    - レスポンシブ対応（PC: Header右側 / SP: ページ本文上部）
-    - 市場略称（PR/ST/GR）+ N225/TPXバッジ表示
-  - ✅ 推奨履歴チャートのエラー修正（時刻重複問題を解決）
-  - ✅ FE/BE基本機能実装完了 🎉
-- **次回**: フェーズ5（モックデータ拡充：銘柄数増加、株価データ追加）
+  - ✅ **フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化**
+    - `docs/batch/jquants-api.md` 作成
+      - Standardプラン全17種のAPI詳細調査完了
+      - データ期間の正確な情報確認（過去10年）
+      - レート制限（120件/分）、認証方法（APIキー方式）
+      - APIとDBテーブルの対応表（更新頻度・更新時刻・更新ジョブ列付き）
+    - `docs/database/overview.md` 作成
+      - Layer構造の説明（Layer 1〜4）
+      - 全23テーブルの対応表（実装状況付き）
+      - データフロー図
+    - `docs/database/schemas/` ディレクトリ作成
+      - 実装済み8テーブルを個別md化（markets, sectors, stock_master, stock_prices_daily, technical_indicators, rounds, round_recommendations, round_results）
+      - 各テーブルにソースコードへのリンク追加
+    - `docs/database/schemas.md` 削除（個別ファイルに分割）
+- **次回**: フェーズ6-2（銘柄マスタ取得）
+  - 前提条件: J-Quants API アカウント登録 + APIキー取得（開発者が実施）
+  - 環境変数設定（`.env` に `JQUANTS_API_KEY` 追加）
+  - APIクライアント実装（`backend/jobs/collectors/jquants_client.py`）
+  - 銘柄マスタ取得スクリプト実装（`backend/jobs/collectors/fetch_stock_master.py`）
+  - 全銘柄約3800件のデータ取得
