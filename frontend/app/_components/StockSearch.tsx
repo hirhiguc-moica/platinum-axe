@@ -46,28 +46,39 @@ export function StockSearch() {
       return;
     }
 
+    const controller = new AbortController();
+    let active = true;
+
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const response = await fetch(
-          `${API_URL}/api/v1/stocks/search?q=${encodeURIComponent(query)}&limit=10`
+          `${API_URL}/api/v1/stocks/search?q=${encodeURIComponent(query)}&limit=10`,
+          { signal: controller.signal }
         );
 
-        if (response.ok) {
+        if (!response.ok) throw new Error("Search failed");
+        if (active) {
           const data = await response.json();
           setResults(data.stocks || []);
           setIsOpen(true);
         }
       } catch (error) {
-        console.error("Search error:", error);
-        setResults([]);
+        if (active && !(error instanceof DOMException && error.name === "AbortError")) {
+          setResults([]);
+          setIsOpen(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }, 300); // 300msのdebounce
 
-    return () => clearTimeout(timer);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   const handleSelectStock = (stockCode: string) => {
