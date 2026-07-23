@@ -65,15 +65,11 @@ class RoundRecommendation(TimestampMixin, Base):
     )
     stock_code: Mapped[str] = mapped_column(String(10), nullable=False, comment="銘柄コード")
     rank: Mapped[int] = mapped_column(Integer, nullable=False, comment="推奨順位（1〜N位）")
-    predicted_return: Mapped[float | None] = mapped_column(
-        Numeric(8, 4), comment="予測騰落率"
-    )
+    predicted_return: Mapped[float | None] = mapped_column(Numeric(8, 4), comment="予測騰落率")
     confidence_score: Mapped[float | None] = mapped_column(
         Numeric(5, 4), comment="信頼度スコア（0〜1）"
     )
-    reason_features: Mapped[dict | None] = mapped_column(
-        JSONB, comment="推奨理由となった特徴量"
-    )
+    reason_features: Mapped[dict | None] = mapped_column(JSONB, comment="推奨理由となった特徴量")
 
     # リレーション
     round: Mapped["Round"] = relationship("Round", back_populates="recommendations")

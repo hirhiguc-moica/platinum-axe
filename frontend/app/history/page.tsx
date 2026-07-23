@@ -1,9 +1,9 @@
-import { PerformanceSummary } from "./_components/PerformanceSummary";
-import { TypeFilterTabs } from "./_components/TypeFilterTabs";
-import { IndexFilterTabs } from "./_components/IndexFilterTabs";
-import { RoundHistoryTable } from "./_components/RoundHistoryTable";
-import { Pagination } from "./_components/Pagination";
 import { StockSearch } from "@/app/_components/StockSearch";
+import { IndexFilterTabs } from "./_components/IndexFilterTabs";
+import { Pagination } from "./_components/Pagination";
+import { PerformanceSummary } from "./_components/PerformanceSummary";
+import { RoundHistoryTable } from "./_components/RoundHistoryTable";
+import { TypeFilterTabs } from "./_components/TypeFilterTabs";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -28,10 +28,9 @@ async function getHistoryData(searchParams: Awaited<SearchParams>) {
   historyParams.set("page", page.toString());
   historyParams.set("limit", limit.toString());
 
-  const historyRes = await fetch(
-    `${API_BASE_URL}/api/v1/history?${historyParams.toString()}`,
-    { cache: "no-store" }
-  );
+  const historyRes = await fetch(`${API_BASE_URL}/api/v1/history?${historyParams.toString()}`, {
+    cache: "no-store",
+  });
 
   if (!historyRes.ok) {
     throw new Error("Failed to fetch history data");
@@ -61,17 +60,11 @@ async function getHistoryData(searchParams: Awaited<SearchParams>) {
   };
 }
 
-export default async function HistoryPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function HistoryPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const data = await getHistoryData(params);
 
-  const currentType = data.roundType
-    ? (data.roundType.toLowerCase() as "buy" | "sell")
-    : "all";
+  const currentType = data.roundType ? (data.roundType.toLowerCase() as "buy" | "sell") : "all";
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -86,9 +79,7 @@ export default async function HistoryPage({
           <h1 className="text-4xl font-bold mb-2 bg-gradient-gold bg-clip-text text-transparent">
             過去のラウンド結果
           </h1>
-          <p className="text-muted-foreground">
-            予測 vs 実績の乖離、的中率を確認できます
-          </p>
+          <p className="text-muted-foreground">予測 vs 実績の乖離、的中率を確認できます</p>
         </div>
 
         {/* 指数フィルター */}
@@ -109,10 +100,7 @@ export default async function HistoryPage({
         {/* タイプフィルター */}
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">表示:</span>
-          <TypeFilterTabs
-            currentType={currentType}
-            indexFilter={data.indexFilter}
-          />
+          <TypeFilterTabs currentType={currentType} indexFilter={data.indexFilter} />
         </div>
 
         {/* ラウンド履歴テーブル */}

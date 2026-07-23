@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
-import type {
-  GetRoundsResponse,
-  GetRoundRecommendationsResponse,
-} from "@/generated/types.gen";
 import { FilterTabs } from "@/app/_components/FilterTabs";
 import { RecommendationCard } from "@/app/_components/RecommendationCard";
+import type { GetRoundRecommendationsResponse, GetRoundsResponse } from "@/generated/types.gen";
 
 const API_URL = process.env.API_URL || "http://localhost:8000";
 
@@ -31,15 +28,10 @@ async function getRounds(): Promise<GetRoundsResponse> {
   return res.json();
 }
 
-async function getRoundRecommendations(
-  roundId: string
-): Promise<GetRoundRecommendationsResponse> {
-  const res = await fetch(
-    `${API_URL}/api/v1/rounds/${roundId}/recommendations`,
-    {
-      cache: "no-store",
-    }
-  );
+async function getRoundRecommendations(roundId: string): Promise<GetRoundRecommendationsResponse> {
+  const res = await fetch(`${API_URL}/api/v1/rounds/${roundId}/recommendations`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch recommendations");
@@ -63,36 +55,26 @@ export default async function RecommendationPage({
   // ラウンド取得
   const roundsData = await getRounds();
   const roundType = type.toUpperCase();
-  const targetRound = roundsData.rounds?.find(
-    (r) => r.round_type === roundType
-  );
+  const targetRound = roundsData.rounds?.find((r) => r.round_type === roundType);
 
   if (!targetRound) {
     return (
       <div className="container mx-auto py-8">
-        <p className="text-center text-muted-foreground">
-          ラウンドデータがありません
-        </p>
+        <p className="text-center text-muted-foreground">ラウンドデータがありません</p>
       </div>
     );
   }
 
   // 推奨銘柄取得
-  const recommendationsData = await getRoundRecommendations(
-    targetRound.round_id
-  );
+  const recommendationsData = await getRoundRecommendations(targetRound.round_id);
 
   // フィルタリング
   let filteredRecommendations = recommendationsData.recommendations;
 
   if (filter === "nikkei225") {
-    filteredRecommendations = filteredRecommendations.filter(
-      (rec) => rec.stock?.is_nikkei225
-    );
+    filteredRecommendations = filteredRecommendations.filter((rec) => rec.stock?.is_nikkei225);
   } else if (filter === "topix") {
-    filteredRecommendations = filteredRecommendations.filter(
-      (rec) => rec.stock?.is_topix
-    );
+    filteredRecommendations = filteredRecommendations.filter((rec) => rec.stock?.is_topix);
   }
 
   return (
@@ -103,8 +85,7 @@ export default async function RecommendationPage({
           {FILTER_LABELS[filter]}の{type === "buy" ? "買い" : "売り"}推奨
         </h1>
         <p className="text-muted-foreground mb-4">
-          {targetRound.start_date} 〜 {targetRound.end_date} (
-          {targetRound.round_id})
+          {targetRound.start_date} 〜 {targetRound.end_date} ({targetRound.round_id})
         </p>
         <div className="bg-card/50 border border-border rounded-lg p-4 text-sm text-muted-foreground">
           <p>
@@ -133,9 +114,7 @@ export default async function RecommendationPage({
           ))}
         </div>
       ) : (
-        <p className="text-center text-muted-foreground py-12">
-          該当する推奨銘柄がありません
-        </p>
+        <p className="text-center text-muted-foreground py-12">該当する推奨銘柄がありません</p>
       )}
     </div>
   );

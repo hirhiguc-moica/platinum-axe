@@ -41,8 +41,12 @@ class StockInfoSchema(BaseModel):
             return {
                 "stock_code": data.stock_code,
                 "company_name": data.company_name,
-                "sector_name": data.sector.sector_name if hasattr(data, "sector") and data.sector else None,
-                "market_name": data.market.market_short_name if hasattr(data, "market") and data.market else None,
+                "sector_name": data.sector.sector_name
+                if hasattr(data, "sector") and data.sector
+                else None,
+                "market_name": data.market.market_short_name
+                if hasattr(data, "market") and data.market
+                else None,
             }
         return data
 

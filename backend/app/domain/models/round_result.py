@@ -26,37 +26,21 @@ class RoundResult(TimestampMixin, Base):
     stock_code: Mapped[str] = mapped_column(String(10), nullable=False, comment="銘柄コード")
 
     # 価格情報
-    start_price: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="開始時点の株価"
-    )
+    start_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="開始時点の株価")
     end_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="終了時点の株価")
-    highest_price: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="期間中最高値"
-    )
+    highest_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="期間中最高値")
     lowest_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="期間中最安値")
 
     # 実績
-    actual_return: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="実際の騰落率"
-    )
-    predicted_return: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="予測騰落率"
-    )
-    prediction_error: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="予測誤差"
-    )
-    prediction_hit: Mapped[bool | None] = mapped_column(
-        Boolean, comment="予測が当たったか"
-    )
+    actual_return: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="実際の騰落率")
+    predicted_return: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="予測騰落率")
+    prediction_error: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="予測誤差")
+    prediction_hit: Mapped[bool | None] = mapped_column(Boolean, comment="予測が当たったか")
 
     # 仮想損益
-    entry_shares: Mapped[int] = mapped_column(
-        Integer, default=100, comment="仮想投資株数"
-    )
+    entry_shares: Mapped[int] = mapped_column(Integer, default=100, comment="仮想投資株数")
     profit_loss: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="損益金額")
-    profit_loss_rate: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="損益率"
-    )
+    profit_loss_rate: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="損益率")
 
     # リレーション
     round: Mapped["Round"] = relationship("Round", back_populates="results")

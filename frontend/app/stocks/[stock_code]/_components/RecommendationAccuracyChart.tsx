@@ -1,12 +1,7 @@
 "use client";
 
+import { ColorType, createChart, type IChartApi, LineSeries } from "lightweight-charts";
 import { useEffect, useRef } from "react";
-import {
-  createChart,
-  ColorType,
-  IChartApi,
-  LineSeries,
-} from "lightweight-charts";
 
 interface RecommendationHistoryItem {
   round_id: string;
@@ -27,9 +22,7 @@ interface RecommendationAccuracyChartProps {
   items: RecommendationHistoryItem[];
 }
 
-export function RecommendationAccuracyChart({
-  items,
-}: RecommendationAccuracyChartProps) {
+export function RecommendationAccuracyChart({ items }: RecommendationAccuracyChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -85,7 +78,7 @@ export function RecommendationAccuracyChart({
       .filter((item) => item.predicted_return !== null)
       .map((item) => ({
         time: item.start_date as any, // YYYY-MM-DD形式の文字列
-        value: (item.predicted_return! * 100), // パーセント表示
+        value: item.predicted_return! * 100, // パーセント表示
       }));
 
     // 実績騰落率データ（実績がある場合のみ）
@@ -93,7 +86,7 @@ export function RecommendationAccuracyChart({
       .filter((item) => item.actual_return !== null)
       .map((item) => ({
         time: item.start_date as any, // YYYY-MM-DD形式の文字列
-        value: (item.actual_return! * 100), // パーセント表示
+        value: item.actual_return! * 100, // パーセント表示
       }));
 
     // 予測騰落率の線を追加
@@ -143,9 +136,7 @@ export function RecommendationAccuracyChart({
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-[#cccccc] mb-1">
-          予測精度の推移
-        </h3>
+        <h3 className="text-sm font-semibold text-[#cccccc] mb-1">予測精度の推移</h3>
         <p className="text-xs text-[#858585]">
           予測騰落率と実績騰落率の比較 • 青線：予測 / 橙線：実績
         </p>

@@ -1,11 +1,9 @@
 """ラウンド結果リポジトリ"""
 
-from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.domain.models.round import Round
 from app.domain.models.round_result import RoundResult
@@ -62,16 +60,16 @@ class RoundResultRepository:
         """
         # 基本クエリ
         # prediction_hitはBoolean型なので、INTEGERにキャストしてからSUM
-        from sqlalchemy import Integer, case
+        from sqlalchemy import case
 
         stmt = (
             select(
                 func.count(RoundResult.id).label("total_recommendations"),
                 func.avg(RoundResult.predicted_return).label("avg_predicted_return"),
                 func.avg(RoundResult.actual_return).label("avg_actual_return"),
-                func.sum(
-                    case((RoundResult.prediction_hit.is_(True), 1), else_=0)
-                ).label("hit_count"),
+                func.sum(case((RoundResult.prediction_hit.is_(True), 1), else_=0)).label(
+                    "hit_count"
+                ),
             )
             .select_from(RoundResult)
             .where(RoundResult.round_id == round_uuid)
@@ -79,9 +77,7 @@ class RoundResultRepository:
 
         # 指数フィルター適用
         if index_filter != "all":
-            stmt = stmt.join(
-                StockMaster, RoundResult.stock_code == StockMaster.stock_code
-            )
+            stmt = stmt.join(StockMaster, RoundResult.stock_code == StockMaster.stock_code)
             if index_filter == "nikkei225":
                 stmt = stmt.where(StockMaster.is_nikkei225.is_(True))
             elif index_filter == "topix":
@@ -137,12 +133,8 @@ class RoundResultRepository:
         # 各ラウンドのパフォーマンス統計を取得
         rounds_with_performance = []
         for round_obj in rounds:
-            performance = await self.get_round_performance(
-                round_obj.id, index_filter
-            )
-            rounds_with_performance.append(
-                {"round": round_obj, "performance": performance}
-            )
+            performance = await self.get_round_performance(round_obj.id, index_filter)
+            rounds_with_performance.append({"round": round_obj, "performance": performance})
 
         return rounds_with_performance
 
@@ -155,9 +147,7 @@ class RoundResultRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
-    async def get_overall_performance(
-        self, round_type: str, index_filter: str = "all"
-    ) -> dict:
+    async def get_overall_performance(self, round_type: str, index_filter: str = "all") -> dict:
         """全体のパフォーマンス統計を計算
 
         Args:
@@ -168,9 +158,8 @@ class RoundResultRepository:
             全体統計
         """
         # ラウンド一覧取得
-        rounds_stmt = (
-            select(Round.id)
-            .where(Round.round_type == round_type, Round.status == "CLOSED")
+        rounds_stmt = select(Round.id).where(
+            Round.round_type == round_type, Round.status == "CLOSED"
         )
         rounds_result = await self.session.execute(rounds_stmt)
         round_uuids = [row[0] for row in rounds_result.all()]
@@ -193,9 +182,9 @@ class RoundResultRepository:
                 func.avg(RoundResult.actual_return).label("avg_actual"),
                 func.sum(RoundResult.profit_loss).label("total_profit_loss"),
                 func.count(RoundResult.id).label("total_count"),
-                func.sum(
-                    case((RoundResult.prediction_hit.is_(True), 1), else_=0)
-                ).label("hit_count"),
+                func.sum(case((RoundResult.prediction_hit.is_(True), 1), else_=0)).label(
+                    "hit_count"
+                ),
             )
             .select_from(RoundResult)
             .where(RoundResult.round_id.in_(round_uuids))
@@ -203,9 +192,7 @@ class RoundResultRepository:
 
         # 指数フィルター適用
         if index_filter != "all":
-            stmt = stmt.join(
-                StockMaster, RoundResult.stock_code == StockMaster.stock_code
-            )
+            stmt = stmt.join(StockMaster, RoundResult.stock_code == StockMaster.stock_code)
             if index_filter == "nikkei225":
                 stmt = stmt.where(StockMaster.is_nikkei225.is_(True))
             elif index_filter == "topix":

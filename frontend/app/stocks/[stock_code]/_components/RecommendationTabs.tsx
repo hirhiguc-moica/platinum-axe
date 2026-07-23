@@ -26,12 +26,8 @@ export function RecommendationTabs({ items }: RecommendationTabsProps) {
   return (
     <div className="bg-[#252526] border border-[#3e3e42] rounded-lg">
       <div className="p-4 border-b border-[#3e3e42]">
-        <h2 className="text-sm font-semibold text-[#cccccc]">
-          推奨履歴
-        </h2>
-        <p className="text-xs text-[#858585] mt-1">
-          過去の推奨実績 • 予測 vs 実績
-        </p>
+        <h2 className="text-sm font-semibold text-[#cccccc]">推奨履歴</h2>
+        <p className="text-xs text-[#858585] mt-1">過去の推奨実績 • 予測 vs 実績</p>
       </div>
 
       <Tabs defaultValue="chart" className="w-full">
@@ -101,9 +97,7 @@ export function RecommendationTabs({ items }: RecommendationTabsProps) {
                         <span className="text-[#858585]">騰落率</span>
                         <span
                           className={`font-mono font-semibold ${
-                            (rec.predicted_return || 0) >= 0
-                              ? "text-emerald-400"
-                              : "text-red-400"
+                            (rec.predicted_return || 0) >= 0 ? "text-emerald-400" : "text-red-400"
                           }`}
                         >
                           {rec.predicted_return !== null
@@ -133,9 +127,7 @@ export function RecommendationTabs({ items }: RecommendationTabsProps) {
                           <span className="text-[#858585]">実際の騰落率</span>
                           <span
                             className={`font-mono font-semibold ${
-                              (rec.actual_return || 0) >= 0
-                                ? "text-emerald-400"
-                                : "text-red-400"
+                              (rec.actual_return || 0) >= 0 ? "text-emerald-400" : "text-red-400"
                             }`}
                           >
                             {rec.actual_return > 0 ? "+" : ""}
@@ -146,9 +138,7 @@ export function RecommendationTabs({ items }: RecommendationTabsProps) {
                           <span className="text-[#858585]">判定</span>
                           <span
                             className={`font-medium ${
-                              rec.prediction_hit
-                                ? "text-emerald-400"
-                                : "text-red-400"
+                              rec.prediction_hit ? "text-emerald-400" : "text-red-400"
                             }`}
                           >
                             {rec.prediction_hit ? "的中 🎯" : "外れ"}
@@ -164,9 +154,7 @@ export function RecommendationTabs({ items }: RecommendationTabsProps) {
                         )}
                       </div>
                     ) : (
-                      <div className="text-xs text-[#858585]">
-                        期間終了後に実績が確定します
-                      </div>
+                      <div className="text-xs text-[#858585]">期間終了後に実績が確定します</div>
                     )}
                   </div>
                 </div>

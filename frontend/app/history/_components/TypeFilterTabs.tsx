@@ -8,10 +8,7 @@ interface TypeFilterTabsProps {
   indexFilter: string;
 }
 
-export function TypeFilterTabs({
-  currentType,
-  indexFilter,
-}: TypeFilterTabsProps) {
+export function TypeFilterTabs({ currentType, indexFilter }: TypeFilterTabsProps) {
   const tabs = [
     { label: "すべて", value: "all" as const },
     { label: "買い推奨", value: "buy" as const },

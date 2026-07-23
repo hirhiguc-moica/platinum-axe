@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import {
-  createChart,
-  ColorType,
-  IChartApi,
-  ISeriesApi,
   CandlestickSeries,
-  LineSeries,
+  ColorType,
+  createChart,
   HistogramSeries,
+  type IChartApi,
+  ISeriesApi,
+  LineSeries,
 } from "lightweight-charts";
+import { useEffect, useRef } from "react";
 
 interface StockPrice {
   date: string;

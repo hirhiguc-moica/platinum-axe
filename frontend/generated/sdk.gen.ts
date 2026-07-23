@@ -67,13 +67,12 @@ export type Options<
  * システムの稼働状況を確認します。
  */
 export const healthCheckApiV1HealthGet = <ThrowOnError extends boolean = false>(
-  options?: Options<HealthCheckApiV1HealthGetData, ThrowOnError>,
+  options?: Options<HealthCheckApiV1HealthGetData, ThrowOnError>
 ) =>
-  (options?.client ?? client).get<
-    HealthCheckApiV1HealthGetResponses,
-    unknown,
-    ThrowOnError
-  >({ url: "/api/v1/health", ...options });
+  (options?.client ?? client).get<HealthCheckApiV1HealthGetResponses, unknown, ThrowOnError>({
+    url: "/api/v1/health",
+    ...options,
+  });
 
 /**
  * Get Rounds
@@ -89,7 +88,7 @@ export const healthCheckApiV1HealthGet = <ThrowOnError extends boolean = false>(
  * ラウンド一覧
  */
 export const getRoundsApiV1RoundsGet = <ThrowOnError extends boolean = false>(
-  options?: Options<GetRoundsApiV1RoundsGetData, ThrowOnError>,
+  options?: Options<GetRoundsApiV1RoundsGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<
     GetRoundsApiV1RoundsGetResponses,
@@ -116,10 +115,7 @@ export const getRoundsApiV1RoundsGet = <ThrowOnError extends boolean = false>(
 export const getRoundRecommendationsApiV1RoundsRoundIdRecommendationsGet = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetData,
-    ThrowOnError
-  >,
+  options: Options<GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
     GetRoundRecommendationsApiV1RoundsRoundIdRecommendationsGetResponses,
@@ -140,10 +136,8 @@ export const getRoundRecommendationsApiV1RoundsRoundIdRecommendationsGet = <
  * Returns:
  * 銘柄詳細情報
  */
-export const getStockDetailApiV1StocksStockCodeGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetStockDetailApiV1StocksStockCodeGetData, ThrowOnError>,
+export const getStockDetailApiV1StocksStockCodeGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetStockDetailApiV1StocksStockCodeGetData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
     GetStockDetailApiV1StocksStockCodeGetResponses,
@@ -169,10 +163,7 @@ export const getStockDetailApiV1StocksStockCodeGet = <
 export const getStockPriceHistoryApiV1StocksStockCodePricesGet = <
   ThrowOnError extends boolean = false,
 >(
-  options: Options<
-    GetStockPriceHistoryApiV1StocksStockCodePricesGetData,
-    ThrowOnError
-  >,
+  options: Options<GetStockPriceHistoryApiV1StocksStockCodePricesGetData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
     GetStockPriceHistoryApiV1StocksStockCodePricesGetResponses,
@@ -197,18 +188,19 @@ export const getStockPriceHistoryApiV1StocksStockCodePricesGet = <
  * Returns:
  * テクニカル指標履歴データ（ページング情報付き）
  */
-export const getStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGet =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData,
-      ThrowOnError
-    >,
-  ) =>
-    (options.client ?? client).get<
-      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses,
-      GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors,
-      ThrowOnError
-    >({ url: "/api/v1/stocks/{stock_code}/technical-indicators", ...options });
+export const getStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetResponses,
+    GetStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/stocks/{stock_code}/technical-indicators", ...options });
 
 /**
  * Get Stock Technical Indicators Full
@@ -228,21 +220,22 @@ export const getStockTechnicalIndicatorsApiV1StocksStockCodeTechnicalIndicatorsG
  * Returns:
  * テクニカル指標完全履歴データ（ページング情報付き、全125指標）
  */
-export const getStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGet =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData,
-      ThrowOnError
-    >,
-  ) =>
-    (options.client ?? client).get<
-      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetResponses,
-      GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors,
-      ThrowOnError
-    >({
-      url: "/api/v1/stocks/{stock_code}/technical-indicators/full",
-      ...options,
-    });
+export const getStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetResponses,
+    GetStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicatorsFullGetErrors,
+    ThrowOnError
+  >({
+    url: "/api/v1/stocks/{stock_code}/technical-indicators/full",
+    ...options,
+  });
 
 /**
  * Get Stock Recommendation History
@@ -259,18 +252,19 @@ export const getStockTechnicalIndicatorsFullApiV1StocksStockCodeTechnicalIndicat
  * Returns:
  * 推奨履歴データ（ページング情報付き）
  */
-export const getStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGet =
-  <ThrowOnError extends boolean = false>(
-    options: Options<
-      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData,
-      ThrowOnError
-    >,
-  ) =>
-    (options.client ?? client).get<
-      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses,
-      GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors,
-      ThrowOnError
-    >({ url: "/api/v1/stocks/{stock_code}/recommendations", ...options });
+export const getStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetResponses,
+    GetStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGetErrors,
+    ThrowOnError
+  >({ url: "/api/v1/stocks/{stock_code}/recommendations", ...options });
 
 /**
  * Get Latest Results
@@ -284,10 +278,8 @@ export const getStockRecommendationHistoryApiV1StocksStockCodeRecommendationsGet
  * Returns:
  * 直近のBUY/SELLラウンド結果
  */
-export const getLatestResultsApiV1HistoryLatestGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<GetLatestResultsApiV1HistoryLatestGetData, ThrowOnError>,
+export const getLatestResultsApiV1HistoryLatestGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetLatestResultsApiV1HistoryLatestGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<
     GetLatestResultsApiV1HistoryLatestGetResponses,
@@ -307,13 +299,8 @@ export const getLatestResultsApiV1HistoryLatestGet = <
  * Returns:
  * BUY/SELLの全体パフォーマンス統計
  */
-export const getPerformanceSummaryApiV1HistorySummaryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<
-    GetPerformanceSummaryApiV1HistorySummaryGetData,
-    ThrowOnError
-  >,
+export const getPerformanceSummaryApiV1HistorySummaryGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPerformanceSummaryApiV1HistorySummaryGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<
     GetPerformanceSummaryApiV1HistorySummaryGetResponses,
@@ -336,10 +323,8 @@ export const getPerformanceSummaryApiV1HistorySummaryGet = <
  * Returns:
  * ラウンド履歴とページネーション情報
  */
-export const getRoundHistoryApiV1HistoryGet = <
-  ThrowOnError extends boolean = false,
->(
-  options?: Options<GetRoundHistoryApiV1HistoryGetData, ThrowOnError>,
+export const getRoundHistoryApiV1HistoryGet = <ThrowOnError extends boolean = false>(
+  options?: Options<GetRoundHistoryApiV1HistoryGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<
     GetRoundHistoryApiV1HistoryGetResponses,
@@ -362,10 +347,8 @@ export const getRoundHistoryApiV1HistoryGet = <
  * Raises:
  * HTTPException: ラウンドが見つからない場合（404）
  */
-export const getRoundDetailApiV1HistoryRoundIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<GetRoundDetailApiV1HistoryRoundIdGetData, ThrowOnError>,
+export const getRoundDetailApiV1HistoryRoundIdGet = <ThrowOnError extends boolean = false>(
+  options: Options<GetRoundDetailApiV1HistoryRoundIdGetData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
     GetRoundDetailApiV1HistoryRoundIdGetResponses,
@@ -379,7 +362,7 @@ export const getRoundDetailApiV1HistoryRoundIdGet = <
  * ルートエンドポイント
  */
 export const rootGet = <ThrowOnError extends boolean = false>(
-  options?: Options<RootGetData, ThrowOnError>,
+  options?: Options<RootGetData, ThrowOnError>
 ) =>
   (options?.client ?? client).get<RootGetResponses, unknown, ThrowOnError>({
     url: "/",

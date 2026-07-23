@@ -156,9 +156,7 @@ class GetStockTechnicalIndicatorsFullUseCase:
                 "bollinger_upper_2sigma": float(ind.bollinger_upper_2sigma)
                 if ind.bollinger_upper_2sigma
                 else None,
-                "bollinger_middle": float(ind.bollinger_middle)
-                if ind.bollinger_middle
-                else None,
+                "bollinger_middle": float(ind.bollinger_middle) if ind.bollinger_middle else None,
                 "bollinger_lower_2sigma": float(ind.bollinger_lower_2sigma)
                 if ind.bollinger_lower_2sigma
                 else None,
@@ -183,12 +181,8 @@ class GetStockTechnicalIndicatorsFullUseCase:
                 "volume_ma_60": ind.volume_ma_60,
                 "volume_ratio_5": float(ind.volume_ratio_5) if ind.volume_ratio_5 else None,
                 "volume_ratio_20": float(ind.volume_ratio_20) if ind.volume_ratio_20 else None,
-                "volume_change_1d": float(ind.volume_change_1d)
-                if ind.volume_change_1d
-                else None,
-                "volume_change_5d": float(ind.volume_change_5d)
-                if ind.volume_change_5d
-                else None,
+                "volume_change_1d": float(ind.volume_change_1d) if ind.volume_change_1d else None,
+                "volume_change_5d": float(ind.volume_change_5d) if ind.volume_change_5d else None,
                 "obv": ind.obv,
                 "obv_ma_20": ind.obv_ma_20,
                 "vwap": float(ind.vwap) if ind.vwap else None,
@@ -258,9 +252,7 @@ class GetStockTechnicalIndicatorsFullUseCase:
                 else None,
                 "aroon_up": float(ind.aroon_up) if ind.aroon_up else None,
                 "aroon_down": float(ind.aroon_down) if ind.aroon_down else None,
-                "aroon_oscillator": float(ind.aroon_oscillator)
-                if ind.aroon_oscillator
-                else None,
+                "aroon_oscillator": float(ind.aroon_oscillator) if ind.aroon_oscillator else None,
             }
             items.append(item)
 

@@ -63,8 +63,7 @@ export default async function RoundDetailPage({ params }: { params: Params }) {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            {formatDate(data.round.start_date)} 〜{" "}
-            {formatDate(data.round.end_date)}
+            {formatDate(data.round.start_date)} 〜 {formatDate(data.round.end_date)}
           </p>
         </div>
 
@@ -105,16 +104,11 @@ export default async function RoundDetailPage({ params }: { params: Params }) {
                       className="border-b border-border hover:bg-accent/50 transition-colors"
                     >
                       <td className="p-4">
-                        <span className="font-mono font-semibold">
-                          #{rec.rank}
-                        </span>
+                        <span className="font-mono font-semibold">#{rec.rank}</span>
                       </td>
 
                       <td className="p-4">
-                        <Link
-                          href={`/stocks/${rec.stock_code}`}
-                          className="hover:underline"
-                        >
+                        <Link href={`/stocks/${rec.stock_code}`} className="hover:underline">
                           <div className="font-semibold">{rec.company_name}</div>
                           <div className="text-sm text-muted-foreground">
                             {rec.stock_code}
@@ -137,9 +131,7 @@ export default async function RoundDetailPage({ params }: { params: Params }) {
                         {rec.actual_return !== null ? (
                           <span
                             className={`font-mono font-semibold ${
-                              rec.actual_return >= 0
-                                ? "text-emerald-400"
-                                : "text-red-400"
+                              rec.actual_return >= 0 ? "text-emerald-400" : "text-red-400"
                             }`}
                           >
                             {formatPercent(rec.actual_return)}
@@ -163,9 +155,7 @@ export default async function RoundDetailPage({ params }: { params: Params }) {
                         {rec.prediction_hit !== null ? (
                           <span
                             className={`text-sm font-semibold ${
-                              rec.prediction_hit
-                                ? "text-emerald-400"
-                                : "text-red-400"
+                              rec.prediction_hit ? "text-emerald-400" : "text-red-400"
                             }`}
                           >
                             {rec.prediction_hit ? "的中" : "外れ"}

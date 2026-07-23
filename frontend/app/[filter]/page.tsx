@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
-import type {
-  GetRoundsResponse,
-  GetRoundRecommendationsResponse,
-} from "@/generated/types.gen";
 import { RecommendationCard } from "@/app/_components/RecommendationCard";
 import { StockSearch } from "@/app/_components/StockSearch";
+import type { GetRoundRecommendationsResponse, GetRoundsResponse } from "@/generated/types.gen";
 
 const API_URL = process.env.API_URL || "http://localhost:8000";
 
@@ -80,15 +77,10 @@ async function getRounds(): Promise<GetRoundsResponse> {
   return res.json();
 }
 
-async function getRoundRecommendations(
-  roundId: string
-): Promise<GetRoundRecommendationsResponse> {
-  const res = await fetch(
-    `${API_URL}/api/v1/rounds/${roundId}/recommendations`,
-    {
-      cache: "no-store",
-    }
-  );
+async function getRoundRecommendations(roundId: string): Promise<GetRoundRecommendationsResponse> {
+  const res = await fetch(`${API_URL}/api/v1/rounds/${roundId}/recommendations`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch recommendations");
@@ -97,15 +89,10 @@ async function getRoundRecommendations(
   return res.json();
 }
 
-async function getLatestResults(
-  indexFilter: string
-): Promise<GetLatestResultsResponse> {
-  const res = await fetch(
-    `${API_URL}/api/v1/history/latest?index_filter=${indexFilter}`,
-    {
-      cache: "no-store",
-    }
-  );
+async function getLatestResults(indexFilter: string): Promise<GetLatestResultsResponse> {
+  const res = await fetch(`${API_URL}/api/v1/history/latest?index_filter=${indexFilter}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch latest results");
@@ -134,22 +121,16 @@ export default async function RecommendationPage({
   if (!buyRound || !sellRound) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <p className="text-center text-muted-foreground">
-          ラウンドデータがありません
-        </p>
+        <p className="text-center text-muted-foreground">ラウンドデータがありません</p>
       </div>
     );
   }
 
   // 買い推奨銘柄取得
-  const buyRecommendationsData = await getRoundRecommendations(
-    buyRound.round_id
-  );
+  const buyRecommendationsData = await getRoundRecommendations(buyRound.round_id);
 
   // 売り推奨銘柄取得
-  const sellRecommendationsData = await getRoundRecommendations(
-    sellRound.round_id
-  );
+  const sellRecommendationsData = await getRoundRecommendations(sellRound.round_id);
 
   // 先週の実績取得
   const latestResults = await getLatestResults(filter);
@@ -164,9 +145,7 @@ export default async function RecommendationPage({
     return recommendations;
   };
 
-  const filteredBuyRecommendations = filterRecommendations(
-    buyRecommendationsData.recommendations
-  );
+  const filteredBuyRecommendations = filterRecommendations(buyRecommendationsData.recommendations);
   const filteredSellRecommendations = filterRecommendations(
     sellRecommendationsData.recommendations
   );
@@ -182,13 +161,12 @@ export default async function RecommendationPage({
       <div className="mb-6">
         <div className="bg-card/50 border border-border rounded-lg p-4 text-sm">
           <p className="text-foreground mb-2">
-            <span className="font-bold text-accent">クオンツ × AI</span> による<span className="font-semibold">週次スイング取引</span>の推奨銘柄。機械学習（LightGBM）で週次騰落率を予測し、買い推奨は上昇が期待される銘柄を、売り推奨は下落が期待される銘柄をランキング形式で表示しています。
+            <span className="font-bold text-accent">クオンツ × AI</span> による
+            <span className="font-semibold">週次スイング取引</span>
+            の推奨銘柄。機械学習（LightGBM）で週次騰落率を予測し、買い推奨は上昇が期待される銘柄を、売り推奨は下落が期待される銘柄をランキング形式で表示しています。
           </p>
           <div className="flex items-center justify-end">
-            <a
-              href="/about"
-              className="text-xs text-accent hover:text-accent/80 underline"
-            >
+            <a href="/about" className="text-xs text-accent hover:text-accent/80 underline">
               このページの使い方 →
             </a>
           </div>
@@ -208,10 +186,7 @@ export default async function RecommendationPage({
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">📊 先週の実績</h2>
-              <a
-                href="/history"
-                className="text-sm text-accent hover:text-accent/80 underline"
-              >
+              <a href="/history" className="text-sm text-accent hover:text-accent/80 underline">
                 過去の結果を見る →
               </a>
             </div>
@@ -220,25 +195,17 @@ export default async function RecommendationPage({
               {/* 買い推奨の実績 */}
               {latestResults.buy_latest && (
                 <div className="space-y-3 bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-emerald-400">
-                    買い推奨の実績
-                  </h3>
+                  <h3 className="text-sm font-semibold text-emerald-400">買い推奨の実績</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        平均騰落率
-                      </span>
+                      <span className="text-sm text-muted-foreground">平均騰落率</span>
                       <span className="text-2xl font-bold text-emerald-400 neon-text-sm">
-                        {latestResults.buy_latest.avg_actual_return >= 0
-                          ? "+"
-                          : ""}
+                        {latestResults.buy_latest.avg_actual_return >= 0 ? "+" : ""}
                         {latestResults.buy_latest.avg_actual_return.toFixed(2)}%
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        的中率
-                      </span>
+                      <span className="text-sm text-muted-foreground">的中率</span>
                       <span className="text-lg font-bold text-foreground">
                         {(
                           latestResults.buy_latest.hit_rate *
@@ -258,25 +225,17 @@ export default async function RecommendationPage({
               {/* 売り推奨の実績 */}
               {latestResults.sell_latest && (
                 <div className="space-y-3 bg-red-950/20 border border-red-500/20 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-red-400">
-                    売り推奨の実績
-                  </h3>
+                  <h3 className="text-sm font-semibold text-red-400">売り推奨の実績</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        平均騰落率
-                      </span>
+                      <span className="text-sm text-muted-foreground">平均騰落率</span>
                       <span className="text-2xl font-bold text-red-400 neon-text-sm">
-                        {latestResults.sell_latest.avg_actual_return >= 0
-                          ? "+"
-                          : ""}
+                        {latestResults.sell_latest.avg_actual_return >= 0 ? "+" : ""}
                         {latestResults.sell_latest.avg_actual_return.toFixed(2)}%
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        的中率
-                      </span>
+                      <span className="text-sm text-muted-foreground">的中率</span>
                       <span className="text-lg font-bold text-foreground">
                         {(
                           latestResults.sell_latest.hit_rate *
@@ -317,10 +276,15 @@ export default async function RecommendationPage({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 neon-pulse"></span>
-                    <span className="text-sm font-semibold text-emerald-400 neon-text-sm">現在予測中</span>
+                    <span className="text-sm font-semibold text-emerald-400 neon-text-sm">
+                      現在予測中
+                    </span>
                   </div>
                   <div className="text-sm text-emerald-300/70">
-                    次回更新: <span className="font-medium text-emerald-200">{getNextSaturday(buyRound.end_date)}</span>
+                    次回更新:{" "}
+                    <span className="font-medium text-emerald-200">
+                      {getNextSaturday(buyRound.end_date)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -331,17 +295,11 @@ export default async function RecommendationPage({
         {filteredBuyRecommendations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBuyRecommendations.map((rec) => (
-              <RecommendationCard
-                key={rec.id}
-                recommendation={rec}
-                type="BUY"
-              />
+              <RecommendationCard key={rec.id} recommendation={rec} type="BUY" />
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-12">
-            該当する推奨銘柄がありません
-          </p>
+          <p className="text-center text-muted-foreground py-12">該当する推奨銘柄がありません</p>
         )}
       </section>
 
@@ -365,10 +323,15 @@ export default async function RecommendationPage({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <span className="inline-block w-2 h-2 rounded-full bg-red-400 neon-pulse"></span>
-                    <span className="text-sm font-semibold text-red-400 neon-text-sm">現在予測中</span>
+                    <span className="text-sm font-semibold text-red-400 neon-text-sm">
+                      現在予測中
+                    </span>
                   </div>
                   <div className="text-sm text-red-300/70">
-                    次回更新: <span className="font-medium text-red-200">{getNextSaturday(sellRound.end_date)}</span>
+                    次回更新:{" "}
+                    <span className="font-medium text-red-200">
+                      {getNextSaturday(sellRound.end_date)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -379,17 +342,11 @@ export default async function RecommendationPage({
         {filteredSellRecommendations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSellRecommendations.map((rec) => (
-              <RecommendationCard
-                key={rec.id}
-                recommendation={rec}
-                type="SELL"
-              />
+              <RecommendationCard key={rec.id} recommendation={rec} type="SELL" />
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-12">
-            該当する推奨銘柄がありません
-          </p>
+          <p className="text-center text-muted-foreground py-12">該当する推奨銘柄がありません</p>
         )}
       </section>
     </div>

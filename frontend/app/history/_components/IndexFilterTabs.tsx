@@ -8,10 +8,7 @@ interface IndexFilterTabsProps {
   roundType?: string;
 }
 
-export function IndexFilterTabs({
-  currentIndex,
-  roundType,
-}: IndexFilterTabsProps) {
+export function IndexFilterTabs({ currentIndex, roundType }: IndexFilterTabsProps) {
   const tabs = [
     { label: "総合", value: "all" },
     { label: "NIKKEI225", value: "nikkei225" },

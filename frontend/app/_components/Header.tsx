@@ -46,9 +46,7 @@ export function Header() {
             <div className="flex">
               <Link href="/all" className="mr-6 flex items-center space-x-2">
                 <span className="text-xl">🪓</span>
-                <span className="hidden font-bold sm:inline-block">
-                  Platinum Axe
-                </span>
+                <span className="hidden font-bold sm:inline-block">Platinum Axe</span>
               </Link>
             </div>
             <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">

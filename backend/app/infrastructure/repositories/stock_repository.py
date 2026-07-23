@@ -13,9 +13,7 @@ class StockRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def search(
-        self, query: str, limit: int = 10, offset: int = 0
-    ) -> list[StockMaster]:
+    async def search(self, query: str, limit: int = 10, offset: int = 0) -> list[StockMaster]:
         """
         銘柄検索（銘柄コード・会社名の部分一致）
 
@@ -36,9 +34,7 @@ class StockRepository:
                     StockMaster.company_name.ilike(f"%{query}%"),
                 )
             )
-            .options(
-                selectinload(StockMaster.sector), selectinload(StockMaster.market)
-            )
+            .options(selectinload(StockMaster.sector), selectinload(StockMaster.market))
             .order_by(StockMaster.stock_code)
             .limit(limit)
             .offset(offset)
@@ -59,9 +55,7 @@ class StockRepository:
         stmt = (
             select(StockMaster)
             .where(StockMaster.stock_code == stock_code)
-            .options(
-                selectinload(StockMaster.sector), selectinload(StockMaster.market)
-            )
+            .options(selectinload(StockMaster.sector), selectinload(StockMaster.market))
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

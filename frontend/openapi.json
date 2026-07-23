@@ -8,9 +8,7 @@
   "paths": {
     "/api/v1/health": {
       "get": {
-        "tags": [
-          "health"
-        ],
+        "tags": ["health"],
         "summary": "Health Check",
         "description": "\u30d8\u30eb\u30b9\u30c1\u30a7\u30c3\u30af\u30a8\u30f3\u30c9\u30dd\u30a4\u30f3\u30c8\n\n\u30b7\u30b9\u30c6\u30e0\u306e\u7a3c\u50cd\u72b6\u6cc1\u3092\u78ba\u8a8d\u3057\u307e\u3059\u3002",
         "operationId": "health_check_api_v1_health_get",
@@ -34,9 +32,7 @@
     },
     "/api/v1/rounds": {
       "get": {
-        "tags": [
-          "rounds"
-        ],
+        "tags": ["rounds"],
         "summary": "Get Rounds",
         "description": "\u30e9\u30a6\u30f3\u30c9\u4e00\u89a7\u53d6\u5f97\n\nArgs:\n    limit: \u53d6\u5f97\u4ef6\u6570\uff081\u301c100\uff09\n    offset: \u30aa\u30d5\u30bb\u30c3\u30c8\n    round_repository: RoundRepository\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u4e00\u89a7",
         "operationId": "get_rounds_api_v1_rounds_get",
@@ -95,9 +91,7 @@
     },
     "/api/v1/rounds/{round_id}/recommendations": {
       "get": {
-        "tags": [
-          "rounds"
-        ],
+        "tags": ["rounds"],
         "summary": "Get Round Recommendations",
         "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u53d6\u5f97\n\nArgs:\n    round_id: \u30e9\u30a6\u30f3\u30c9ID\uff08\u30d3\u30b8\u30cd\u30b9\u30ad\u30fc\u3001\u4f8b: 2026-W30-BUY\uff09\n    round_repository: RoundRepository\n    recommendation_repository: RoundRecommendationRepository\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9 + \u63a8\u5968\u9298\u67c4\u30ea\u30b9\u30c8\n\nRaises:\n    HTTPException: \u30e9\u30a6\u30f3\u30c9\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u5834\u5408\uff08404\uff09",
         "operationId": "get_round_recommendations_api_v1_rounds__round_id__recommendations_get",
@@ -138,10 +132,7 @@
     },
     "/api/v1/stocks/{stock_code}": {
       "get": {
-        "tags": [
-          "stocks",
-          "stocks"
-        ],
+        "tags": ["stocks", "stocks"],
         "summary": "Get Stock Detail",
         "description": "\u9298\u67c4\u8a73\u7d30\u53d6\u5f97\n\n\u9298\u67c4\u57fa\u672c\u60c5\u5831 + \u6700\u65b0\u682a\u4fa1\u3092\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\uff08\u4f8b: 7203\uff09\n\nReturns:\n    \u9298\u67c4\u8a73\u7d30\u60c5\u5831",
         "operationId": "get_stock_detail_api_v1_stocks__stock_code__get",
@@ -182,10 +173,7 @@
     },
     "/api/v1/stocks/{stock_code}/prices": {
       "get": {
-        "tags": [
-          "stocks",
-          "stocks"
-        ],
+        "tags": ["stocks", "stocks"],
         "summary": "Get Stock Price History",
         "description": "\u682a\u4fa1\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u682a\u4fa1\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u682a\u4fa1\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
         "operationId": "get_stock_price_history_api_v1_stocks__stock_code__prices_get",
@@ -253,10 +241,7 @@
     },
     "/api/v1/stocks/{stock_code}/technical-indicators": {
       "get": {
-        "tags": [
-          "stocks",
-          "stocks"
-        ],
+        "tags": ["stocks", "stocks"],
         "summary": "Get Stock Technical Indicators",
         "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\n\u4e3b\u8981\u6307\u6a19\u306e\u307f\u3092\u8fd4\u3057\u307e\u3059\uff08MA, RSI, MACD, Bollinger Bands\u7b49\uff09\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
         "operationId": "get_stock_technical_indicators_api_v1_stocks__stock_code__technical_indicators_get",
@@ -324,10 +309,7 @@
     },
     "/api/v1/stocks/{stock_code}/technical-indicators/full": {
       "get": {
-        "tags": [
-          "stocks",
-          "stocks"
-        ],
+        "tags": ["stocks", "stocks"],
         "summary": "Get Stock Technical Indicators Full",
         "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5b8c\u5168\u5c65\u6b74\u53d6\u5f97\uff08\u5168125\u6307\u6a19\uff09\n\n\u6307\u5b9a\u9298\u67c4\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\n\u5168125\u500b\u306e\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u3092\u8fd4\u3057\u307e\u3059\u3002\n\u30c1\u30e3\u30fc\u30c8\u63cf\u753b\u3084\u8a73\u7d30\u5206\u6790\u306b\u4f7f\u7528\u3067\u304d\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 200\u3001\u6700\u5927: 500\uff09\n\nReturns:\n    \u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5b8c\u5168\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\u3001\u5168125\u6307\u6a19\uff09",
         "operationId": "get_stock_technical_indicators_full_api_v1_stocks__stock_code__technical_indicators_full_get",
@@ -393,10 +375,7 @@
     },
     "/api/v1/stocks/{stock_code}/recommendations": {
       "get": {
-        "tags": [
-          "stocks",
-          "stocks"
-        ],
+        "tags": ["stocks", "stocks"],
         "summary": "Get Stock Recommendation History",
         "description": "\u63a8\u5968\u5c65\u6b74\u53d6\u5f97\n\n\u6307\u5b9a\u9298\u67c4\u306e\u904e\u53bb\u306e\u63a8\u5968\u5c65\u6b74\u3092\u30da\u30fc\u30b8\u30f3\u30b0\u5f62\u5f0f\u3067\u53d6\u5f97\u3057\u307e\u3059\u3002\n\nArgs:\n    stock_code: \u9298\u67c4\u30b3\u30fc\u30c9\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 1\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff08\u30c7\u30d5\u30a9\u30eb\u30c8: 20\u3001\u6700\u5927: 100\uff09\n\nReturns:\n    \u63a8\u5968\u5c65\u6b74\u30c7\u30fc\u30bf\uff08\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831\u4ed8\u304d\uff09",
         "operationId": "get_stock_recommendation_history_api_v1_stocks__stock_code__recommendations_get",
@@ -464,10 +443,7 @@
     },
     "/api/v1/history/latest": {
       "get": {
-        "tags": [
-          "history",
-          "history"
-        ],
+        "tags": ["history", "history"],
         "summary": "Get Latest Results",
         "description": "\u76f4\u8fd1\u306e\u30e9\u30a6\u30f3\u30c9\u7d50\u679c\u3092\u53d6\u5f97\uff08BUY/SELL\uff09\n\nArgs:\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u76f4\u8fd1\u306eBUY/SELL\u30e9\u30a6\u30f3\u30c9\u7d50\u679c",
         "operationId": "get_latest_results_api_v1_history_latest_get",
@@ -477,11 +453,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "all",
-                "nikkei225",
-                "topix"
-              ],
+              "enum": ["all", "nikkei225", "topix"],
               "type": "string",
               "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
               "default": "all",
@@ -514,10 +486,7 @@
     },
     "/api/v1/history/summary": {
       "get": {
-        "tags": [
-          "history",
-          "history"
-        ],
+        "tags": ["history", "history"],
         "summary": "Get Performance Summary",
         "description": "\u5168\u4f53\u306e\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u30b5\u30de\u30ea\u30fc\u3092\u53d6\u5f97\n\nArgs:\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    BUY/SELL\u306e\u5168\u4f53\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u7d71\u8a08",
         "operationId": "get_performance_summary_api_v1_history_summary_get",
@@ -527,11 +496,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "all",
-                "nikkei225",
-                "topix"
-              ],
+              "enum": ["all", "nikkei225", "topix"],
               "type": "string",
               "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
               "default": "all",
@@ -564,10 +529,7 @@
     },
     "/api/v1/history": {
       "get": {
-        "tags": [
-          "history",
-          "history"
-        ],
+        "tags": ["history", "history"],
         "summary": "Get Round History",
         "description": "\u30e9\u30a6\u30f3\u30c9\u5c65\u6b74\u3092\u53d6\u5f97\uff08\u30da\u30fc\u30b8\u30cd\u30fc\u30b7\u30e7\u30f3\u4ed8\u304d\uff09\n\nArgs:\n    round_type: BUY | SELL | None\uff08\u5168\u3066\uff09\n    index_filter: all\uff08\u5168\u9298\u67c4\uff09 | nikkei225\uff08\u65e5\u7d4c225\u306e\u307f\uff09 | topix\uff08TOPIX\u306e\u307f\uff09\n    page: \u30da\u30fc\u30b8\u756a\u53f7\uff081\u59cb\u307e\u308a\uff09\n    limit: 1\u30da\u30fc\u30b8\u3042\u305f\u308a\u306e\u4ef6\u6570\uff081-100\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u5c65\u6b74\u3068\u30da\u30fc\u30b8\u30cd\u30fc\u30b7\u30e7\u30f3\u60c5\u5831",
         "operationId": "get_round_history_api_v1_history_get",
@@ -579,10 +541,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "BUY",
-                    "SELL"
-                  ],
+                  "enum": ["BUY", "SELL"],
                   "type": "string"
                 },
                 {
@@ -599,11 +558,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "all",
-                "nikkei225",
-                "topix"
-              ],
+              "enum": ["all", "nikkei225", "topix"],
               "type": "string",
               "description": "\u6307\u6570\u30d5\u30a3\u30eb\u30bf\u30fc",
               "default": "all",
@@ -663,10 +618,7 @@
     },
     "/api/v1/history/{round_id}": {
       "get": {
-        "tags": [
-          "history",
-          "history"
-        ],
+        "tags": ["history", "history"],
         "summary": "Get Round Detail",
         "description": "\u7279\u5b9a\u30e9\u30a6\u30f3\u30c9\u306e\u8a73\u7d30\u3092\u53d6\u5f97\uff08\u63a8\u5968\u9298\u67c4 + \u7d50\u679c\u30c7\u30fc\u30bf\u4ed8\u304d\uff09\n\nArgs:\n    round_id: \u30e9\u30a6\u30f3\u30c9ID\uff08\u4f8b: 2026-W29-BUY\uff09\n    db: DB\u30bb\u30c3\u30b7\u30e7\u30f3\n\nReturns:\n    \u30e9\u30a6\u30f3\u30c9\u8a73\u7d30 + \u63a8\u5968\u9298\u67c4 + \u7d50\u679c\u30c7\u30fc\u30bf\n\nRaises:\n    HTTPException: \u30e9\u30a6\u30f3\u30c9\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u5834\u5408\uff08404\uff09",
         "operationId": "get_round_detail_api_v1_history__round_id__get",
@@ -745,10 +697,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "round",
-          "recommendations"
-        ],
+        "required": ["round", "recommendations"],
         "title": "GetRoundRecommendationsResponse",
         "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u30ec\u30b9\u30dd\u30f3\u30b9"
       },
@@ -769,10 +718,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "rounds",
-          "total"
-        ],
+        "required": ["rounds", "total"],
         "title": "GetRoundsResponse",
         "description": "\u30e9\u30a6\u30f3\u30c9\u4e00\u89a7\u30ec\u30b9\u30dd\u30f3\u30b9"
       },
@@ -859,9 +805,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "date"
-        ],
+        "required": ["date"],
         "title": "LatestPriceSchema",
         "description": "\u6700\u65b0\u682a\u4fa1\u30b9\u30ad\u30fc\u30de"
       },
@@ -889,12 +833,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "total_pages"
-        ],
+        "required": ["page", "limit", "total", "total_pages"],
         "title": "PaginationSchema",
         "description": "\u30da\u30fc\u30b8\u30f3\u30b0\u60c5\u5831"
       },
@@ -1006,14 +945,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "round_id",
-          "round_type",
-          "start_date",
-          "end_date",
-          "status",
-          "rank"
-        ],
+        "required": ["round_id", "round_type", "start_date", "end_date", "status", "rank"],
         "title": "RecommendationHistoryItemSchema",
         "description": "\u63a8\u5968\u5c65\u6b74\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de"
       },
@@ -1032,10 +964,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "RecommendationHistoryResponse",
         "description": "\u63a8\u5968\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
       },
@@ -1113,12 +1042,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "round_id",
-          "stock_code",
-          "rank"
-        ],
+        "required": ["id", "round_id", "stock_code", "rank"],
         "title": "RoundRecommendationSchema",
         "description": "\u30e9\u30a6\u30f3\u30c9\u63a8\u5968\u9298\u67c4\u30b9\u30ad\u30fc\u30de"
       },
@@ -1196,14 +1120,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "round_id",
-          "round_type",
-          "start_date",
-          "end_date",
-          "status"
-        ],
+        "required": ["id", "round_id", "round_type", "start_date", "end_date", "status"],
         "title": "RoundSchema",
         "description": "\u30e9\u30a6\u30f3\u30c9\u30b9\u30ad\u30fc\u30de"
       },
@@ -1349,10 +1266,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "stock_code",
-          "company_name"
-        ],
+        "required": ["stock_code", "company_name"],
         "title": "StockInfoSchema",
         "description": "\u9298\u67c4\u60c5\u5831\u30b9\u30ad\u30fc\u30de\uff08\u63a8\u5968\u9298\u67c4\u306b\u542b\u307e\u308c\u308b\uff09"
       },
@@ -1371,10 +1285,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "StockPriceHistoryResponse",
         "description": "\u682a\u4fa1\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
       },
@@ -1460,9 +1371,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "date"
-        ],
+        "required": ["date"],
         "title": "StockPriceItemSchema",
         "description": "\u682a\u4fa1\u5c65\u6b74\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de"
       },
@@ -1668,9 +1577,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "date"
-        ],
+        "required": ["date"],
         "title": "TechnicalIndicatorItemSchema",
         "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u30a2\u30a4\u30c6\u30e0\u30b9\u30ad\u30fc\u30de\uff08\u4e3b\u8981\u6307\u6a19\u306e\u307f\uff09"
       },
@@ -1689,10 +1596,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "title": "TechnicalIndicatorResponse",
         "description": "\u30c6\u30af\u30cb\u30ab\u30eb\u6307\u6a19\u5c65\u6b74\u30ec\u30b9\u30dd\u30f3\u30b9"
       },
@@ -1729,11 +1633,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     }

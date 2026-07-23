@@ -47,24 +47,16 @@ export default function AboutPage() {
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="bg-card border border-border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-2 text-emerald-400">
-              📈 週次予測データ
-            </h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              毎週土曜日の朝に更新
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-emerald-400">📈 週次予測データ</h3>
+            <p className="text-sm text-muted-foreground mb-2">毎週土曜日の朝に更新</p>
             <p className="text-base text-foreground">
               前週の市場データを分析し、翌週（月曜〜金曜）の推奨銘柄を算出します。買い推奨・売り推奨それぞれTop
               10銘柄を提示します。
             </p>
           </div>
           <div className="bg-card border border-border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-2 text-blue-400">
-              📊 日次市場データ
-            </h3>
-            <p className="text-sm text-muted-foreground mb-2">
-              毎営業日 18:00頃に更新
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-blue-400">📊 日次市場データ</h3>
+            <p className="text-sm text-muted-foreground mb-2">毎営業日 18:00頃に更新</p>
             <p className="text-base text-foreground">
               J-Quants
               APIから取引終了後の株価・出来高・信用取引データを取得し、テクニカル指標を計算します。
@@ -87,9 +79,7 @@ export default function AboutPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {/* カテゴリ1: 移動平均線 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-emerald-400">
-              📊 移動平均線（13種）
-            </h3>
+            <h3 className="text-lg font-semibold mb-2 text-emerald-400">📊 移動平均線（13種）</h3>
             <p className="text-sm text-muted-foreground mb-3">
               価格のトレンドを把握する基本的な指標
             </p>
@@ -105,9 +95,7 @@ export default function AboutPage() {
             <h3 className="text-lg font-semibold mb-2 text-blue-400">
               📈 移動平均派生特徴量（14種）
             </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              移動平均線から算出される高度な指標
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">移動平均線から算出される高度な指標</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• 乖離率（価格とMAの距離）</li>
               <li>• GC/DCからの経過日数</li>
@@ -118,12 +106,8 @@ export default function AboutPage() {
 
           {/* カテゴリ3: 騰落率 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-amber-400">
-              📉 騰落率（10種）
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              価格変動の大きさを測定
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-amber-400">📉 騰落率（10種）</h3>
+            <p className="text-sm text-muted-foreground mb-3">価格変動の大きさを測定</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• 1日〜120日騰落率</li>
               <li>• 対数収益率（1日/5日/20日）</li>
@@ -132,12 +116,8 @@ export default function AboutPage() {
 
           {/* カテゴリ4: モメンタム系 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-red-400">
-              ⚡ モメンタム系（16種）
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              相場の勢いを測定する指標
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-red-400">⚡ モメンタム系（16種）</h3>
+            <p className="text-sm text-muted-foreground mb-3">相場の勢いを測定する指標</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• RSI（9日/14日/25日）</li>
               <li>• MACD（ヒストグラム含む）</li>
@@ -148,12 +128,8 @@ export default function AboutPage() {
 
           {/* カテゴリ5: トレンド指標 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-green-400">
-              📐 トレンド指標（13種）
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              トレンドの強さと方向性を判定
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-green-400">📐 トレンド指標（13種）</h3>
+            <p className="text-sm text-muted-foreground mb-3">トレンドの強さと方向性を判定</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• ADX（±DI含む）</li>
               <li>• パラボリックSAR</li>
@@ -166,9 +142,7 @@ export default function AboutPage() {
             <h3 className="text-lg font-semibold mb-2 text-purple-400">
               📊 ボラティリティ指標（12種）
             </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              価格変動の大きさを測定
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">価格変動の大きさを測定</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• ボリンジャーバンド（%B含む）</li>
               <li>• ATR（14日/20日）</li>
@@ -179,12 +153,8 @@ export default function AboutPage() {
 
           {/* カテゴリ7: 出来高系 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-cyan-400">
-              📦 出来高系（13種）
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              売買の活発度を測定
-            </p>
+            <h3 className="text-lg font-semibold mb-2 text-cyan-400">📦 出来高系（13種）</h3>
+            <p className="text-sm text-muted-foreground mb-3">売買の活発度を測定</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• 出来高移動平均（5日〜60日）</li>
               <li>• OBV（On-Balance Volume）</li>
@@ -198,9 +168,7 @@ export default function AboutPage() {
             <h3 className="text-lg font-semibold mb-2 text-yellow-400">
               📍 価格位置・高値安値（19種）
             </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              価格の相対的な位置を測定
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">価格の相対的な位置を測定</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• 高値・安値（5日〜52週）</li>
               <li>• 高値/安値からの乖離率</li>
@@ -213,9 +181,7 @@ export default function AboutPage() {
             <h3 className="text-lg font-semibold mb-2 text-orange-400">
               🕯️ ローソク足パターン（10種）
             </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              価格パターンの認識
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">価格パターンの認識</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• 十字線、ハンマー、流れ星等</li>
               <li>• 連続陽線・陰線日数</li>
@@ -225,9 +191,7 @@ export default function AboutPage() {
 
           {/* カテゴリ10: その他 */}
           <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2 text-pink-400">
-              ⭐ その他の指標（5種）
-            </h3>
+            <h3 className="text-lg font-semibold mb-2 text-pink-400">⭐ その他の指標（5種）</h3>
             <p className="text-sm text-muted-foreground mb-3">高度な複合指標</p>
             <ul className="text-sm text-foreground space-y-1">
               <li>• Awesome Oscillator</li>
@@ -255,8 +219,7 @@ export default function AboutPage() {
           </p>
           <div className="border-t border-border pt-4 mt-4">
             <p className="text-sm text-muted-foreground mb-2">
-              ⚠️
-              モデルの詳細なアーキテクチャやハイパーパラメータは非公開としています。
+              ⚠️ モデルの詳細なアーキテクチャやハイパーパラメータは非公開としています。
             </p>
             <p className="text-sm text-foreground">
               📖 ソースコードは GitHub で公開しています：
@@ -276,8 +239,7 @@ export default function AboutPage() {
       {/* フッター */}
       <section className="text-center py-8 border-t border-border">
         <p className="text-sm text-muted-foreground">
-          ⚠️
-          本サービスは投資助言ではありません。投資判断は自己責任でお願いします。
+          ⚠️ 本サービスは投資助言ではありません。投資判断は自己責任でお願いします。
         </p>
       </section>
     </div>

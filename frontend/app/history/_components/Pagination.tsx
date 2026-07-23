@@ -10,12 +10,7 @@ interface PaginationProps {
   indexFilter: string;
 }
 
-export function Pagination({
-  currentPage,
-  totalPages,
-  roundType,
-  indexFilter,
-}: PaginationProps) {
+export function Pagination({ currentPage, totalPages, roundType, indexFilter }: PaginationProps) {
   const buildHref = (page: number) => {
     const params = new URLSearchParams();
     params.set("page", page.toString());
@@ -88,10 +83,7 @@ export function Pagination({
         {getPageNumbers().map((page, index) => {
           if (page === "...") {
             return (
-              <span
-                key={`ellipsis-${index}`}
-                className="px-3 py-2 text-muted-foreground"
-              >
+              <span key={`ellipsis-${index}`} className="px-3 py-2 text-muted-foreground">
                 ...
               </span>
             );
@@ -105,9 +97,7 @@ export function Pagination({
               <Button
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                className={
-                  isActive ? "bg-blue-600 hover:bg-blue-700" : ""
-                }
+                className={isActive ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
                 {pageNum}
               </Button>

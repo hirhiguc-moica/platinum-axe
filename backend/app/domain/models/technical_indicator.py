@@ -70,23 +70,13 @@ class TechnicalIndicator(TimestampMixin, Base):
     )
 
     # 移動平均の傾き（Slope）
-    ma_5_slope_5d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA5の5日傾き"
-    )
-    ma_25_slope_5d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA25の5日傾き"
-    )
-    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA75の10日傾き"
-    )
+    ma_5_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA5の5日傾き")
+    ma_25_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA25の5日傾き")
+    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA75の10日傾き")
 
     # ゴールデンクロス/デッドクロスからの経過日数
-    days_since_gc_5_25: Mapped[int | None] = mapped_column(
-        Integer, comment="MA5×MA25 GCからの日数"
-    )
-    days_since_dc_5_25: Mapped[int | None] = mapped_column(
-        Integer, comment="MA5×MA25 DCからの日数"
-    )
+    days_since_gc_5_25: Mapped[int | None] = mapped_column(Integer, comment="MA5×MA25 GCからの日数")
+    days_since_dc_5_25: Mapped[int | None] = mapped_column(Integer, comment="MA5×MA25 DCからの日数")
     days_since_gc_25_75: Mapped[int | None] = mapped_column(
         Integer, comment="MA25×MA75 GCからの日数"
     )
@@ -116,9 +106,7 @@ class TechnicalIndicator(TimestampMixin, Base):
     # 対数収益率（Log Return）
     log_return_1d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="1日対数収益率")
     log_return_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="5日対数収益率")
-    log_return_20d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="20日対数収益率"
-    )
+    log_return_20d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="20日対数収益率")
 
     # ==========================================
     # 4. モメンタム系
@@ -177,9 +165,7 @@ class TechnicalIndicator(TimestampMixin, Base):
     parabolic_sar: Mapped[Decimal | None] = mapped_column(
         Numeric(10, 2), comment="パラボリックSAR値"
     )
-    sar_direction: Mapped[str | None] = mapped_column(
-        String(10), comment="SAR方向（LONG/SHORT）"
-    )
+    sar_direction: Mapped[str | None] = mapped_column(String(10), comment="SAR方向（LONG/SHORT）")
 
     # 一目均衡表（Ichimoku）
     tenkan_sen: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="転換線（9日）")
@@ -230,9 +216,7 @@ class TechnicalIndicator(TimestampMixin, Base):
 
     # ケルトナーチャネル
     keltner_upper: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="ケルトナー上限")
-    keltner_middle: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), comment="ケルトナー中心"
-    )
+    keltner_middle: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="ケルトナー中心")
     keltner_lower: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="ケルトナー下限")
 
     # ==========================================
@@ -245,7 +229,9 @@ class TechnicalIndicator(TimestampMixin, Base):
     volume_ma_60: Mapped[int | None] = mapped_column(comment="60日平均出来高")
 
     # 出来高比率
-    volume_ratio_5: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="出来高比率（5日）")
+    volume_ratio_5: Mapped[Decimal | None] = mapped_column(
+        Numeric(8, 4), comment="出来高比率（5日）"
+    )
     volume_ratio_20: Mapped[Decimal | None] = mapped_column(
         Numeric(8, 4), comment="出来高比率（20日）"
     )
@@ -266,7 +252,9 @@ class TechnicalIndicator(TimestampMixin, Base):
     vwap: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="VWAP")
 
     # 出来高加重移動平均
-    vwma_20: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="20日出来高加重移動平均")
+    vwma_20: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 2), comment="20日出来高加重移動平均"
+    )
 
     # CMF（Chaikin Money Flow）
     cmf_20: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="20日CMF")
@@ -334,12 +322,8 @@ class TechnicalIndicator(TimestampMixin, Base):
 
     # 実体・ヒゲの比率
     body_size: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="実体サイズ")
-    upper_shadow_ratio: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="上ヒゲ比率"
-    )
-    lower_shadow_ratio: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="下ヒゲ比率"
-    )
+    upper_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="上ヒゲ比率")
+    lower_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="下ヒゲ比率")
 
     # ==========================================
     # 10. その他の指標
@@ -374,6 +358,5 @@ class TechnicalIndicator(TimestampMixin, Base):
 
     def __repr__(self) -> str:
         return (
-            f"<TechnicalIndicator(code={self.stock_code}, date={self.date}, "
-            f"rsi_14={self.rsi_14})>"
+            f"<TechnicalIndicator(code={self.stock_code}, date={self.date}, rsi_14={self.rsi_14})>"
         )
