@@ -97,7 +97,7 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ---
 
-## 現在の状態（2026-07-24 深夜）
+## 現在の状態（2026-07-24 深夜 - フェーズ6-2完了）
 
 ### 環境
 
@@ -117,10 +117,10 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 ### データベース
 
 - ✅ 8テーブル作成完了
-  - `markets` (市場区分マスタ6件)
-  - `sectors` (33業種マスタ33件)
-  - `sector17s` (17業種マスタ18件) ✨NEW
-  - `stock_master` (銘柄マスタ10件 → 拡張完了: info_date, sector17_code, scale_category, margin_code) ✨UPDATE
+  - `markets` (市場区分マスタ **10件** - JPX公式コード、Alembic管理) ✨UPDATE
+  - `sectors` (33業種マスタ **34件** - 33業種+9999、Alembic管理) ✨UPDATE
+  - `sector17s` (17業種マスタ18件 - Alembic管理) ✨NEW
+  - `stock_master` (銘柄マスタ **4444件** - 全銘柄取得完了、info_date/sector17_code/scale_category/margin_code追加) ✨UPDATE
   - `rounds` (ラウンド32件)
   - `round_recommendations` (推奨銘柄320件)
   - `stock_prices_daily` (株価240日分 - トヨタのみ)
@@ -205,7 +205,7 @@ ml/                                 # 機械学習開発
 ### ブランチ
 
 - `main` - メインブランチ
-- `feature/jpx_api` - J-Quants API連携実装中（現在のブランチ）
+- `feature/jpx_api_v2` - J-Quants API連携実装中（現在のブランチ）
 
 ---
 
@@ -246,42 +246,89 @@ ml/                                 # 機械学習開発
 
 **成果物**:
 - ✅ **DBスキーマ拡張**
-  - `sector17s` テーブル作成 + マスタデータ18件INSERT
+  - `sector17s` テーブル作成 + マスタデータ18件INSERT（Alembic管理）
+  - `markets` テーブル置き換え（JPX公式コード10件、Alembic管理）
+  - `sectors` テーブル置き換え（東証公式34件、Alembic管理）
   - `stock_master` テーブル拡張（4カラム追加）
     - `info_date` - 情報適用年月日（更新判断用）
     - `sector17_code` - 17業種コード（外部キー）
     - `scale_category` - 規模区分（TOPIX分類）
     - `margin_code` - 信用区分コード（1: 信用 / 2: 貸借 / 3: その他）
-  - Alembicマイグレーション実行完了
+  - Alembicマイグレーション3本実行完了
+    - `20260724_0100`: sector17s追加
+    - `20260724_0200`: markets JPX公式コード化
+    - `20260724_0210`: sectors 34件化
 
 - ✅ **ドキュメント**
   - `docs/database/schemas/sector17s.md` 作成
+  - `docs/database/schemas/markets.md` 更新（JPX公式コード詳細）
   - `docs/database/schemas/stock_master.md` 更新（コード値説明追加）
 
 - ✅ **実装**
   - `backend/app/domain/models/sector17.py` - Sector17モデル作成
   - `backend/app/domain/models/stock.py` - StockMasterモデル拡張
+  - `backend/app/shared/config.py` - J-Quants API V1→V2仕様変更
   - `backend/jobs/collectors/jquants_client.py` - J-Quants API V2クライアント
   - `backend/jobs/collectors/fetch_stock_master.py` - 銘柄マスタ取得スクリプト
   - `backend/.env.example` 更新（JQUANTS_API_KEY追加）
+  - `backend/scripts/seeds/seed_markets.py`, `seed_sectors.py` 更新（参考用）
 
 **動作確認**:
 - ✅ API接続テスト成功（全4444銘柄取得確認）
-- ⏸️ 銘柄マスタ取得スクリプト実行（次回セッションで実行予定）
+- ✅ **銘柄マスタ取得スクリプト実行成功（4444銘柄DB保存完了）** 🎉
+- ✅ 外部キー制約クリア（markets, sectors, sector17s）
+- ✅ info_dateによる更新判定機能確認
 
 ---
 
-#### 6-3. 株価データ取得（銘柄マスタ取得後）
+#### 6-3. 株価データ取得（次回セッション）
 
 **目的**: 過去10年分（2015〜2025）の全銘柄株価データを取得
 
-**実装予定**: 銘柄マスタ取得完了後に着手
-2. 各銘柄ループ
-   - 株価データ取得（10年分）
-   - DB保存（`stock_prices_daily`）
-   - 進捗保存（JSON）
-   - レート制限対策（sleep）
-3. 完了通知
+**段階的アプローチ（推奨）**:
+
+**Step 1: プロトタイプ実装（次回セッション、最優先）**
+```
+目的：動作確認 + ML開発を早期開始
+対象：数銘柄（3〜5銘柄） × 過去1年分
+  - トヨタ自動車（7203）
+  - ソニー（6758）
+  - ファーストリテイリング（9983）
+所要時間：約30分
+```
+
+**実装内容**:
+1. `backend/jobs/collectors/fetch_stock_prices.py` 作成
+2. J-Quants API V2で株価データ取得（daily_quotes API）
+3. stock_prices_dailyテーブルに保存
+4. 動作確認（約750レコード保存確認）
+
+**Step 2: ML開発環境準備**
+```
+目的：取得したデータで探索的分析開始
+対象：ml/notebooks/01_data_exploration.ipynb 作成
+所要時間：約20分
+```
+
+**Step 3: 全銘柄取得スクリプト拡張（オプション）**
+```
+対象：全4444銘柄 × 過去10年分
+期間：約2500営業日 × 4444銘柄 = 約1100万レコード
+実装：
+  - 進捗保存機能（JSON）
+  - レート制限対策（年単位で分割取得）
+  - バックグラウンド実行対応
+所要時間：数時間〜半日（見込み）
+実行方法：バックグラウンド実行 + 進捗保存
+```
+
+**次回セッション作業見積もり**: 1〜1.5時間
+| タスク | 所要時間 | 優先度 |
+|--------|---------|--------|
+| プロトタイプスクリプト | 30分 | ⭐⭐⭐ |
+| 動作確認 | 10分 | ⭐⭐⭐ |
+| ML環境準備 | 20分 | ⭐⭐ |
+| 全銘柄対応 | 30分 | ⭐ |
 
 ---
 
@@ -407,29 +454,31 @@ Cloud Scheduler
 ✅ 完了:
   1. フェーズ5: ディレクトリリファクタリング完了
   2. フェーズ6-1: J-Quants API仕様調査 + ドキュメント化完了
+  3. フェーズ6-2: 銘柄マスタ取得完了（全4444銘柄） 🎉
 
-次のセッション（APIキー受領後）:
-  3. フェーズ6-2: 銘柄マスタ取得（最優先！）
-     - APIクライアント実装
-     - 銘柄マスタ取得スクリプト実装
-     - 全銘柄約3800件のデータ取得
+🎯 次のセッション（最優先）:
+  4. フェーズ6-3: 株価データ取得（プロトタイプ）
+     - 数銘柄×1年分で動作確認（30分）
+     - 早期にML開発開始可能に
+     - 全銘柄対応はオプション（バックグラウンド実行）
 
-その後:
-  4. フェーズ6-3: 株価データ取得（過去10年分）
-     - 初回全件データ取得（2015〜2025）
-     - 少なくとも数銘柄×1年分のデータがあればJupyter Notebook開始可能
+その後の優先順位:
   5. フェーズ7-1: Jupyter Notebookでモデル構築（データ探索から開始）
-  6. フェーズ6-4: 日次差分取得実装
+     - 取得済みの数銘柄データで探索的分析
+     - 特徴量エンジニアリング
+     - LightGBMでプロトタイプモデル構築
+  6. フェーズ6-3（続き）: 全銘柄×10年データ取得（バックグラウンド）
   7. フェーズ6-5: テクニカル指標計算バッチ
-  8. フェーズ7-2: 週次推論パイプライン
-  9. フェーズ6-6: GCPデプロイ（自動化）
+  8. フェーズ6-4: 日次差分取得実装
+  9. フェーズ7-2: 週次推論パイプライン
+ 10. フェーズ6-6: GCPデプロイ（自動化）
 ```
 
 **段階的アプローチ**:
-- まず銘柄マスタ取得で全銘柄情報を確保
-- 株価データは1〜2銘柄の過去1年分で動作確認
-- Jupyter Notebookでプロトタイプ検証可能になったら並行作業
-- バックグラウンドで全銘柄×10年データ取得継続
+- ✅ 銘柄マスタ取得完了（全4444銘柄）
+- ⏭️  株価データは3〜5銘柄の過去1年分で動作確認（次回）
+- ⏭️  Jupyter Notebookでプロトタイプ検証開始（次回）
+- ⏭️  バックグラウンドで全銘柄×10年データ取得（並行作業）
 
 ---
 
@@ -479,30 +528,37 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-24 深夜（フェーズ6-2：銘柄マスタ取得機能実装完了）
+- **日時**: 2026-07-24 深夜（フェーズ6-2：銘柄マスタ取得完全完了）
 - **作業者**: Claude Code
-- **ブランチ**: feature/jpx_api
+- **ブランチ**: feature/jpx_api_v2
 - **変更内容**:
-  - ✅ **フェーズ6-2完了: 銘柄マスタ取得機能実装**
-    - **DBスキーマ拡張**
-      - Alembicマイグレーション作成・実行完了
-      - `sector17s` テーブル作成 + マスタデータ18件INSERT
-      - `stock_master` テーブル拡張（4カラム追加: info_date, sector17_code, scale_category, margin_code）
+  - ✅ **フェーズ6-2完全完了: 銘柄マスタ取得機能実装 + 全4444銘柄取得成功** 🎉
+    - **DBスキーマ拡張 + マスタデータ整備**
+      - Alembicマイグレーション3本作成・実行完了
+        - `20260724_0100`: sector17s追加（18件）
+        - `20260724_0200`: markets JPX公式コード化（10件）
+        - `20260724_0210`: sectors 34件化（33業種+9999）
+      - `stock_master` テーブル拡張（4カラム追加）
+      - 全マスタテーブルをAlembic管理化（seedスクリプト不要に）
+    - **コード品質改善**
+      - `fetch_stock_master.py`: DATABASE_URLハードコード削除（.envから読み込み）
+      - `config.py`: J-Quants API V1→V2仕様変更（JQUANTS_API_KEY）
     - **ドキュメント**
       - `docs/database/schemas/sector17s.md` 作成
+      - `docs/database/schemas/markets.md` 更新（JPX公式コード詳細）
       - `docs/database/schemas/stock_master.md` 更新（コード値説明追加）
     - **モデル実装**
       - `backend/app/domain/models/sector17.py` 作成
       - `backend/app/domain/models/stock.py` 拡張
-      - `backend/app/domain/models/__init__.py` 更新
+      - `backend/app/shared/config.py` V2仕様変更
     - **APIクライアント・スクリプト実装**
       - `backend/jobs/collectors/jquants_client.py` 実装
       - `backend/jobs/collectors/fetch_stock_master.py` 実装
-      - `backend/.env.example` 更新
     - **動作確認**
-      - API接続テスト成功（全4444銘柄取得確認）
-      - 規模区分6種類、信用区分3種類を確認
-- **次回**: フェーズ6-2の続き
-  - 銘柄マスタ取得スクリプト実行（約4400銘柄のDB保存）
-  - スクリプトの改善（DATABASE_URL環境変数化、指数組入判定ロジック実装）
-  - 動作確認・デバッグ
+      - ✅ 全4444銘柄取得成功（DB保存完了）
+      - ✅ 外部キー制約クリア（markets/sectors/sector17s）
+      - ✅ info_dateによる更新判定機能確認（2回目実行で全件スキップ）
+- **次回**: フェーズ6-3：株価データ取得
+  - 過去10年分（2015〜2025）の株価データ取得スクリプト実装
+  - 段階的アプローチ：まず数銘柄×1年分で動作確認
+  - バックグラウンドで全銘柄×10年データ取得

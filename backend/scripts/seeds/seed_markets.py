@@ -1,11 +1,58 @@
-"""市場マスタのシードデータ"""
+"""市場マスタのシードデータ（JPX公式コード）"""
 
-# 東証市場区分（2022年4月再編後）
+# JPX（日本取引所グループ）公式の市場区分コード
+# 出典: J-Quants API V2 仕様
 MARKETS_DATA = [
-    # プライム市場
+    # === 旧市場区分（2022年4月以前） ===
     {
-        "market_code": "PRIME",
-        "market_name": "プライム（内国株式）",
+        "market_code": "0101",
+        "market_name": "東証一部",
+        "market_short_name": "東証一部",
+        "market_abbreviation": "東1",
+        "market_category": "LEGACY",
+        "market_type": "内国株式",
+        "sort_order": 11,
+    },
+    {
+        "market_code": "0102",
+        "market_name": "東証二部",
+        "market_short_name": "東証二部",
+        "market_abbreviation": "東2",
+        "market_category": "LEGACY",
+        "market_type": "内国株式",
+        "sort_order": 12,
+    },
+    {
+        "market_code": "0104",
+        "market_name": "マザーズ",
+        "market_short_name": "マザーズ",
+        "market_abbreviation": "MTH",
+        "market_category": "LEGACY",
+        "market_type": "内国株式",
+        "sort_order": 14,
+    },
+    {
+        "market_code": "0106",
+        "market_name": "JASDAQ スタンダード",
+        "market_short_name": "JASDAQ STD",
+        "market_abbreviation": "JQ-STD",
+        "market_category": "LEGACY",
+        "market_type": "内国株式",
+        "sort_order": 16,
+    },
+    {
+        "market_code": "0107",
+        "market_name": "JASDAQ グロース",
+        "market_short_name": "JASDAQ GRW",
+        "market_abbreviation": "JQ-GRW",
+        "market_category": "LEGACY",
+        "market_type": "内国株式",
+        "sort_order": 17,
+    },
+    # === 新市場区分（2022年4月以降） ===
+    {
+        "market_code": "0111",
+        "market_name": "プライム",
         "market_short_name": "プライム",
         "market_abbreviation": "PR",
         "market_category": "PRIME",
@@ -13,18 +60,8 @@ MARKETS_DATA = [
         "sort_order": 1,
     },
     {
-        "market_code": "PRIME_F",
-        "market_name": "プライム（外国株式）",
-        "market_short_name": "プライム外国",
-        "market_abbreviation": "PR(外)",
-        "market_category": "PRIME",
-        "market_type": "外国株式",
-        "sort_order": 4,
-    },
-    # スタンダード市場
-    {
-        "market_code": "STANDARD",
-        "market_name": "スタンダード（内国株式）",
+        "market_code": "0112",
+        "market_name": "スタンダード",
         "market_short_name": "スタンダード",
         "market_abbreviation": "ST",
         "market_category": "STANDARD",
@@ -32,32 +69,32 @@ MARKETS_DATA = [
         "sort_order": 2,
     },
     {
-        "market_code": "STANDARD_F",
-        "market_name": "スタンダード（外国株式）",
-        "market_short_name": "スタンダード外国",
-        "market_abbreviation": "ST(外)",
-        "market_category": "STANDARD",
-        "market_type": "外国株式",
-        "sort_order": 5,
-    },
-    # グロース市場
-    {
-        "market_code": "GROWTH",
-        "market_name": "グロース（内国株式）",
+        "market_code": "0113",
+        "market_name": "グロース",
         "market_short_name": "グロース",
         "market_abbreviation": "GR",
         "market_category": "GROWTH",
         "market_type": "内国株式",
         "sort_order": 3,
     },
+    # === その他 ===
     {
-        "market_code": "GROWTH_F",
-        "market_name": "グロース（外国株式）",
-        "market_short_name": "グロース外国",
-        "market_abbreviation": "GR(外)",
-        "market_category": "GROWTH",
-        "market_type": "外国株式",
-        "sort_order": 6,
+        "market_code": "0105",
+        "market_name": "TOKYO PRO MARKET",
+        "market_short_name": "PRO Market",
+        "market_abbreviation": "PRO",
+        "market_category": "OTHER",
+        "market_type": "内国株式",
+        "sort_order": 15,
+    },
+    {
+        "market_code": "0109",
+        "market_name": "その他",
+        "market_short_name": "その他",
+        "market_abbreviation": "OTHER",
+        "market_category": "OTHER",
+        "market_type": "内国株式",
+        "sort_order": 99,
     },
 ]
 

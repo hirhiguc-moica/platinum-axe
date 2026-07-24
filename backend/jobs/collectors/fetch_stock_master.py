@@ -11,13 +11,20 @@ J-Quants API から銘柄マスタを取得してDBに保存する。
     - 2回目以降: info_dateで更新判断（新しいデータのみ更新）
 """
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # プロジェクトルートをPYTHONPATHに追加
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# .envファイルを読み込み
+env_path = project_root / ".env"
+load_dotenv(env_path)
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -45,8 +52,14 @@ def fetch_and_save_stock_master():
     print(f"✅ 銘柄マスタ取得成功: {len(df)}銘柄")
 
     # 3. DB接続
-    # TODO: 環境変数から取得する実装に変更
-    database_url = "postgresql://platinum:platinum@localhost:5432/platinum_axe"
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        print(f"❌ DATABASE_URLが設定されていません")
+        return
+
+    # 非同期版のURL（+asyncpg）を同期版に変換
+    database_url = database_url.replace("+asyncpg", "")
+
     engine = create_engine(database_url)
     print(f"✅ DB接続成功")
 
