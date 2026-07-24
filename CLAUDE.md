@@ -97,7 +97,7 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ---
 
-## 現在の状態（2026-07-23 深夜）
+## 現在の状態（2026-07-24 深夜）
 
 ### 環境
 
@@ -116,10 +116,11 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ### データベース
 
-- ✅ 7テーブル作成完了
+- ✅ 8テーブル作成完了
   - `markets` (市場区分マスタ6件)
-  - `sectors` (業種マスタ33件)
-  - `stock_master` (銘柄マスタ10件)
+  - `sectors` (33業種マスタ33件)
+  - `sector17s` (17業種マスタ18件) ✨NEW
+  - `stock_master` (銘柄マスタ10件 → 拡張完了: info_date, sector17_code, scale_category, margin_code) ✨UPDATE
   - `rounds` (ラウンド32件)
   - `round_recommendations` (推奨銘柄320件)
   - `stock_prices_daily` (株価240日分 - トヨタのみ)
@@ -187,7 +188,8 @@ backend/
 │
 └── jobs/                           # GCP Cloud Run Jobsで実行
     ├── collectors/                 # データ収集（J-Quants API）
-    │   └── .gitkeep
+    │   ├── jquants_client.py       # J-Quants API V2クライアント ✨NEW
+    │   └── fetch_stock_master.py   # 銘柄マスタ取得スクリプト ✨NEW
     ├── preprocessors/              # 前処理・指標計算
     │   └── .gitkeep
     └── predictors/                 # 推論
@@ -202,7 +204,8 @@ ml/                                 # 機械学習開発
 
 ### ブランチ
 
-`main`
+- `main` - メインブランチ
+- `feature/jpx_api` - J-Quants API連携実装中（現在のブランチ）
 
 ---
 
@@ -214,6 +217,7 @@ ml/                                 # 機械学習開発
 **✅ Linter/Formatter導入完了（Biome + Ruff）**
 **✅ フェーズ5完了: ディレクトリ構成リファクタリング完了**
 **✅ フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化完了** 🎉
+**✅ フェーズ6-2完了: 銘柄マスタ取得機能実装完了** 🎉
 
 ### 🎯 フェーズ6: J-Quants API連携 + データ蓄積バッチ（進行中）
 
@@ -238,118 +242,32 @@ ml/                                 # 機械学習開発
 
 ---
 
-#### 🔄 6-2. 銘柄マスタ取得（次の作業）
+#### ✅ 6-2. 銘柄マスタ取得（完了）
 
-**前提条件**:
-- ❌ J-Quants API アカウント登録（開発者が実施）
-- ❌ APIキー取得（開発者から提供予定）
+**成果物**:
+- ✅ **DBスキーマ拡張**
+  - `sector17s` テーブル作成 + マスタデータ18件INSERT
+  - `stock_master` テーブル拡張（4カラム追加）
+    - `info_date` - 情報適用年月日（更新判断用）
+    - `sector17_code` - 17業種コード（外部キー）
+    - `scale_category` - 規模区分（TOPIX分類）
+    - `margin_code` - 信用区分コード（1: 信用 / 2: 貸借 / 3: その他）
+  - Alembicマイグレーション実行完了
 
-**環境変数設定**:
+- ✅ **ドキュメント**
+  - `docs/database/schemas/sector17s.md` 作成
+  - `docs/database/schemas/stock_master.md` 更新（コード値説明追加）
 
-`backend/.env` に追加：
-```bash
-# J-Quants API
-JQUANTS_API_KEY=your_api_key_here  # 開発者から提供されるAPIキー
-```
+- ✅ **実装**
+  - `backend/app/domain/models/sector17.py` - Sector17モデル作成
+  - `backend/app/domain/models/stock.py` - StockMasterモデル拡張
+  - `backend/jobs/collectors/jquants_client.py` - J-Quants API V2クライアント
+  - `backend/jobs/collectors/fetch_stock_master.py` - 銘柄マスタ取得スクリプト
+  - `backend/.env.example` 更新（JQUANTS_API_KEY追加）
 
-`backend/.env.example` を更新：
-```bash
-# J-Quants API
-JQUANTS_API_KEY=  # J-Quants API Standardプランのキー
-```
-
-**実装計画**:
-
-**Step 1: APIクライアント実装**
-
-`backend/jobs/collectors/jquants_client.py` を新規作成：
-
-```python
-"""J-Quants API V2クライアント"""
-import os
-from typing import Optional
-import httpx
-from dotenv import load_dotenv
-
-load_dotenv()
-
-class JQuantsClient:
-    """J-Quants API V2クライアント"""
-
-    BASE_URL = "https://api.jquants.com/v2"
-
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("JQUANTS_API_KEY")
-        if not self.api_key:
-            raise ValueError("JQUANTS_API_KEY is required")
-
-        self.client = httpx.Client(
-            base_url=self.BASE_URL,
-            headers={
-                "Authorization": f"Bearer {self.api_key}"
-            },
-            timeout=30.0
-        )
-
-    def get_equities_master(self) -> dict:
-        """銘柄マスタ取得
-
-        エンドポイント: GET /v2/equities/master
-        API仕様: docs/batch/jquants-api.md 参照
-        DBテーブル: docs/database/schemas/stock_master.md 参照
-
-        Returns:
-            dict: 銘柄マスタデータ（JSON）
-        """
-        response = self.client.get("/equities/master")
-        response.raise_for_status()
-        return response.json()
-```
-
-**Step 2: データ取得・保存スクリプト実装**
-
-`backend/jobs/collectors/fetch_stock_master.py` を新規作成：
-
-```python
-"""銘柄マスタ取得スクリプト"""
-from jquants_client import JQuantsClient
-# TODO: SQLAlchemyでDB保存処理を実装
-
-def fetch_and_save_stock_master():
-    """銘柄マスタを取得してDBに保存"""
-
-    # 1. APIから取得
-    client = JQuantsClient()
-    data = client.get_equities_master()
-
-    # 2. DB保存（TODO: 実装）
-    # ... SQLAlchemyでinsert/update
-
-    print(f"取得完了: {len(data.get('stocks', []))}銘柄")
-
-if __name__ == "__main__":
-    fetch_and_save_stock_master()
-```
-
-**Step 3: 実行**
-
-```bash
-# DevContainer内で実行
-cd /workspaces/platinum-axe
-uv run python backend/jobs/collectors/fetch_stock_master.py
-```
-
-**Step 4: 動作確認**
-
-- [ ] APIキー設定確認
-- [ ] APIリクエスト成功確認
-- [ ] レスポンスデータ確認
-- [ ] DB保存確認（全銘柄約3800件）
-
-**参考ドキュメント**:
-- API仕様: `docs/batch/jquants-api.md` - 「1. 銘柄マスタ取得」セクション
-- DBテーブル: `docs/database/schemas/stock_master.md`
-- API対応表: `docs/database/overview.md` - Layer 1
+**動作確認**:
+- ✅ API接続テスト成功（全4444銘柄取得確認）
+- ⏸️ 銘柄マスタ取得スクリプト実行（次回セッションで実行予定）
 
 ---
 
@@ -561,26 +479,30 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-23 深夜（フェーズ6-1：J-Quants API仕様調査 + ドキュメント化完了）
+- **日時**: 2026-07-24 深夜（フェーズ6-2：銘柄マスタ取得機能実装完了）
 - **作業者**: Claude Code
+- **ブランチ**: feature/jpx_api
 - **変更内容**:
-  - ✅ **フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化**
-    - `docs/batch/jquants-api.md` 作成
-      - Standardプラン全17種のAPI詳細調査完了
-      - データ期間の正確な情報確認（過去10年）
-      - レート制限（120件/分）、認証方法（APIキー方式）
-      - APIとDBテーブルの対応表（更新頻度・更新時刻・更新ジョブ列付き）
-    - `docs/database/overview.md` 作成
-      - Layer構造の説明（Layer 1〜4）
-      - 全23テーブルの対応表（実装状況付き）
-      - データフロー図
-    - `docs/database/schemas/` ディレクトリ作成
-      - 実装済み8テーブルを個別md化（markets, sectors, stock_master, stock_prices_daily, technical_indicators, rounds, round_recommendations, round_results）
-      - 各テーブルにソースコードへのリンク追加
-    - `docs/database/schemas.md` 削除（個別ファイルに分割）
-- **次回**: フェーズ6-2（銘柄マスタ取得）
-  - 前提条件: J-Quants API アカウント登録 + APIキー取得（開発者が実施）
-  - 環境変数設定（`.env` に `JQUANTS_API_KEY` 追加）
-  - APIクライアント実装（`backend/jobs/collectors/jquants_client.py`）
-  - 銘柄マスタ取得スクリプト実装（`backend/jobs/collectors/fetch_stock_master.py`）
-  - 全銘柄約3800件のデータ取得
+  - ✅ **フェーズ6-2完了: 銘柄マスタ取得機能実装**
+    - **DBスキーマ拡張**
+      - Alembicマイグレーション作成・実行完了
+      - `sector17s` テーブル作成 + マスタデータ18件INSERT
+      - `stock_master` テーブル拡張（4カラム追加: info_date, sector17_code, scale_category, margin_code）
+    - **ドキュメント**
+      - `docs/database/schemas/sector17s.md` 作成
+      - `docs/database/schemas/stock_master.md` 更新（コード値説明追加）
+    - **モデル実装**
+      - `backend/app/domain/models/sector17.py` 作成
+      - `backend/app/domain/models/stock.py` 拡張
+      - `backend/app/domain/models/__init__.py` 更新
+    - **APIクライアント・スクリプト実装**
+      - `backend/jobs/collectors/jquants_client.py` 実装
+      - `backend/jobs/collectors/fetch_stock_master.py` 実装
+      - `backend/.env.example` 更新
+    - **動作確認**
+      - API接続テスト成功（全4444銘柄取得確認）
+      - 規模区分6種類、信用区分3種類を確認
+- **次回**: フェーズ6-2の続き
+  - 銘柄マスタ取得スクリプト実行（約4400銘柄のDB保存）
+  - スクリプトの改善（DATABASE_URL環境変数化、指数組入判定ロジック実装）
+  - 動作確認・デバッグ
