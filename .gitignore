@@ -17,6 +17,9 @@ backend/.ruff_cache/
 backend/.env
 backend/.env.local
 
+# Job progress files
+backend/jobs/**/progress_*.json
+
 # Database
 *.db
 *.sqlite
