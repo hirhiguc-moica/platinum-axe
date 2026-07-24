@@ -11,6 +11,7 @@ from app.domain.models.base import Base, TimestampMixin
 if TYPE_CHECKING:
     from app.domain.models.market import Market
     from app.domain.models.sector import Sector
+    from app.domain.models.sector17 import Sector17
 
 
 class StockMaster(TimestampMixin, Base):
@@ -31,11 +32,26 @@ class StockMaster(TimestampMixin, Base):
         index=True,
         comment="業種コード（33業種分類）",
     )
+    sector17_code: Mapped[str | None] = mapped_column(
+        String(10),
+        ForeignKey("sector17s.sector17_code"),
+        index=True,
+        comment="17業種コード",
+    )
     market_code: Mapped[str | None] = mapped_column(
         String(10),
         ForeignKey("markets.market_code"),
         index=True,
         comment="市場区分コード",
+    )
+    scale_category: Mapped[str | None] = mapped_column(
+        String(50), comment="規模区分（TOPIX分類: TOPIX Core30, Large70, Mid400, Small 1/2）"
+    )
+    margin_code: Mapped[str | None] = mapped_column(
+        String(10), comment="信用区分コード（1: 信用 / 2: 貸借 / 3: その他）"
+    )
+    info_date: Mapped[date | None] = mapped_column(
+        Date, index=True, comment="情報適用年月日（APIのDateフィールド、更新判断に使用）"
     )
     listing_date: Mapped[date | None] = mapped_column(Date, comment="上場日")
     delisting_date: Mapped[date | None] = mapped_column(Date, comment="上場廃止日")
@@ -64,6 +80,13 @@ class StockMaster(TimestampMixin, Base):
         "Sector",
         foreign_keys=[sector_code],
         primaryjoin="foreign(StockMaster.sector_code) == Sector.sector_code",
+        viewonly=True,
+        lazy="selectin",
+    )
+    sector17: Mapped["Sector17"] = relationship(
+        "Sector17",
+        foreign_keys=[sector17_code],
+        primaryjoin="foreign(StockMaster.sector17_code) == Sector17.sector17_code",
         viewonly=True,
         lazy="selectin",
     )

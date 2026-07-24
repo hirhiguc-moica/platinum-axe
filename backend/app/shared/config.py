@@ -27,14 +27,10 @@ class Settings(BaseSettings):
         description="Redis接続URL",
     )
 
-    # J-Quants API
-    JQUANTS_REFRESH_TOKEN: str = Field(
+    # J-Quants API (V2)
+    JQUANTS_API_KEY: str = Field(
         default="",
-        description="J-Quants API リフレッシュトークン",
-    )
-    JQUANTS_API_BASE_URL: str = Field(
-        default="https://api.jquants.com/v1",
-        description="J-Quants API ベースURL",
+        description="J-Quants API Key (V2)",
     )
 
     # ML Model

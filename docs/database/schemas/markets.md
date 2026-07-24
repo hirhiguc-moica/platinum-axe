@@ -6,8 +6,9 @@
 
 ## データソース
 
-- **データ取得方法**: 手動管理
-- **更新頻度**: 不定期
+- **データ取得方法**: Alembicマイグレーション（自動投入）
+- **データ元**: JPX（日本取引所グループ）公式コード
+- **更新頻度**: 不定期（市場区分変更時のみ）
 - **更新時刻**: -
 - **更新ジョブ**: -
 
@@ -37,16 +38,32 @@
 | `ix_markets_market_code` | `market_code` | ✅ |
 | `ix_markets_market_category` | `market_category` | ❌ |
 
-## 登録データ（6件）
+## 登録データ（10件）
 
-| market_code | market_category | market_name |
-|------------|----------------|-------------|
-| 0111 | PRIME | プライム（内国株式） |
-| 0112 | STANDARD | スタンダード（内国株式） |
-| 0113 | GROWTH | グロース（内国株式） |
-| 0121 | PRIME | プライム（外国株式） |
-| 0122 | STANDARD | スタンダード（外国株式） |
-| 0123 | GROWTH | グロース（外国株式） |
+### 新市場区分（2022年4月以降）
+
+| market_code | market_category | market_name | 略号 |
+|------------|----------------|-------------|-----|
+| 0111 | PRIME | プライム | PR |
+| 0112 | STANDARD | スタンダード | ST |
+| 0113 | GROWTH | グロース | GR |
+
+### 旧市場区分（2022年4月以前）
+
+| market_code | market_category | market_name | 略号 |
+|------------|----------------|-------------|-----|
+| 0101 | LEGACY | 東証一部 | 東1 |
+| 0102 | LEGACY | 東証二部 | 東2 |
+| 0104 | LEGACY | マザーズ | MTH |
+| 0106 | LEGACY | JASDAQ スタンダード | JQ-STD |
+| 0107 | LEGACY | JASDAQ グロース | JQ-GRW |
+
+### その他
+
+| market_code | market_category | market_name | 略号 |
+|------------|----------------|-------------|-----|
+| 0105 | OTHER | TOKYO PRO MARKET | PRO |
+| 0109 | OTHER | その他 | OTHER |
 
 ## 関連テーブル
 
@@ -58,7 +75,8 @@
 
 ### Alembicマイグレーション
 
-- [20260722_1441_3e798dd4bfb9_initial_migration.py](../../../backend/alembic/versions/20260722_1441_3e798dd4bfb9_initial_migration.py#L26-L82)
+- [20260722_1441_3e798dd4bfb9_initial_migration.py](../../../backend/alembic/versions/20260722_1441_3e798dd4bfb9_initial_migration.py#L26-L82) - テーブル作成
+- [20260724_0200_b3c4d5e6f7g8_replace_markets_with_jpx_official_codes.py](../../../backend/alembic/versions/20260724_0200_b3c4d5e6f7g8_replace_markets_with_jpx_official_codes.py) - JPX公式コードで置き換え
 
 ### SQLAlchemyモデル
 
@@ -80,4 +98,5 @@ WHERE market_category = 'PRIME';
 
 ## 更新履歴
 
-- **2026-07-22**: 初版作成（Alembic migration）
+- **2026-07-24**: JPX公式コードで置き換え（10件）
+- **2026-07-22**: 初版作成（暫定データ6件）

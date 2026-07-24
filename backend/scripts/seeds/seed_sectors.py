@@ -71,6 +71,12 @@ SECTORS_DATA = [
     },
     {"sector_code": "8050", "sector_name": "不動産業", "sector_name_en": "Real Estate"},
     {"sector_code": "9050", "sector_name": "サービス業", "sector_name_en": "Services"},
+    # その他（業種分類なし: ETF、REIT、優先株式等）
+    {
+        "sector_code": "9999",
+        "sector_name": "その他（業種なし）",
+        "sector_name_en": "Other (No Sector)",
+    },
 ]
 
 
