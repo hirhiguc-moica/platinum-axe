@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, DateTime, Index, Numeric, String
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Index, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.models.base import Base, TimestampMixin
@@ -24,7 +24,7 @@ class StockPriceDaily(TimestampMixin, Base):
     high: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="高値")
     low: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="安値")
     close: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="終値")
-    volume: Mapped[int | None] = mapped_column(comment="出来高")
+    volume: Mapped[int | None] = mapped_column(BigInteger, comment="出来高")
     turnover_value: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), comment="売買代金")
 
     # 調整済み四本値
@@ -32,7 +32,7 @@ class StockPriceDaily(TimestampMixin, Base):
     adjusted_high: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後高値")
     adjusted_low: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後安値")
     adjusted_close: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="調整後終値")
-    adjusted_volume: Mapped[int | None] = mapped_column(comment="調整後出来高")
+    adjusted_volume: Mapped[int | None] = mapped_column(BigInteger, comment="調整後出来高")
     adjustment_factor: Mapped[Decimal | None] = mapped_column(Numeric(10, 6), comment="調整係数")
 
     # ストップ高/安フラグ
@@ -43,7 +43,9 @@ class StockPriceDaily(TimestampMixin, Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="API取得日時")
 
     __table_args__ = (
-        Index("idx_stock_prices_daily_code_date", "stock_code", "date", postgresql_using="btree"),
+        UniqueConstraint("stock_code", "date", name="uq_stock_prices_daily_code_date"),
+        # 注: UNIQUE制約が自動的にINDEXを作成するため、
+        # idx_stock_prices_daily_code_date は不要（削除済み）
         Index("idx_stock_prices_daily_date", "date", postgresql_using="btree"),
         {"comment": "株価日次データ"},
     )

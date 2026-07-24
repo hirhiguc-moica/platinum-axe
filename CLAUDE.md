@@ -218,6 +218,7 @@ ml/                                 # 機械学習開発
 **✅ フェーズ5完了: ディレクトリ構成リファクタリング完了**
 **✅ フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化完了** 🎉
 **✅ フェーズ6-2完了: 銘柄マスタ取得機能実装完了** 🎉
+**✅ フェーズ6-3完了: 株価データ取得機能実装完了** 🎉
 
 ### 🎯 フェーズ6: J-Quants API連携 + データ蓄積バッチ（進行中）
 
@@ -281,54 +282,60 @@ ml/                                 # 機械学習開発
 
 ---
 
-#### 6-3. 株価データ取得（次回セッション）
+#### ✅ 6-3. 株価データ取得（完了）
 
-**目的**: 過去10年分（2015〜2025）の全銘柄株価データを取得
+**目的**: 株価データ取得機能の実装と動作確認
 
-**段階的アプローチ（推奨）**:
+**成果物**:
+- ✅ **スクリプト実装**
+  - `backend/jobs/collectors/fetch_stock_prices.py` 実装完了
+  - 週単位分割（7日ずつ）でrate limit対策
+  - 進捗保存機能（JSON）でエラー時の再開対応
+  - `--test` オプションで1週間のテスト実行
+  - `--resume` オプションで進捗から再開
+  - `--wait` オプションで待機時間調整可能
 
-**Step 1: プロトタイプ実装（次回セッション、最優先）**
+- ✅ **DB拡張**
+  - Alembicマイグレーション作成・実行
+    - `20260724_2200_d7e8f9g0h1i2`: UNIQUE制約追加
+    - `20260724_2300_e8f9g0h1i2j3`: volume列をBIGINTに変更
+  - `stock_prices_daily` テーブルにUNIQUE制約追加
+  - volume/adjusted_volume列をBIGINT化（21億超の出来高対応）
+
+- ✅ **実装詳細**
+  - PostgreSQL UPSERT（`ON CONFLICT DO UPDATE`）で高速保存
+  - NaN処理完全対応（pandas → PostgreSQL）
+  - 型変換完全対応（Decimal, int, bool）
+  - bool変換対応（J-Quants APIの文字列 '0'/'1' → bool）
+  - TimestampMixin対応（id, created_at, updated_atを除外）
+
+**動作確認**:
+- ✅ テスト実行成功：19,119件を9.08秒でUPSERT完了
+- ✅ API取得: 3.12秒（7日分）
+- ✅ 全カラム正常保存確認
+  - 四本値（open, high, low, close）
+  - 出来高（volume, adjusted_volume）
+  - ストップ高・安（is_upper_limit, is_lower_limit）
+- ✅ ストップ高・安の正しい判定確認
+  - 通常: 19,036件（false, false）
+  - ストップ安: 27件（false, true）
+  - ストップ高: 55件（true, false）
+  - 両方該当: 1件（true, true）
+
+**使用例**:
+```bash
+# テストモード（1週間のみ取得）
+uv run python backend/jobs/collectors/fetch_stock_prices.py --test
+
+# 過去10年分取得
+uv run python backend/jobs/collectors/fetch_stock_prices.py
+
+# 期間指定
+uv run python backend/jobs/collectors/fetch_stock_prices.py --start-date 2024-01-01 --end-date 2024-12-31
+
+# 進捗から再開
+uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 ```
-目的：動作確認 + ML開発を早期開始
-対象：数銘柄（3〜5銘柄） × 過去1年分
-  - トヨタ自動車（7203）
-  - ソニー（6758）
-  - ファーストリテイリング（9983）
-所要時間：約30分
-```
-
-**実装内容**:
-1. `backend/jobs/collectors/fetch_stock_prices.py` 作成
-2. J-Quants API V2で株価データ取得（daily_quotes API）
-3. stock_prices_dailyテーブルに保存
-4. 動作確認（約750レコード保存確認）
-
-**Step 2: ML開発環境準備**
-```
-目的：取得したデータで探索的分析開始
-対象：ml/notebooks/01_data_exploration.ipynb 作成
-所要時間：約20分
-```
-
-**Step 3: 全銘柄取得スクリプト拡張（オプション）**
-```
-対象：全4444銘柄 × 過去10年分
-期間：約2500営業日 × 4444銘柄 = 約1100万レコード
-実装：
-  - 進捗保存機能（JSON）
-  - レート制限対策（年単位で分割取得）
-  - バックグラウンド実行対応
-所要時間：数時間〜半日（見込み）
-実行方法：バックグラウンド実行 + 進捗保存
-```
-
-**次回セッション作業見積もり**: 1〜1.5時間
-| タスク | 所要時間 | 優先度 |
-|--------|---------|--------|
-| プロトタイプスクリプト | 30分 | ⭐⭐⭐ |
-| 動作確認 | 10分 | ⭐⭐⭐ |
-| ML環境準備 | 20分 | ⭐⭐ |
-| 全銘柄対応 | 30分 | ⭐ |
 
 ---
 
@@ -528,37 +535,34 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-24 深夜（フェーズ6-2：銘柄マスタ取得完全完了）
+- **日時**: 2026-07-24 深夜（フェーズ6-3：株価データ取得完全完了）
 - **作業者**: Claude Code
 - **ブランチ**: feature/jpx_api_v2
 - **変更内容**:
-  - ✅ **フェーズ6-2完全完了: 銘柄マスタ取得機能実装 + 全4444銘柄取得成功** 🎉
-    - **DBスキーマ拡張 + マスタデータ整備**
-      - Alembicマイグレーション3本作成・実行完了
-        - `20260724_0100`: sector17s追加（18件）
-        - `20260724_0200`: markets JPX公式コード化（10件）
-        - `20260724_0210`: sectors 34件化（33業種+9999）
-      - `stock_master` テーブル拡張（4カラム追加）
-      - 全マスタテーブルをAlembic管理化（seedスクリプト不要に）
-    - **コード品質改善**
-      - `fetch_stock_master.py`: DATABASE_URLハードコード削除（.envから読み込み）
-      - `config.py`: J-Quants API V1→V2仕様変更（JQUANTS_API_KEY）
-    - **ドキュメント**
-      - `docs/database/schemas/sector17s.md` 作成
-      - `docs/database/schemas/markets.md` 更新（JPX公式コード詳細）
-      - `docs/database/schemas/stock_master.md` 更新（コード値説明追加）
-    - **モデル実装**
-      - `backend/app/domain/models/sector17.py` 作成
-      - `backend/app/domain/models/stock.py` 拡張
-      - `backend/app/shared/config.py` V2仕様変更
-    - **APIクライアント・スクリプト実装**
-      - `backend/jobs/collectors/jquants_client.py` 実装
-      - `backend/jobs/collectors/fetch_stock_master.py` 実装
+  - ✅ **フェーズ6-3完全完了: 株価データ取得機能実装 + 動作確認成功** 🎉
+    - **スクリプト実装**
+      - `backend/jobs/collectors/fetch_stock_prices.py` 実装完了
+      - 週単位分割（7日ずつ）でrate limit対策（60秒待機）
+      - 進捗保存機能（JSON）でエラー時の再開対応
+      - コマンドラインオプション（--test, --resume, --wait, --start-date, --end-date）
+    - **DB拡張**
+      - Alembicマイグレーション2本作成・実行完了
+        - `20260724_2200_d7e8f9g0h1i2`: UNIQUE制約追加
+        - `20260724_2300_e8f9g0h1i2j3`: volume列をBIGINTに変更
+      - `stock_prices_daily` テーブルにUNIQUE制約追加（stock_code, date）
+      - volume/adjusted_volume列をBIGINT化（21億超の出来高対応）
+    - **実装詳細**
+      - PostgreSQL UPSERT（`ON CONFLICT DO UPDATE`）で高速保存
+      - NaN処理完全対応（pandas → PostgreSQL）
+      - 型変換完全対応（Decimal, int, bool）
+      - J-Quants APIの文字列 '0'/'1' → bool 正しく変換
+      - TimestampMixin対応（id, created_at, updated_atを除外）
+      - SQLログ抑制（logging設定、echo=False）
     - **動作確認**
-      - ✅ 全4444銘柄取得成功（DB保存完了）
-      - ✅ 外部キー制約クリア（markets/sectors/sector17s）
-      - ✅ info_dateによる更新判定機能確認（2回目実行で全件スキップ）
-- **次回**: フェーズ6-3：株価データ取得
-  - 過去10年分（2015〜2025）の株価データ取得スクリプト実装
-  - 段階的アプローチ：まず数銘柄×1年分で動作確認
-  - バックグラウンドで全銘柄×10年データ取得
+      - ✅ テスト実行成功：19,119件を9.08秒でUPSERT完了
+      - ✅ API取得: 3.12秒（7日分、約7リクエスト）
+      - ✅ 全カラム正常保存確認（四本値、出来高、ストップ高・安）
+      - ✅ ストップ高・安の正しい判定確認（通常19,036件、ストップ安27件、ストップ高55件）
+- **次回**: 次のいずれかを優先
+  - オプション1: 全銘柄×10年データ取得（バックグラウンド実行）
+  - オプション2: ML環境準備（Jupyter Notebook）でプロトタイプモデル構築
