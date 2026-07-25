@@ -339,7 +339,48 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 ---
 
-#### 6-4. テクニカル指標計算バッチ
+#### 6-4. 日次差分取得（データ更新の自動化）
+
+**ファイル**: `backend/jobs/collectors/fetch_daily_stock_prices.py`
+
+**目的**: 毎営業日の最新株価データを自動取得
+
+**実装方針（冪等性担保）**:
+```python
+# progress.jsonではなく、DBの最新日付をソースとする
+max_date = session.query(func.max(StockPriceDaily.date)).scalar()
+start_date = max_date + timedelta(days=1) if max_date else default_start_date
+end_date = datetime.now().date()
+
+# start_date 〜 end_date の差分を取得
+```
+
+**progress.json方式の問題点**:
+- ❌ pod再配置で消失（永続化されていない）
+- ❌ バッチ停止時に進捗がわからない
+- ❌ 冪等性が担保できない
+
+**DBベース方式のメリット**:
+- ✅ DBは永続化されている
+- ✅ 最新日付は常に正確
+- ✅ 冪等性担保（何度実行しても同じ結果）
+- ✅ バックフィル（過去の欠損補完）も可能
+
+**実装内容**:
+- DBから最新日付を取得
+- J-Quants APIから差分データ取得
+- PostgreSQL UPSERTで保存
+- 欠損日の検出・補完機能
+
+**実行タイミング**:
+- 手動実行: `uv run python backend/jobs/collectors/fetch_daily_stock_prices.py`
+- 自動実行: GCP Cloud Scheduler（毎営業日17:30）
+
+**所要時間**: 約5-10分（全銘柄1日分）
+
+---
+
+#### 6-5. テクニカル指標計算バッチ
 
 **ファイル**: `backend/jobs/preprocessors/calculate_technical_indicators.py`
 
@@ -361,7 +402,7 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 ---
 
-#### 6-5. ファンダメンタルデータ取得
+#### 6-6. ファンダメンタルデータ取得
 
 **ファイル**: `backend/jobs/collectors/fetch_financials.py`
 
@@ -388,7 +429,7 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 ---
 
-#### 6-6. ファンダメンタル指標計算バッチ
+#### 6-7. ファンダメンタル指標計算バッチ
 
 **ファイル**: `backend/jobs/preprocessors/calculate_fundamental_indicators.py`
 
@@ -408,36 +449,6 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 **データ量**:
 - 全4444銘柄 × 約2500営業日 × 20項目 = 約2.2億データポイント
-
----
-
-#### 6-7. 日次差分データ取得
-
-**ファイル**: `backend/jobs/collectors/collect_daily_data.py`
-
-**目的**: 毎営業日の最新データを取得
-
-**仕様**:
-- **実行タイミング**: 毎営業日17:30（Cloud Schedulerで自動実行）
-- **対象期間**: 前営業日1日分
-- **対象銘柄**: 全銘柄（約3000銘柄）
-- **所要時間**: 5〜10分
-- **エラー対策**: リトライ + Slack通知
-
-**コマンド例**:
-```bash
-# ローカルテスト時
-uv run python backend/jobs/collectors/collect_daily_data.py \
-  --date 2025-12-23  # 省略時は前営業日
-```
-
-**処理フロー**:
-1. 対象日付決定（前営業日）
-2. 銘柄一覧取得
-3. 各銘柄の株価取得
-4. DB保存（`stock_prices_daily`）
-5. テクニカル指標計算トリガー
-6. 完了通知
 
 ---
 
@@ -525,22 +536,25 @@ Cloud Scheduler
   4. フェーズ6-3: 株価データ取得完了（10年分、約1100万レコード） 🎉
 
 🎯 次のセッション（最優先）:
-  5. フェーズ6-4: テクニカル指標計算バッチ
-     - 125項目のテクニカル指標を全銘柄×10年分計算
-     - 約13億データポイント
+  5. フェーズ6-4: 日次差分取得実装（データ更新の自動化）
+     - DBの最新日付ベースで差分取得（冪等性担保）
+     - progress.json依存を排除（pod再配置対策）
+     - 毎営業日の自動更新基盤を構築
 
 その後の優先順位:
-  6. フェーズ6-5: ファンダメンタルデータ取得
+  6. フェーズ6-5: テクニカル指標計算バッチ
+     - 125項目のテクニカル指標を全銘柄×10年分計算
+     - 約13億データポイント
+  7. フェーズ6-6: ファンダメンタルデータ取得
      - J-Quants API /v2/fins/summary から財務データ取得
      - 全銘柄×過去10年分の四半期決算データ（約18万レコード）
-  7. フェーズ6-6: ファンダメンタル指標計算バッチ
+  8. フェーズ6-7: ファンダメンタル指標計算バッチ
      - PER、PBR、ROE等20項目を計算
      - 約2.2億データポイント
-  8. フェーズ7-1: Jupyter Notebookでモデル構築
+  9. フェーズ7-1: Jupyter Notebookでモデル構築
      - テクニカル125項目 + ファンダメンタル20項目 = 145項目で学習
      - データ探索、特徴量エンジニアリング
      - LightGBMでプロトタイプモデル構築
-  9. フェーズ6-7: 日次差分取得実装
  10. フェーズ7-2: 週次推論パイプライン
  11. フェーズ6-8: GCPデプロイ（自動化）
 ```
@@ -604,11 +618,11 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-24（フェーズ6-3完了 + 作業計画更新）
+- **日時**: 2026-07-25（フェーズ6-3完全完了 + nullデータ検証完了）
 - **作業者**: Claude Code
 - **ブランチ**: feature/jpx_api_v2
 - **変更内容**:
-  - ✅ **フェーズ6-3完全完了: 株価データ取得完了（10年分、約1100万レコード）** 🎉
+  - ✅ **フェーズ6-3完全完了: 株価データ10年分取得成功（約1100万レコード）** 🎉
     - **スクリプト実装**
       - `backend/jobs/collectors/fetch_stock_prices.py` 実装完了
       - 週単位分割（7日ずつ）でrate limit対策
@@ -630,16 +644,23 @@ Cloud Scheduler
       - TimestampMixin対応（id, created_at, updated_atを除外）
       - SQLログ抑制（logging設定、echo=False）
       - 不要なデバッグログ削除（リクエスト数表示等）
-    - **動作確認**
-      - ✅ 全銘柄×10年分取得実行中（wait=2秒、約2時間見込み）
-      - ✅ Rate limit問題なし（0.47req/秒、十分な余裕）
-      - ✅ テスト実行成功：19,119件を9.08秒でUPSERT完了
-      - ✅ ストップ高・安の正しい判定確認
-  - ✅ **作業計画更新: ファンダメンタルデータ取得を追加**
-    - フェーズ6-5: ファンダメンタルデータ取得（新規追加）
-    - フェーズ6-6: ファンダメンタル指標計算バッチ（新規追加）
-    - 目的：テクニカル125項目 + ファンダメンタル20項目 = **145項目で高精度モデル構築**
-    - PER、PBR、ROE等の重要指標を追加
-- **次回**: フェーズ6-4：テクニカル指標計算バッチ
-  - 125項目のテクニカル指標を全銘柄×10年分計算
-  - 約13億データポイント
+    - **データ取得完了**
+      - ✅ **全4444銘柄×10年分（2016-07-25 〜 2026-07-24）取得完了**
+      - ✅ wait=2秒で約2時間で完了（Rate limit問題なし）
+      - ✅ 約1100万レコード取得（内国株式のみで有効データ多数）
+    - **nullデータ検証完了**
+      - ✅ J-Quants API自体がNaNを返している（取引なし日）
+      - ✅ Yahoo!ファイナンスとも一致（実装は正しい）
+      - ✅ ML学習時は `WHERE volume > 0` でフィルタすればOK
+      - ✅ 銘柄コードは5桁形式（J-Quants API仕様）
+    - **コード品質**
+      - ✅ `.gitignore`にprogress_*.json追加（Git管理から除外）
+      - ✅ Ruffフォーマット適用
+  - ✅ **作業計画更新: 優先順位見直し**
+    - **次回**: フェーズ6-4：日次差分取得実装（データ更新の自動化）
+    - DBベースの冪等な実装（progress.json依存排除、pod再配置対策）
+    - その後: テクニカル指標計算 → ファンダメンタルデータ取得 → ML構築
+- **次回**: フェーズ6-4：日次差分取得実装
+  - DBの最新日付ベースで差分取得（冪等性担保）
+  - progress.json依存を排除（pod再配置対策）
+  - 毎営業日の自動更新基盤を構築
