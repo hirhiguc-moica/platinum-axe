@@ -168,7 +168,7 @@ def fetch_and_save_stock_prices(
     # 1. APIクライアント初期化
     try:
         client = JQuantsClient()
-        print(f"✅ J-Quants APIクライアント初期化成功")
+        print("✅ J-Quants APIクライアント初期化成功")
     except ValueError as e:
         print(f"❌ APIキーが設定されていません: {e}")
         return
@@ -176,7 +176,7 @@ def fetch_and_save_stock_prices(
     # 2. DB接続
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
-        print(f"❌ DATABASE_URLが設定されていません")
+        print("❌ DATABASE_URLが設定されていません")
         return
 
     # 非同期版のURL（+asyncpg）を同期版に変換
@@ -184,7 +184,7 @@ def fetch_and_save_stock_prices(
 
     # SQLログを完全に抑制
     engine = create_engine(database_url, echo=False)
-    print(f"✅ DB接続成功")
+    print("✅ DB接続成功")
 
     # 3. 週単位で分割取得
     current_date = start_date
@@ -208,7 +208,7 @@ def fetch_and_save_stock_prices(
 
             # API取得（応答時間計測）
             request_start = time.time()
-            print(f"  🔄 API取得中...")
+            print("  🔄 API取得中...")
 
             try:
                 df = client.get_daily_quotes_range(
@@ -227,7 +227,7 @@ def fetch_and_save_stock_prices(
 
             # DB保存
             if len(df) > 0:
-                print(f"  🔄 DB保存中（UPSERT）...")
+                print("  🔄 DB保存中（UPSERT）...")
                 save_start = time.time()
                 inserted, updated, skipped = save_to_db(session, df)
                 save_elapsed = time.time() - save_start
