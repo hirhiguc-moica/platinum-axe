@@ -200,7 +200,7 @@ def fetch_and_save_stock_prices(
     session = Session(engine)
 
     try:
-        while current_date < end_date:
+        while current_date <= end_date:
             week_count += 1
             week_end = min(current_date + timedelta(days=6), end_date)
 
