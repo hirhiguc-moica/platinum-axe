@@ -26,11 +26,11 @@ sys.path.insert(0, str(project_root))
 env_path = project_root / ".env"
 load_dotenv(env_path)
 
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, select  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
 
-from app.domain.models import StockMaster
-from jobs.collectors.jquants_client import JQuantsClient
+from app.domain.models import StockMaster  # noqa: E402
+from jobs.collectors.jquants_client import JQuantsClient  # noqa: E402
 
 
 def fetch_and_save_stock_master():
@@ -41,30 +41,30 @@ def fetch_and_save_stock_master():
     # 1. APIクライアント初期化
     try:
         client = JQuantsClient()
-        print(f"✅ J-Quants APIクライアント初期化成功")
+        print("✅ J-Quants APIクライアント初期化成功")
     except ValueError as e:
         print(f"❌ APIキーが設定されていません: {e}")
         return
 
     # 2. 銘柄マスタ取得
-    print(f"\n🔄 J-Quants API から銘柄マスタ取得中...")
+    print("\n🔄 J-Quants API から銘柄マスタ取得中...")
     df = client.get_equities_master()
     print(f"✅ 銘柄マスタ取得成功: {len(df)}銘柄")
 
     # 3. DB接続
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
-        print(f"❌ DATABASE_URLが設定されていません")
+        print("❌ DATABASE_URLが設定されていません")
         return
 
     # 非同期版のURL（+asyncpg）を同期版に変換
     database_url = database_url.replace("+asyncpg", "")
 
     engine = create_engine(database_url)
-    print(f"✅ DB接続成功")
+    print("✅ DB接続成功")
 
     # 4. データ保存
-    print(f"\n🔄 DBに保存中...")
+    print("\n🔄 DBに保存中...")
     session = Session(engine)
 
     try:
@@ -133,7 +133,7 @@ def fetch_and_save_stock_master():
 
         # コミット
         session.commit()
-        print(f"\n✅ DB保存完了")
+        print("\n✅ DB保存完了")
         print(f"  - 新規追加: {inserted_count}件")
         print(f"  - 更新: {updated_count}件")
         print(f"  - スキップ: {skipped_count}件")
@@ -148,7 +148,7 @@ def fetch_and_save_stock_master():
     finally:
         session.close()
 
-    print(f"\n🎉 銘柄マスタ取得完了!")
+    print("\n🎉 銘柄マスタ取得完了!")
 
 
 if __name__ == "__main__":
