@@ -339,51 +339,54 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 ---
 
-#### 6-4. 日次差分取得（データ更新の自動化）
+#### ✅ 6-4. 日次差分取得（完了）
 
-**ファイル**: `backend/jobs/collectors/fetch_daily_stock_prices.py`
+**目的**: 毎営業日の最新株価データを自動取得（データ更新の自動化）
 
-**目的**: 毎営業日の最新株価データを自動取得
+**成果物**:
+- ✅ **DDD構造リファクタリング完了**
+  - Infrastructure層: `JQuantsStockPriceRepository`, `StockPriceDailyRepository`
+  - UseCase層: `FetchStockPricesUseCase`
+  - Jobs層: `fetch_stock_prices.py`（書き換え）、`fetch_daily_stock_prices.py`（新規）
 
-**設計方針: fetch_stock_prices.pyを再利用（DRY原則）**
+- ✅ **実装ファイル**
+  - `backend/app/infrastructure/jquants/stock_price_repository.py` - J-Quants API呼び出し
+  - `backend/app/infrastructure/persistence/stock_price_daily_repository.py` - DB保存（UPSERT）
+  - `backend/app/usecase/fetch_stock_prices_usecase.py` - 全件取得・差分取得の調整
+  - `backend/jobs/collectors/fetch_stock_prices.py` - 全件取得（500行→165行に削減）
+  - `backend/jobs/collectors/fetch_daily_stock_prices.py` - 差分取得（新規）
 
-日次差分取得は`fetch_stock_prices.py`を再利用する設計とする。同じロジックを2箇所に書かず、保守性・柔軟性を向上させる。
+- ✅ **共通化されたロジック**
+  - J-Quants API呼び出し → `JQuantsStockPriceRepository`
+  - PostgreSQL UPSERT → `StockPriceDailyRepository`
+  - 週単位分割・rate limit対策 → `FetchStockPricesUseCase`
+  - NaN/型変換/bool変換 → `StockPriceDailyRepository`
 
-**実装方針（冪等性担保）**:
-```python
-# backend/jobs/collectors/fetch_daily_stock_prices.py
-
-from sqlalchemy import create_engine, func
-from backend.app.domain.models.stock import StockPriceDaily
-from datetime import datetime, timedelta
-from fetch_stock_prices import main as fetch_stock_prices_main
-
-# 1. DBから最新日付を取得（progress.jsonは使わない）
-engine = create_engine(database_url)
-session = Session(engine)
-max_date = session.query(func.max(StockPriceDaily.date)).scalar()
-
-# 2. 差分期間を計算
-start_date = max_date + timedelta(days=1) if max_date else datetime(2016, 7, 25).date()
-end_date = datetime.now().date()
-
-# 3. fetch_stock_prices.pyのmain()を期間指定で呼び出し
-# ※単日でも複数日でも同じロジックで処理される（while current_date <= end_dateで対応済み）
-fetch_stock_prices_main(start_date=start_date, end_date=end_date, wait=2)
-```
-
-**この設計のメリット**:
-- ✅ **DRY原則**: 同じロジックを2箇所に書かない
-- ✅ **保守性**: バグ修正・機能追加が1箇所で済む
+**実装の特徴**:
+- ✅ **DRY原則**: 共通ロジックをUseCase/Infrastructureに集約
 - ✅ **冪等性**: DBの最新日付ベースで何度実行しても同じ結果
-- ✅ **柔軟性**: バックフィル（バッチ停止期間の補完）も同じコードで対応
-  - 例: バッチが1週間止まっていた → 自動的に7日分取得
-- ✅ **単日・複数日対応**: `while current_date <= end_date`で両対応済み
+- ✅ **保守性**: API変更時はRepository層のみ修正
+- ✅ **柔軟性**: バックフィル（バッチ停止期間の補完）も自動対応
+- ✅ **テスタビリティ**: UseCase単体でテスト可能
+- ✅ **pod再配置対策**: progress.json不要（DB状態ベース）
 
-**progress.json方式の問題点（使わない）**:
-- ❌ pod再配置で消失（永続化されていない）
-- ❌ バッチ停止時に進捗がわからない
-- ❌ 冪等性が担保できない
+**動作確認**:
+- ✅ 全件取得テスト: 19,115件（20.4秒）
+- ✅ 差分取得テスト（初回）: 8,886件（11.9秒）
+- ✅ 差分取得テスト（冪等性）: 差分なし（完全）
+- ✅ Ruffエラー解消: All checks passed!
+
+**使用例**:
+```bash
+# 全件取得（テストモード: 1週間のみ）
+uv run python backend/jobs/collectors/fetch_stock_prices.py --test
+
+# 全件取得（過去10年分、wait=2秒で約2時間）
+uv run python backend/jobs/collectors/fetch_stock_prices.py --wait 2
+
+# 差分取得（DBの最新日付から自動取得）
+uv run python backend/jobs/collectors/fetch_daily_stock_prices.py
+```
 
 **実行タイミング**:
 - 手動実行: `uv run python backend/jobs/collectors/fetch_daily_stock_prices.py`
@@ -549,14 +552,9 @@ Cloud Scheduler
   2. フェーズ6-1: J-Quants API仕様調査 + ドキュメント化完了
   3. フェーズ6-2: 銘柄マスタ取得完了（全4444銘柄） 🎉
   4. フェーズ6-3: 株価データ取得完了（10年分、約1100万レコード） 🎉
+  5. フェーズ6-4: 日次差分取得実装完了（DDD構造リファクタリング） 🎉
 
 🎯 次のセッション（最優先）:
-  5. フェーズ6-4: 日次差分取得実装（データ更新の自動化）
-     - DBの最新日付ベースで差分取得（冪等性担保）
-     - progress.json依存を排除（pod再配置対策）
-     - 毎営業日の自動更新基盤を構築
-
-その後の優先順位:
   6. フェーズ6-5: テクニカル指標計算バッチ
      - 125項目のテクニカル指標を全銘柄×10年分計算
      - 約13億データポイント
@@ -633,49 +631,39 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-25（フェーズ6-3完全完了 + nullデータ検証完了）
+- **日時**: 2026-07-28（フェーズ6-4完了: DDD構造リファクタリング + 差分取得実装）
 - **作業者**: Claude Code
 - **ブランチ**: feature/jpx_api_v2
 - **変更内容**:
-  - ✅ **フェーズ6-3完全完了: 株価データ10年分取得成功（約1100万レコード）** 🎉
-    - **スクリプト実装**
-      - `backend/jobs/collectors/fetch_stock_prices.py` 実装完了
-      - 週単位分割（7日ずつ）でrate limit対策
-      - wait=2秒で最適化（10年分で約2時間）
-      - 進捗保存機能（JSON）でエラー時の再開対応
-      - コマンドラインオプション（--test, --resume, --wait, --start-date, --end-date）
-      - Google Style docstringで詳細なドキュメント化
-    - **DB拡張**
-      - Alembicマイグレーション2本作成・実行完了
-        - `20260724_2200_d7e8f9g0h1i2`: UNIQUE制約追加
-        - `20260724_2300_e8f9g0h1i2j3`: volume列をBIGINTに変更
-      - `stock_prices_daily` テーブルにUNIQUE制約追加（stock_code, date）
-      - volume/adjusted_volume列をBIGINT化（21億超の出来高対応）
-    - **実装詳細**
-      - PostgreSQL UPSERT（`ON CONFLICT DO UPDATE`）で高速保存
-      - NaN処理完全対応（pandas → PostgreSQL）
-      - 型変換完全対応（Decimal, int, bool）
-      - J-Quants APIの文字列 '0'/'1' → bool 正しく変換
-      - TimestampMixin対応（id, created_at, updated_atを除外）
-      - SQLログ抑制（logging設定、echo=False）
-      - 不要なデバッグログ削除（リクエスト数表示等）
-    - **データ取得完了**
-      - ✅ **全4444銘柄×10年分（2016-07-25 〜 2026-07-24）取得完了**
-      - ✅ wait=2秒で約2時間で完了（Rate limit問題なし）
-      - ✅ 約1100万レコード取得（内国株式のみで有効データ多数）
-    - **nullデータ検証完了**
-      - ✅ J-Quants API自体がNaNを返している（取引なし日）
-      - ✅ Yahoo!ファイナンスとも一致（実装は正しい）
-      - ✅ ML学習時は `WHERE volume > 0` でフィルタすればOK
-      - ✅ 銘柄コードは5桁形式（J-Quants API仕様）
+  - ✅ **フェーズ6-4完了: 日次差分取得実装 + DDD構造リファクタリング** 🎉
+    - **DDD構造リファクタリング**
+      - Infrastructure層: `JQuantsStockPriceRepository`, `StockPriceDailyRepository` 実装
+      - UseCase層: `FetchStockPricesUseCase` 実装（全件取得・差分取得の調整）
+      - Jobs層: `fetch_stock_prices.py`（500行→165行に削減）、`fetch_daily_stock_prices.py`（新規）
+    - **実装ファイル**
+      - `backend/app/infrastructure/jquants/stock_price_repository.py` - J-Quants API呼び出し
+      - `backend/app/infrastructure/persistence/stock_price_daily_repository.py` - DB保存（UPSERT）
+      - `backend/app/usecase/fetch_stock_prices_usecase.py` - ビジネスロジック
+      - `backend/jobs/collectors/fetch_stock_prices.py` - 全件取得（書き換え）
+      - `backend/jobs/collectors/fetch_daily_stock_prices.py` - 差分取得（新規）
+    - **共通化完了**
+      - J-Quants API呼び出し → `JQuantsStockPriceRepository`
+      - PostgreSQL UPSERT → `StockPriceDailyRepository`
+      - 週単位分割・rate limit対策 → `FetchStockPricesUseCase`
+      - NaN/型変換/bool変換 → `StockPriceDailyRepository`
+    - **実装の特徴**
+      - ✅ DRY原則: 共通ロジックをUseCase/Infrastructureに集約
+      - ✅ 冪等性: DBの最新日付ベースで何度実行しても同じ結果
+      - ✅ 保守性: API変更時はRepository層のみ修正
+      - ✅ テスタビリティ: UseCase単体でテスト可能
+      - ✅ pod再配置対策: progress.json不要（DB状態ベース）
+    - **動作確認完了**
+      - ✅ 全件取得テスト: 19,115件（20.4秒）
+      - ✅ 差分取得テスト（初回）: 8,886件（11.9秒）
+      - ✅ 差分取得テスト（冪等性）: 差分なし（完全）
     - **コード品質**
-      - ✅ `.gitignore`にprogress_*.json追加（Git管理から除外）
-      - ✅ Ruffフォーマット適用
-  - ✅ **作業計画更新: 優先順位見直し**
-    - **次回**: フェーズ6-4：日次差分取得実装（データ更新の自動化）
-    - DBベースの冪等な実装（progress.json依存排除、pod再配置対策）
-    - その後: テクニカル指標計算 → ファンダメンタルデータ取得 → ML構築
-- **次回**: フェーズ6-4：日次差分取得実装
-  - DBの最新日付ベースで差分取得（冪等性担保）
-  - progress.json依存を排除（pod再配置対策）
-  - 毎営業日の自動更新基盤を構築
+      - ✅ Ruffエラー解消: All checks passed!
+      - ✅ デフォルト開始日を2016-07-28に修正（Standardプラン実際の開始日）
+- **次回**: フェーズ6-5：テクニカル指標計算バッチ
+  - 125項目のテクニカル指標を全銘柄×10年分計算
+  - 約13億データポイント
