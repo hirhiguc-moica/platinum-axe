@@ -345,38 +345,53 @@ uv run python backend/jobs/collectors/fetch_stock_prices.py --resume
 
 **目的**: 毎営業日の最新株価データを自動取得
 
+**設計方針: fetch_stock_prices.pyを再利用（DRY原則）**
+
+日次差分取得は`fetch_stock_prices.py`を再利用する設計とする。同じロジックを2箇所に書かず、保守性・柔軟性を向上させる。
+
 **実装方針（冪等性担保）**:
 ```python
-# progress.jsonではなく、DBの最新日付をソースとする
+# backend/jobs/collectors/fetch_daily_stock_prices.py
+
+from sqlalchemy import create_engine, func
+from backend.app.domain.models.stock import StockPriceDaily
+from datetime import datetime, timedelta
+from fetch_stock_prices import main as fetch_stock_prices_main
+
+# 1. DBから最新日付を取得（progress.jsonは使わない）
+engine = create_engine(database_url)
+session = Session(engine)
 max_date = session.query(func.max(StockPriceDaily.date)).scalar()
-start_date = max_date + timedelta(days=1) if max_date else default_start_date
+
+# 2. 差分期間を計算
+start_date = max_date + timedelta(days=1) if max_date else datetime(2016, 7, 25).date()
 end_date = datetime.now().date()
 
-# start_date 〜 end_date の差分を取得
+# 3. fetch_stock_prices.pyのmain()を期間指定で呼び出し
+# ※単日でも複数日でも同じロジックで処理される（while current_date <= end_dateで対応済み）
+fetch_stock_prices_main(start_date=start_date, end_date=end_date, wait=2)
 ```
 
-**progress.json方式の問題点**:
+**この設計のメリット**:
+- ✅ **DRY原則**: 同じロジックを2箇所に書かない
+- ✅ **保守性**: バグ修正・機能追加が1箇所で済む
+- ✅ **冪等性**: DBの最新日付ベースで何度実行しても同じ結果
+- ✅ **柔軟性**: バックフィル（バッチ停止期間の補完）も同じコードで対応
+  - 例: バッチが1週間止まっていた → 自動的に7日分取得
+- ✅ **単日・複数日対応**: `while current_date <= end_date`で両対応済み
+
+**progress.json方式の問題点（使わない）**:
 - ❌ pod再配置で消失（永続化されていない）
 - ❌ バッチ停止時に進捗がわからない
 - ❌ 冪等性が担保できない
-
-**DBベース方式のメリット**:
-- ✅ DBは永続化されている
-- ✅ 最新日付は常に正確
-- ✅ 冪等性担保（何度実行しても同じ結果）
-- ✅ バックフィル（過去の欠損補完）も可能
-
-**実装内容**:
-- DBから最新日付を取得
-- J-Quants APIから差分データ取得
-- PostgreSQL UPSERTで保存
-- 欠損日の検出・補完機能
 
 **実行タイミング**:
 - 手動実行: `uv run python backend/jobs/collectors/fetch_daily_stock_prices.py`
 - 自動実行: GCP Cloud Scheduler（毎営業日17:30）
 
-**所要時間**: 約5-10分（全銘柄1日分）
+**所要時間**:
+- 通常（1日分）: 約5-10分
+- バックフィル（複数日）: 日数に応じて増加（週単位分割で自動対応）
 
 ---
 
