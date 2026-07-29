@@ -947,15 +947,16 @@ class CalculateTechnicalIndicatorsUseCase:
         Returns:
             dict: ゴールデンクロス/デッドクロスからの経過日数
         """
-        # クロスの検出（短期線が長期線を上抜けまたは下抜け）
-        # NaNの場合は0として扱う
-        cross = (ma_short > ma_long).astype(int).fillna(0)
+        # 両MAが確定している区間のみでクロスを検出（未確定期間の誤検出を防止）
+        # 例: MA200の場合、200日目までは未確定なのでNaNのまま維持
+        valid = ma_short.notna() & ma_long.notna()
+        cross = (ma_short > ma_long).where(valid).astype("Int64")
 
         # ゴールデンクロス: 0 → 1 への変化
-        gc_occurred = cross.diff() == 1
-
         # デッドクロス: 1 → 0 への変化
-        dc_occurred = cross.diff() == -1
+        cross_diff = cross.diff()
+        gc_occurred = (cross_diff == 1).fillna(False)
+        dc_occurred = (cross_diff == -1).fillna(False)
 
         # ゴールデンクロスからの経過日数
         days_since_gc = pd.Series(index=ma_short.index, dtype=pd.Int64Dtype())
