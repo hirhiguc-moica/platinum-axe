@@ -511,8 +511,8 @@ class CalculateTechnicalIndicatorsUseCase:
             result_df["obv"].rolling(window=20).mean().round().astype(pd.Int64Dtype())
         )
 
-        # VWAP
-        result_df["vwap"] = self._calculate_vwap(high, low, close, volume)
+        # VWAP（20日ローリング）
+        result_df["vwap_20d"] = self._calculate_vwap(high, low, close, volume)
 
         # VWMA (Volume Weighted Moving Average)
         result_df["vwma_20"] = self._calculate_vwma(close, volume, period=20)
@@ -843,11 +843,16 @@ class CalculateTechnicalIndicatorsUseCase:
         return {"upper": upper, "middle": middle, "lower": lower}
 
     def _calculate_vwap(
-        self, high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series
+        self, high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, period: int = 20
     ) -> pd.Series:
-        """VWAP計算（日次リセット版の簡易実装）"""
+        """VWAP計算（20日ローリング版）
+
+        日次データでは本来のVWAP（日中累積）を計算できないため、
+        過去20日間の出来高加重平均価格として算出。
+        ローリングウィンドウにより、全量計算と差分計算で冪等性を保証。
+        """
         tp = (high + low + close) / 3
-        return (tp * volume).cumsum() / volume.cumsum()
+        return (tp * volume).rolling(window=period).sum() / volume.rolling(window=period).sum()
 
     def _calculate_vwma(self, close: pd.Series, volume: pd.Series, period: int = 20) -> pd.Series:
         """出来高加重移動平均計算"""
