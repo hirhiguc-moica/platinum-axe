@@ -166,7 +166,9 @@ class CalculateTechnicalIndicatorsUseCase:
                 print(f"\n📦 バッチ {batch_num}/{total_batches}: {len(batch_stocks)}銘柄処理中...")
 
                 for stock in batch_stocks:
-                    extended_start_date = start_date - timedelta(days=300)
+                    # 最長指標（52週高値/安値 = 252営業日）のウォームアップ期間を確保
+                    # 252営業日 ÷ 245営業日/年 × 365日/年 ≈ 376暦日 → 余裕を持って450日
+                    extended_start_date = start_date - timedelta(days=450)
                     stock_prices = self._fetch_stock_prices(
                         stock.stock_code, extended_start_date, end_date
                     )
