@@ -99,8 +99,10 @@ class TechnicalIndicatorRepository:
             record.pop("updated_at", None)
 
         # PostgreSQL UPSERT (SQLAlchemy ORM)
-        # PostgreSQLの65,535パラメータ上限対策: 2000件ずつチャンク分割
-        chunk_size = 2000
+        # PostgreSQLの65,535パラメータ上限対策: カラム数から安全なチャンクサイズを動的に算出
+        max_params = 65000  # PostgreSQL BIND上限65,535から余裕を持って65,000
+        num_columns = len(records[0]) if records else 128  # 実際のカラム数を取得
+        chunk_size = max(1, max_params // num_columns)  # 約507件 (65000 / 128)
         total_saved = 0
 
         for i in range(0, len(records), chunk_size):
