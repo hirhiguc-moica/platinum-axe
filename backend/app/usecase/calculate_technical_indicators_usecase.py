@@ -682,19 +682,30 @@ class CalculateTechnicalIndicatorsUseCase:
     def _calculate_adx(
         self, high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
     ) -> dict:
-        """ADX計算"""
-        plus_dm = high.diff()
-        minus_dm = -low.diff()
-        plus_dm[plus_dm < 0] = 0
-        minus_dm[minus_dm < 0] = 0
+        """ADX計算（Wilderの定義に準拠）"""
+        # 上昇幅・下降幅の計算
+        high_diff = high.diff()
+        low_diff = -low.diff()
+
+        # Wilderの定義：上昇幅 > 下降幅 かつ 上昇幅 > 0 の場合のみ+DM採用、それ以外は0
+        # （-DMも同様。同じ日に両方が正になることはない）
+        plus_dm = high_diff.where((high_diff > low_diff) & (high_diff > 0), 0)
+        minus_dm = low_diff.where((low_diff > high_diff) & (low_diff > 0), 0)
+
+        # True Range
         tr = pd.concat(
             [high - low, abs(high - close.shift()), abs(low - close.shift())], axis=1
         ).max(axis=1)
+
+        # ATR
         atr = tr.rolling(window=period).mean()
+
+        # +DI, -DI, DX, ADX
         plus_di = (plus_dm.rolling(window=period).mean() / atr) * 100
         minus_di = (minus_dm.rolling(window=period).mean() / atr) * 100
         dx = (abs(plus_di - minus_di) / (plus_di + minus_di)) * 100
         adx = dx.rolling(window=period).mean()
+
         return {"adx": adx, "plus_di": plus_di, "minus_di": minus_di}
 
     def _calculate_parabolic_sar(
