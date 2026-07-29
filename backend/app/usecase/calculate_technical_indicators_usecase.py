@@ -303,17 +303,18 @@ class CalculateTechnicalIndicatorsUseCase:
             lambda x: np.dot(x, weights) / weights.sum(), raw=True
         )
 
-        # 移動平均の派生特徴量
+        # 移動平均からの乖離率（百分率: 10 = 10%乖離）
         result_df["deviation_from_ma5"] = (close / result_df["ma_5"] - 1) * 100
         result_df["deviation_from_ma25"] = (close / result_df["ma_25"] - 1) * 100
         result_df["deviation_from_ma75"] = (close / result_df["ma_75"] - 1) * 100
         result_df["deviation_from_ma200"] = (close / result_df["ma_200"] - 1) * 100
 
+        # 移動平均線同士の乖離率（百分率: 10 = 10%乖離）
         result_df["ma_5_25_deviation"] = (result_df["ma_5"] / result_df["ma_25"] - 1) * 100
         result_df["ma_25_75_deviation"] = (result_df["ma_25"] / result_df["ma_75"] - 1) * 100
         result_df["ma_75_200_deviation"] = (result_df["ma_75"] / result_df["ma_200"] - 1) * 100
 
-        # 移動平均の傾き
+        # 移動平均の傾き（百分率: 10 = 5日間で10%上昇）
         result_df["ma_5_slope_5d"] = (result_df["ma_5"] / result_df["ma_5"].shift(5) - 1) * 100
         result_df["ma_25_slope_5d"] = (result_df["ma_25"] / result_df["ma_25"].shift(5) - 1) * 100
         result_df["ma_75_slope_10d"] = (result_df["ma_75"] / result_df["ma_75"].shift(10) - 1) * 100
@@ -349,7 +350,7 @@ class CalculateTechnicalIndicatorsUseCase:
         low = df["low"]
         volume = df["volume"]
 
-        # 騰落率
+        # 騰落率（百分率: 10 = 10%増、※volume_change_*系とは異なり×100している）
         result_df["return_1d"] = close.pct_change(periods=1, fill_method=None) * 100
         result_df["return_3d"] = close.pct_change(periods=3, fill_method=None) * 100
         result_df["return_5d"] = close.pct_change(periods=5, fill_method=None) * 100
@@ -358,7 +359,7 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["return_60d"] = close.pct_change(periods=60, fill_method=None) * 100
         result_df["return_120d"] = close.pct_change(periods=120, fill_method=None) * 100
 
-        # 対数収益率
+        # 対数収益率（百分率: 10 = 10%増）
         result_df["log_return_1d"] = np.log(close / close.shift(1)) * 100
         result_df["log_return_5d"] = np.log(close / close.shift(5)) * 100
         result_df["log_return_20d"] = np.log(close / close.shift(20)) * 100
@@ -381,7 +382,7 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["stochastic_d"] = stoch["d"]
         result_df["stochastic_slow_d"] = stoch["slow_d"]
 
-        # ROC (Rate of Change)
+        # ROC (Rate of Change)（百分率: 10 = 10%変化）
         result_df["roc_12"] = ((close / close.shift(12)) - 1) * 100
         result_df["roc_25"] = ((close / close.shift(25)) - 1) * 100
 
@@ -448,9 +449,11 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["bollinger_middle"] = sma_20
         result_df["bollinger_upper_2sigma"] = sma_20 + 2 * std_20
         result_df["bollinger_lower_2sigma"] = sma_20 - 2 * std_20
+        # バンド幅（比率: 0.1 = 10%幅、※×100していない）
         result_df["bollinger_width"] = (
             result_df["bollinger_upper_2sigma"] - result_df["bollinger_lower_2sigma"]
         ) / result_df["bollinger_middle"]
+        # バンド内の相対位置（0-1: 0=下限、1=上限）
         result_df["bollinger_position"] = (close - result_df["bollinger_lower_2sigma"]) / (
             result_df["bollinger_upper_2sigma"] - result_df["bollinger_lower_2sigma"]
         )
@@ -459,7 +462,7 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["atr_14"] = self._calculate_atr(df, period=14)
         result_df["atr_20"] = self._calculate_atr(df, period=20)
 
-        # ヒストリカル・ボラティリティ
+        # ヒストリカル・ボラティリティ（年率換算比率: 0.3 = 30%/年）
         result_df["volatility_10d"] = close.pct_change(fill_method=None).rolling(
             window=10
         ).std() * np.sqrt(252)
@@ -492,11 +495,11 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["volume_ma_20"] = volume.rolling(window=20).mean().round().astype(pd.Int64Dtype())
         result_df["volume_ma_60"] = volume.rolling(window=60).mean().round().astype(pd.Int64Dtype())
 
-        # 出来高比率
+        # 出来高比率（倍率: 2.0 = 2倍）
         result_df["volume_ratio_5"] = volume / result_df["volume_ma_5"]
         result_df["volume_ratio_20"] = volume / result_df["volume_ma_20"]
 
-        # 出来高変化率
+        # 出来高変化率（比率: 0.1 = 10%増、※return_*系とは異なり×100していない）
         result_df["volume_change_1d"] = volume.pct_change(periods=1, fill_method=None)
         result_df["volume_change_5d"] = volume.pct_change(periods=5, fill_method=None)
 
@@ -536,7 +539,7 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["high_52w"] = high.rolling(window=252).max()
         result_df["low_52w"] = low.rolling(window=252).min()
 
-        # 高値・安値からの乖離率
+        # 高値・安値からの乖離率（百分率: -10 = 高値から10%下落）
         result_df["price_from_high_5d"] = (close / result_df["high_5d"] - 1) * 100
         result_df["price_from_low_5d"] = (close / result_df["low_5d"] - 1) * 100
         result_df["price_from_high_20d"] = (close / result_df["high_20d"] - 1) * 100
@@ -544,7 +547,7 @@ class CalculateTechnicalIndicatorsUseCase:
         result_df["price_from_high_52w"] = (close / result_df["high_52w"] - 1) * 100
         result_df["price_from_low_52w"] = (close / result_df["low_52w"] - 1) * 100
 
-        # 価格の相対位置
+        # 価格の相対位置（0-1: 0=安値、1=高値）
         result_df["price_position_20d"] = (close - result_df["low_20d"]) / (
             result_df["high_20d"] - result_df["low_20d"]
         )
