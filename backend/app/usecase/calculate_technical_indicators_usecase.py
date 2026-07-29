@@ -921,12 +921,18 @@ class CalculateTechnicalIndicatorsUseCase:
         return ao
 
     def _calculate_aroon(self, high: pd.Series, low: pd.Series, period: int = 25) -> dict:
-        """Aroon Indicator計算"""
+        """Aroon Indicator計算
+
+        Aroon Upは窓内の最高値からの経過日数が短いほど高くなる（最近最高値 = 強い上昇トレンド）
+        Aroon Downは窓内の最安値からの経過日数が短いほど高くなる（最近最安値 = 強い下降トレンド）
+        """
+        # argmax/argminは0-indexed。最新日（右端）が最高値/最安値の場合、argmax/argmin = period-1
+        # Aroon Up = ((期間 - 経過日数) / 期間) * 100 = ((argmax + 1) / 期間) * 100
         aroon_up = (
-            high.rolling(window=period).apply(lambda x: period - x.argmax(), raw=True) / period
+            high.rolling(window=period).apply(lambda x: x.argmax() + 1, raw=True) / period
         ) * 100
         aroon_down = (
-            low.rolling(window=period).apply(lambda x: period - x.argmin(), raw=True) / period
+            low.rolling(window=period).apply(lambda x: x.argmin() + 1, raw=True) / period
         ) * 100
         aroon_oscillator = aroon_up - aroon_down
         return {"up": aroon_up, "down": aroon_down, "oscillator": aroon_oscillator}
