@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from jobs.collectors.jquants_client import JQuantsClient
+from app.infrastructure.jquants.jquants_client import JQuantsClient
 
 
 class JQuantsStockPriceRepository:

@@ -285,6 +285,8 @@ class FetchStockPricesUseCase:
                     print("  🔄 DB保存中（UPSERT）...")
                     save_start = time.time()
                     saved = self.db_repo.bulk_upsert(df)
+                    # トランザクションをコミット（週ごと）
+                    self.session.commit()
                     save_elapsed = time.time() - save_start
                     total_saved += saved
                     print(f"  ✅ DB保存完了: {saved}件 ({save_elapsed:.2f}秒)")

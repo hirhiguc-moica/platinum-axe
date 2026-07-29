@@ -56,9 +56,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("sector17_code", name=op.f("uq_sector17s_sector17_code")),
         comment="17業種マスタ（JPX分類）",
     )
-    op.create_index(
-        op.f("ix_sector17s_sector17_code"), "sector17s", ["sector17_code"], unique=True
-    )
+    op.create_index(op.f("ix_sector17s_sector17_code"), "sector17s", ["sector17_code"], unique=True)
 
     # 2. sector17sマスタデータINSERT
     op.execute(
@@ -136,9 +134,7 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_stock_master_sector17_code"), "stock_master", ["sector17_code"], unique=False
     )
-    op.create_index(
-        op.f("ix_stock_master_info_date"), "stock_master", ["info_date"], unique=False
-    )
+    op.create_index(op.f("ix_stock_master_info_date"), "stock_master", ["info_date"], unique=False)
 
 
 def downgrade() -> None:

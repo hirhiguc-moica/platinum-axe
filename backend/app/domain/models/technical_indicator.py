@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, Index, Integer, Numeric, String
+from sqlalchemy import BigInteger, Boolean, Date, Index, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.models.base import Base, TimestampMixin
@@ -46,33 +46,33 @@ class TechnicalIndicator(TimestampMixin, Base):
     # ==========================================
     # 乖離率（Deviation）
     deviation_from_ma5: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA5からの乖離率"
+        Numeric(17, 6), comment="MA5からの乖離率"
     )
     deviation_from_ma25: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA25からの乖離率"
+        Numeric(17, 6), comment="MA25からの乖離率"
     )
     deviation_from_ma75: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA75からの乖離率"
+        Numeric(17, 6), comment="MA75からの乖離率"
     )
     deviation_from_ma200: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA200からの乖離率"
+        Numeric(17, 6), comment="MA200からの乖離率"
     )
 
     # 移動平均間の乖離率
     ma_5_25_deviation: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA5-MA25乖離率"
+        Numeric(17, 6), comment="MA5-MA25乖離率"
     )
     ma_25_75_deviation: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA25-MA75乖離率"
+        Numeric(17, 6), comment="MA25-MA75乖離率"
     )
     ma_75_200_deviation: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="MA75-MA200乖離率"
+        Numeric(17, 6), comment="MA75-MA200乖離率"
     )
 
     # 移動平均の傾き（Slope）
-    ma_5_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA5の5日傾き")
-    ma_25_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA25の5日傾き")
-    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="MA75の10日傾き")
+    ma_5_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA5の5日傾き")
+    ma_25_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA25の5日傾き")
+    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA75の10日傾き")
 
     # ゴールデンクロス/デッドクロスからの経過日数
     days_since_gc_5_25: Mapped[int | None] = mapped_column(Integer, comment="MA5×MA25 GCからの日数")
@@ -95,18 +95,18 @@ class TechnicalIndicator(TimestampMixin, Base):
     # ==========================================
     # 3. 騰落率（Return）
     # ==========================================
-    return_1d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="1日騰落率")
-    return_3d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="3日騰落率")
-    return_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="5日騰落率")
-    return_10d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="10日騰落率")
-    return_20d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="20日騰落率")
-    return_60d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="60日騰落率")
-    return_120d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="120日騰落率")
+    return_1d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="1日騰落率")
+    return_3d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="3日騰落率")
+    return_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="5日騰落率")
+    return_10d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="10日騰落率")
+    return_20d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="20日騰落率")
+    return_60d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="60日騰落率")
+    return_120d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="120日騰落率")
 
     # 対数収益率（Log Return）
-    log_return_1d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="1日対数収益率")
-    log_return_5d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="5日対数収益率")
-    log_return_20d: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="20日対数収益率")
+    log_return_1d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="1日対数収益率")
+    log_return_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="5日対数収益率")
+    log_return_20d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="20日対数収益率")
 
     # ==========================================
     # 4. モメンタム系
@@ -129,8 +129,8 @@ class TechnicalIndicator(TimestampMixin, Base):
     stochastic_slow_d: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), comment="Slow %D")
 
     # ROC（Rate of Change）
-    roc_12: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="12日ROC")
-    roc_25: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="25日ROC")
+    roc_12: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="12日ROC")
+    roc_25: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="25日ROC")
 
     # モメンタム
     momentum_10: Mapped[Decimal | None] = mapped_column(Numeric(10, 4), comment="10日モメンタム")
@@ -196,7 +196,7 @@ class TechnicalIndicator(TimestampMixin, Base):
         Numeric(10, 4), comment="ボリンジャーバンド幅"
     )
     bollinger_position: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="バンド内位置（%B）"
+        Numeric(17, 6), comment="バンド内位置（%B）"
     )
 
     # ATR（Average True Range）
@@ -205,13 +205,13 @@ class TechnicalIndicator(TimestampMixin, Base):
 
     # ヒストリカル・ボラティリティ
     volatility_10d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="10日ボラティリティ"
+        Numeric(17, 6), comment="10日ボラティリティ"
     )
     volatility_20d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="20日ボラティリティ"
+        Numeric(17, 6), comment="20日ボラティリティ"
     )
     volatility_60d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="60日ボラティリティ"
+        Numeric(17, 6), comment="60日ボラティリティ"
     )
 
     # ケルトナーチャネル
@@ -223,30 +223,30 @@ class TechnicalIndicator(TimestampMixin, Base):
     # 7. 出来高系
     # ==========================================
     # 出来高移動平均
-    volume_ma_5: Mapped[int | None] = mapped_column(comment="5日平均出来高")
-    volume_ma_10: Mapped[int | None] = mapped_column(comment="10日平均出来高")
-    volume_ma_20: Mapped[int | None] = mapped_column(comment="20日平均出来高")
-    volume_ma_60: Mapped[int | None] = mapped_column(comment="60日平均出来高")
+    volume_ma_5: Mapped[int | None] = mapped_column(BigInteger, comment="5日平均出来高")
+    volume_ma_10: Mapped[int | None] = mapped_column(BigInteger, comment="10日平均出来高")
+    volume_ma_20: Mapped[int | None] = mapped_column(BigInteger, comment="20日平均出来高")
+    volume_ma_60: Mapped[int | None] = mapped_column(BigInteger, comment="60日平均出来高")
 
     # 出来高比率
     volume_ratio_5: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="出来高比率（5日）"
+        Numeric(17, 6), comment="出来高比率（5日）"
     )
     volume_ratio_20: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="出来高比率（20日）"
+        Numeric(17, 6), comment="出来高比率（20日）"
     )
 
     # 出来高変化率
     volume_change_1d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="1日出来高変化率"
+        Numeric(17, 6), comment="1日出来高変化率"
     )
     volume_change_5d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="5日出来高変化率"
+        Numeric(17, 6), comment="5日出来高変化率"
     )
 
     # OBV（On-Balance Volume）
-    obv: Mapped[int | None] = mapped_column(comment="OBV")
-    obv_ma_20: Mapped[int | None] = mapped_column(comment="20日OBV移動平均")
+    obv: Mapped[int | None] = mapped_column(BigInteger, comment="OBV")
+    obv_ma_20: Mapped[int | None] = mapped_column(BigInteger, comment="20日OBV移動平均")
 
     # VWAP（Volume Weighted Average Price）
     vwap: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), comment="VWAP")
@@ -257,7 +257,7 @@ class TechnicalIndicator(TimestampMixin, Base):
     )
 
     # CMF（Chaikin Money Flow）
-    cmf_20: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="20日CMF")
+    cmf_20: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="20日CMF")
 
     # ==========================================
     # 8. 価格位置・高値安値
@@ -274,22 +274,22 @@ class TechnicalIndicator(TimestampMixin, Base):
 
     # 高値・安値からの乖離率
     price_from_high_5d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="5日高値からの乖離率"
+        Numeric(17, 6), comment="5日高値からの乖離率"
     )
     price_from_low_5d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="5日安値からの乖離率"
+        Numeric(17, 6), comment="5日安値からの乖離率"
     )
     price_from_high_20d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="20日高値からの乖離率"
+        Numeric(17, 6), comment="20日高値からの乖離率"
     )
     price_from_low_20d: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="20日安値からの乖離率"
+        Numeric(17, 6), comment="20日安値からの乖離率"
     )
     price_from_high_52w: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="52週高値からの乖離率"
+        Numeric(17, 6), comment="52週高値からの乖離率"
     )
     price_from_low_52w: Mapped[Decimal | None] = mapped_column(
-        Numeric(8, 4), comment="52週安値からの乖離率"
+        Numeric(17, 6), comment="52週安値からの乖離率"
     )
 
     # 価格の相対位置
@@ -321,9 +321,9 @@ class TechnicalIndicator(TimestampMixin, Base):
     consecutive_down_days: Mapped[int | None] = mapped_column(Integer, comment="連続陰線日数")
 
     # 実体・ヒゲの比率
-    body_size: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="実体サイズ")
-    upper_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="上ヒゲ比率")
-    lower_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), comment="下ヒゲ比率")
+    body_size: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="実体サイズ")
+    upper_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="上ヒゲ比率")
+    lower_shadow_ratio: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="下ヒゲ比率")
 
     # ==========================================
     # 10. その他の指標
@@ -346,6 +346,7 @@ class TechnicalIndicator(TimestampMixin, Base):
     calculated_at: Mapped[date] = mapped_column(Date, nullable=False, comment="計算日時")
 
     __table_args__ = (
+        UniqueConstraint("stock_code", "date", name="uq_technical_indicators_code_date"),
         Index(
             "idx_technical_indicators_code_date",
             "stock_code",
