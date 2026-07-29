@@ -109,6 +109,11 @@ def main() -> None:
     start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
     end_date = datetime.strptime(args.end_date, "%Y-%m-%d").date()
 
+    # 日付の妥当性検証
+    if start_date > end_date:
+        print(f"❌ エラー: --start-date ({start_date}) が --end-date ({end_date}) より後の日付です")
+        sys.exit(1)
+
     # テストモード
     batch_size = args.batch_size
     limit_stocks = None
