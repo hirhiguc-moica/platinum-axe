@@ -78,6 +78,8 @@ class TechnicalIndicatorRepository:
 
         # NaN を None に置換（一括処理）
         df_copy = df_copy.where(pd.notna(df_copy), None)
+        # pd.NA を None に置換（nullable Int64型対策: volume_ma_*, obv_*, days_since_*）
+        df_copy = df_copy.replace({pd.NA: None})
 
         # date列を date 型に変換（必要に応じて）
         if not isinstance(df_copy["date"].iloc[0], date):

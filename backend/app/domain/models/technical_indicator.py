@@ -72,7 +72,9 @@ class TechnicalIndicator(TimestampMixin, Base):
     # 移動平均の傾き（Slope）
     ma_5_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA5の5日傾き")
     ma_25_slope_5d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA25の5日傾き")
-    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(Numeric(17, 6), comment="MA75の10日傾き")
+    ma_75_slope_10d: Mapped[Decimal | None] = mapped_column(
+        Numeric(17, 6), comment="MA75の10日傾き"
+    )
 
     # ゴールデンクロス/デッドクロスからの経過日数
     days_since_gc_5_25: Mapped[int | None] = mapped_column(Integer, comment="MA5×MA25 GCからの日数")
