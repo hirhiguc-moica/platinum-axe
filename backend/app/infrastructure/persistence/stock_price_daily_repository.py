@@ -71,12 +71,19 @@ class StockPriceDailyRepository:
             - NaN は None に変換される
             - bool型は J-Quants の文字列 '0'/'1' から変換
             - volume/adjusted_volume は BIGINT (21億超の出来高対応)
+            - close が NULL のレコードは除外（取引なし・上場前等）
         """
         if len(df) == 0:
             return 0
 
         # DataFrameのコピーを作成（元データを変更しない）
         df_copy = df.copy()
+
+        # close が NULL/NaN のレコードを除外（取引がない日、上場前等）
+        df_copy = df_copy[df_copy["C"].notna()]
+
+        if len(df_copy) == 0:
+            return 0
 
         # NaN を None に置換（一括処理）
         df_copy = df_copy.where(pd.notna(df_copy), None)
@@ -197,30 +204,41 @@ class StockPriceDailyRepository:
             record.pop("updated_at", None)
 
         # PostgreSQL UPSERT (SQLAlchemy ORM)
-        stmt = insert(StockPriceDaily).values(records)
-        stmt = stmt.on_conflict_do_update(
-            constraint="uq_stock_prices_daily_code_date",
-            set_={
-                "open": stmt.excluded.open,
-                "high": stmt.excluded.high,
-                "low": stmt.excluded.low,
-                "close": stmt.excluded.close,
-                "volume": stmt.excluded.volume,
-                "turnover_value": stmt.excluded.turnover_value,
-                "adjusted_open": stmt.excluded.adjusted_open,
-                "adjusted_high": stmt.excluded.adjusted_high,
-                "adjusted_low": stmt.excluded.adjusted_low,
-                "adjusted_close": stmt.excluded.adjusted_close,
-                "adjusted_volume": stmt.excluded.adjusted_volume,
-                "adjustment_factor": stmt.excluded.adjustment_factor,
-                "is_upper_limit": stmt.excluded.is_upper_limit,
-                "is_lower_limit": stmt.excluded.is_lower_limit,
-                "fetched_at": stmt.excluded.fetched_at,
-            },
-        )
+        # PostgreSQLの65,535パラメータ上限対策: 2000件ずつチャンク分割
+        chunk_size = 2000
+        total_saved = 0
 
-        self.session.execute(stmt)
-        self.session.commit()
+        for i in range(0, len(records), chunk_size):
+            chunk = records[i : i + chunk_size]
+
+            stmt = insert(StockPriceDaily).values(chunk)
+            stmt = stmt.on_conflict_do_update(
+                constraint="uq_stock_prices_daily_code_date",
+                set_={
+                    "open": stmt.excluded.open,
+                    "high": stmt.excluded.high,
+                    "low": stmt.excluded.low,
+                    "close": stmt.excluded.close,
+                    "volume": stmt.excluded.volume,
+                    "turnover_value": stmt.excluded.turnover_value,
+                    "adjusted_open": stmt.excluded.adjusted_open,
+                    "adjusted_high": stmt.excluded.adjusted_high,
+                    "adjusted_low": stmt.excluded.adjusted_low,
+                    "adjusted_close": stmt.excluded.adjusted_close,
+                    "adjusted_volume": stmt.excluded.adjusted_volume,
+                    "adjustment_factor": stmt.excluded.adjustment_factor,
+                    "is_upper_limit": stmt.excluded.is_upper_limit,
+                    "is_lower_limit": stmt.excluded.is_lower_limit,
+                    "fetched_at": stmt.excluded.fetched_at,
+                },
+            )
+
+            self.session.execute(stmt)
+            total_saved += len(chunk)
+
+        # トランザクション境界は呼び出し側（UseCase）に寄せる
+        # ここではflush()のみ実行（commit()しない）
+        self.session.flush()
 
         # 保存件数を返す
-        return len(records)
+        return total_saved

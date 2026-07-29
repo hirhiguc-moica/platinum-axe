@@ -30,7 +30,7 @@ from sqlalchemy import create_engine, select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.domain.models import StockMaster  # noqa: E402
-from jobs.collectors.jquants_client import JQuantsClient  # noqa: E402
+from app.infrastructure.jquants.jquants_client import JQuantsClient  # noqa: E402
 
 
 def fetch_and_save_stock_master():

@@ -39,8 +39,7 @@ class JQuantsClient:
         self.api_key = api_key or os.getenv("JQUANTS_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "JQUANTS_API_KEY is required. "
-                "Set it in .env file or pass it as an argument."
+                "JQUANTS_API_KEY is required. Set it in .env file or pass it as an argument."
             )
 
         # 公式クライアント初期化（V2）
@@ -75,9 +74,7 @@ class JQuantsClient:
         """
         return self.client.get_eq_master()
 
-    def get_daily_quotes(
-        self, code: str | None = None, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_daily_quotes(self, code: str | None = None, date: str | None = None) -> pd.DataFrame:
         """株価日次データ取得
 
         Args:
@@ -132,8 +129,6 @@ class JQuantsClient:
             - API仕様: docs/batch/jquants-api.md#バッチ処理設計のベストプラクティス
         """
         if code:
-            return self.client.get_eq_bars_daily_range(
-                start_dt=start_dt, end_dt=end_dt, code=code
-            )
+            return self.client.get_eq_bars_daily_range(start_dt=start_dt, end_dt=end_dt, code=code)
         else:
             return self.client.get_eq_bars_daily_range(start_dt=start_dt, end_dt=end_dt)
