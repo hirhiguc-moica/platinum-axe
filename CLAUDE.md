@@ -35,8 +35,8 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 - **アルゴリズム**: LightGBM（勾配ブースティング）
 - **予測ターゲット**: 翌週の騰落率（回帰）
-- **特徴量（Phase 1 MVP）**: テクニカル125項目 + ファンダメンタル20項目 + セクター指数19項目 = 164項目
-- **特徴量（Phase 2 精度向上）**: +マクロ経済10項目（為替、米国株指数、商品） = 174項目
+- **特徴量（Phase 1 MVP）**: テクニカル125項目 + ファンダメンタル20項目 + セクター指数19項目 + 信用倍率5項目 = 169項目
+- **特徴量（Phase 2 精度向上）**: +マクロ経済10項目（為替、米国株指数、商品） + センチメント指標 = 約200項目
 
 ---
 
@@ -98,7 +98,7 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ---
 
-## 現在の状態（2026-07-24 深夜 - フェーズ6-2完了）
+## 現在の状態（2026-07-30 昼 - フェーズ6-6完了：ファンダメンタルデータ取得完了）
 
 ### 環境
 
@@ -117,15 +117,16 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ### データベース
 
-- ✅ 8テーブル作成完了
-  - `markets` (市場区分マスタ **10件** - JPX公式コード、Alembic管理) ✨UPDATE
-  - `sectors` (33業種マスタ **34件** - 33業種+9999、Alembic管理) ✨UPDATE
-  - `sector17s` (17業種マスタ18件 - Alembic管理) ✨NEW
-  - `stock_master` (銘柄マスタ **4444件** - 全銘柄取得完了、info_date/sector17_code/scale_category/margin_code追加) ✨UPDATE
+- ✅ 9テーブル作成完了
+  - `markets` (市場区分マスタ **10件** - JPX公式コード、Alembic管理)
+  - `sectors` (33業種マスタ **34件** - 33業種+9999、Alembic管理)
+  - `sector17s` (17業種マスタ18件 - Alembic管理)
+  - `stock_master` (銘柄マスタ **4444件** - 全銘柄取得完了)
   - `rounds` (ラウンド32件)
   - `round_recommendations` (推奨銘柄320件)
-  - `stock_prices_daily` (株価240日分 - トヨタのみ)
-  - `technical_indicators` (テクニカル指標240日分 - トヨタのみ、125項目)
+  - `stock_prices_daily` (株価 **約1100万件** - 全4444銘柄×10年分)
+  - `technical_indicators` (テクニカル指標 **約1100万件** - 125項目、全銘柄×10年分完了)
+  - `financial_statements` (財務データ **189,882件** - 全銘柄×10年分完了) ✨NEW
   - `round_results` (結果データ300件)
 
 ### Backend API（13エンドポイント）
@@ -189,10 +190,16 @@ backend/
 │
 └── jobs/                           # GCP Cloud Run Jobsで実行
     ├── collectors/                 # データ収集（J-Quants API）
-    │   ├── jquants_client.py       # J-Quants API V2クライアント ✨NEW
-    │   └── fetch_stock_master.py   # 銘柄マスタ取得スクリプト ✨NEW
+    │   ├── fetch_stock_master.py              # 銘柄マスタ取得（初回のみ）
+    │   ├── fetch_stock_prices.py              # 株価全量取得（初回のみ）
+    │   ├── fetch_daily_stock_prices.py        # 株価差分取得（日次）
+    │   ├── fetch_financial_statements.py      # 財務全量取得（初回のみ） ✨NEW
+    │   └── fetch_daily_financial_statements.py # 財務差分取得（日次） ✨NEW
     ├── preprocessors/              # 前処理・指標計算
-    │   └── .gitkeep
+    │   ├── calculate_technical_indicators.py   # テクニカル指標全量計算
+    │   └── calculate_daily_technical_indicators.py # テクニカル指標差分計算
+    ├── workflows/                  # ワークフロー統合 ✨NEW
+    │   └── daily_data_update.py   # 日次データ更新（株価→財務→テクニカル） ✨NEW
     └── predictors/                 # 推論
         └── .gitkeep
 
@@ -220,6 +227,11 @@ ml/                                 # 機械学習開発
 **✅ フェーズ6-1完了: J-Quants API仕様調査 + ドキュメント化完了** 🎉
 **✅ フェーズ6-2完了: 銘柄マスタ取得機能実装完了** 🎉
 **✅ フェーズ6-3完了: 株価データ取得機能実装完了** 🎉
+**✅ フェーズ6-4完了: 日次差分取得実装完了（DDD構造リファクタリング）** 🎉
+**✅ フェーズ6-5完了: テクニカル指標計算バッチ完了（125項目、約1100万件）** 🎉
+**✅ フェーズ6-6完了: 財務データ取得完了（189,882件、10年分）** 🎉
+**✅ Phase 1特徴量構成確定: 169項目（信用倍率追加）** 🎉
+**✅ 日次データ更新ワークフロー完成: 株価→財務→テクニカル** 🎉
 
 ### 🎯 フェーズ6: J-Quants API連携 + データ蓄積バッチ（進行中）
 
@@ -421,30 +433,69 @@ uv run python backend/jobs/collectors/fetch_daily_stock_prices.py
 
 ---
 
-#### 6-6. ファンダメンタルデータ取得
+#### ✅ 6-6. ファンダメンタルデータ取得（完了）
 
-**ファイル**: `backend/jobs/collectors/fetch_financials.py`
+**目的**: Phase 1のファンダメンタル指標（20項目）計算のためのデータ取得
 
-**目的**: J-Quants APIから財務データを取得してDBに保存
+**成果物**:
+- ✅ **DBテーブル作成**: `financial_statements`（Alembic管理）
+  - 主キー: `(stock_code, disc_date, type_of_document, disc_time)`
+  - カラム: 売上高、利益、EPS、BPS、CF、配当等（約110カラム）
+  - UNIQUE制約: ナチュラルキー（冪等性担保）
+  - Alembicマイグレーション2本実行完了
+    - `20260729_2051`: テーブル作成（全カラム定義）
+    - `20260729_2125`: UNIQUE制約修正（disc_time追加） + BIGINT化
+
+- ✅ **DDD構造でデータ取得機能実装**
+  - Infrastructure層: `JQuantsFinancialRepository`（API呼び出し）
+  - Infrastructure層: `FinancialStatementRepository`（DB保存、UPSERT）
+  - UseCase層: `FetchFinancialStatementsUseCase`（日単位分割、差分取得）
+  - Jobs層: `fetch_financial_statements.py`（全量取得バッチ）
+  - Jobs層: `fetch_daily_financial_statements.py`（差分取得バッチ）
+
+- ✅ **日次ワークフロー統合**
+  - `jobs/workflows/daily_data_update.py` 更新
+  - 株価取得 → **財務取得（追加）** → テクニカル指標計算
+
+**実装の特徴**:
+- ✅ **日単位分割**: jquantsライブラリの並列処理を回避（レート制限対策）
+- ✅ **wait=1秒**: 1日ごとに1秒待機（60件/分を確実に回避）
+- ✅ **差分取得**: 最新日-1日から取得（遅延開示・訂正に対応）
+- ✅ **冪等性**: UPSERT（ON CONFLICT DO UPDATE）で重複回避
+- ✅ **進捗保存**: 10日ごとに進捗保存（エラー時の再開対応）
+
+**動作確認**:
+- ✅ 全量取得成功: **189,882件**（約10年分、3653日）
+- ✅ 所要時間: 79.4分（約1.3秒/日）
+- ✅ 差分取得成功: 123件（3日分）
+- ✅ 日次ワークフロー成功: 株価4,197件 + 財務123件 + テクニカル4,195件
+
+**使用例**:
+```bash
+# 全量取得（過去10年分、wait=1秒で約1-2時間）
+uv run python backend/jobs/collectors/fetch_financial_statements.py
+
+# テストモード（直近1ヶ月、待機なし）
+uv run python backend/jobs/collectors/fetch_financial_statements.py --test
+
+# 差分取得（DBの最新日-1日から自動取得）
+uv run python backend/jobs/collectors/fetch_daily_financial_statements.py
+
+# 日次ワークフロー（株価→財務→テクニカル）
+uv run python backend/jobs/workflows/daily_data_update.py
+```
+
+**実行タイミング**:
+- 手動実行: 上記コマンド
+- 自動実行: GCP Cloud Scheduler（毎営業日17:30、株価取得後）
 
 **データソース**: `/v2/fins/summary`（財務サマリーAPI）
 
-**取得データ**:
-- 売上高、営業利益、経常利益、純利益
-- 総資産、純資産、自己資本比率
-- 一株当たり利益（EPS）、一株当たり純資産（BPS）
-- 配当金、配当性向
-- 発行済株式数
+**レート制限**: 60件/分（株価APIとは独立）
 
-**対象期間**: 過去10年分の四半期決算データ
+**対象期間**: 2016-07-30 〜 現在（Standardプランの取得可能期間）
 
-**実装方針**:
-- 週単位分割でrate limit対策（株価データと同様）
-- 進捗保存機能（JSON）でエラー時の再開対応
-- PostgreSQL UPSERTで重複防止
-
-**データ量**:
-- 全4444銘柄 × 約40四半期（10年分） = 約18万レコード
+**データ量**: **189,882件**（約10年分の決算短信・業績予想修正・配当予想修正）
 
 ---
 
@@ -503,11 +554,12 @@ Cloud Scheduler
 - ✅ 全銘柄×10年データでも数分〜数十分で学習完了
 - ❌ GCPは不要（週次再学習の自動化時のみ使用）
 
-**特徴量（164項目）**:
+**特徴量（169項目）**:
 - テクニカル指標: 125項目（移動平均、RSI、MACD等）
 - ファンダメンタル指標: 20項目（PER、PBR、ROE等）
 - セクター指数: 17項目（J-Quants API）
 - TOPIX/日経平均: 2項目
+- 信用倍率: 5項目（信用買い残/売り残、倍率、変化率等）
 
 **実装ステップ**:
 1. **データ探索**（`01_data_exploration.ipynb`）
@@ -516,7 +568,7 @@ Cloud Scheduler
    - 欠損値確認
 
 2. **特徴量エンジニアリング**（`02_feature_engineering.ipynb`）
-   - 164項目の相関分析
+   - 169項目の相関分析
    - 欠損値処理方針決定
    - 特徴量スケーリング検討
 
@@ -624,7 +676,7 @@ Cloud Scheduler
 
 ⏭️ Phase 1（MVP）:
  10. フェーズ7-1: Jupyter Notebookでモデル構築
-     - 特徴量164項目（テクニカル125 + ファンダメンタル20 + セクター指数19）
+     - 特徴量169項目（テクニカル125 + ファンダメンタル20 + セクター指数19 + 信用倍率5）
      - Train/Validation/Test分割（2016-2022/2023/2024）
      - Walk-Forward Validation（2024年12月〜2025年1月、4週間）
      - 精度評価 → 目標達成ならPhase 2スキップ
@@ -632,6 +684,7 @@ Cloud Scheduler
 ⏭️ Phase 2（精度向上 - オプション）:
  11. フェーズ7-2: 海外データ追加（Phase 1で目標未達の場合のみ）
      - 為替、米国株指数、商品等 +10項目
+     - センチメント指標追加（空売り比率等）
      - Yahoo Finance API / FRED API
      - 精度改善を定量評価
 
@@ -642,11 +695,12 @@ Cloud Scheduler
 
 **特徴量の全体像**:
 
-**Phase 1（MVP）**: 164項目
+**Phase 1（MVP）**: 169項目
 - ✅ **テクニカル指標**: 125項目（移動平均、RSI、MACD等）
 - ✅ **ファンダメンタル指標**: 20項目（PER、PBR、ROE等）
 - ✅ **セクター指数**: 17項目（J-Quants API）
 - ✅ **TOPIX/日経平均**: 2項目
+- ✅ **信用倍率**: 5項目（信用買い残/売り残、倍率、変化率等）
 
 **Phase 2（精度向上 - オプション）**: +10項目
 - ⏭️ **為替**: USD/JPY, EUR/JPY, CNY/JPY（3項目）
@@ -688,12 +742,18 @@ Cloud Scheduler
 | **docs/frontend/user-guide.md** | 一般ユーザー向け「使い方」ページ | ⭐⭐ |
 | **docs/infrastructure/local-development.md** | DevContainer使い方 | ⭐⭐⭐ |
 
+| **docs/batch/jquants-api.md** | J-Quants API V2仕様（Phase別実装方針） | ⭐⭐⭐ |
+| **docs/batch/apis/fin-summary.md** | 財務サマリーAPI詳細仕様 | ⭐⭐⭐ |
+| **docs/ml/technical-indicators-125.md** | テクニカル指標125項目詳細 | ⭐⭐⭐ |
+| **docs/ml/feature-engineering.md** | Phase別特徴量設計（169/189/249項目） | ⭐⭐⭐ |
+
 ### ⏳ 未作成（実装フェーズで必要になったら作成）
 
 - docs/architecture/system-architecture.md
 - docs/backend/api-specification.md
-- docs/ml/*.md（特徴量設計、モデル設計、学習パイプライン）
-- docs/batch/*.md（バッチ処理詳細）
+- docs/batch/apis/investor-types.md（投資部門別情報API）
+- docs/batch/apis/indices.md（指数四本値API）
+- docs/batch/apis/margin-interest.md（信用取引週末残高API）
 - docs/infrastructure/deployment.md
 
 ---
@@ -712,30 +772,34 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-07-29（CLAUDE.md更新: Phase 1/2分離 + ML評価方針明確化）
+- **日時**: 2026-07-30 昼（フェーズ6-6完了：財務データ取得完了）
 - **作業者**: Claude Code
-- **ブランチ**: feature/technical_indicators
+- **ブランチ**: feature/fundamental
 - **変更内容**:
-  - ✅ **CLAUDE.md更新: ML実装方針の明確化**
-    - **Phase 1 / Phase 2の分離**
-      - Phase 1（MVP）: 国内データのみ（164項目）
-      - Phase 2（精度向上）: 海外データ追加（+10項目）- オプション
-    - **ML評価方針の詳細化**
-      - Train/Validation/Test分割（2016-2022/2023/2024）
-      - Walk-Forward Validation（バックテスト4週間）
-      - 評価指標: RMSE, MAE, R², Top10適中率, 累積リターン
-      - 目標精度: R²≥0.05, Top10適中率≥30%, 累積リターン>TOPIX
-    - **特徴量の全体像を更新**
-      - Phase 1: テクニカル125 + ファンダメンタル20 + セクター指数19 = 164項目
-      - Phase 2: +為替・米国株・商品等 = +10項目（計174項目）
-    - **実装優先順位の再整理**
-      - フェーズ6-8追加: セクター指数取得（19項目）
-      - フェーズ7-1: Phase 1モデル構築 + 精度評価
-      - フェーズ7-2: Phase 2海外データ追加（条件付き）
-      - フェーズ7-3: 週次推論パイプライン
+  - ✅ **フェーズ6-6完了: 財務データ取得完了（189,882件、10年分）** 🎉
+    - DBテーブル作成: `financial_statements`（約110カラム、Alembic管理）
+    - DDD構造実装: Repository/UseCase/Jobs層
+    - 全量取得完了: 189,882件（79.4分、約1.3秒/日）
+    - 差分取得実装: 最新日-1日から取得（遅延開示・訂正対応）
+    - レート制限対策: 日単位分割 + wait=1秒（jquantsライブラリの並列処理を回避）
+
+  - ✅ **日次データ更新ワークフロー完成** 🎉
+    - `jobs/workflows/daily_data_update.py` 統合完了
+    - フロー: 株価取得 → **財務取得（追加）** → テクニカル指標計算
+    - 動作確認: 株価4,197件 + 財務123件 + テクニカル4,195件（約6分）
+
+  - ✅ **CLAUDE.md更新**
+    - データベース: 8テーブル → 9テーブル（financial_statements追加）
+    - ディレクトリ構成更新: workflows/ディレクトリ追加
+    - フェーズ6-6セクション: 完了版に更新
+
 - **前回の完了内容**:
-  - ✅ フェーズ6-4完了: 日次差分取得実装 + DDD構造リファクタリング（2026-07-28）
-- **次回**: フェーズ6-5：テクニカル指標計算バッチ（実行中）
-  - 125項目のテクニカル指標を全銘柄×10年分計算
-  - 約13億データポイント
-  - 進捗: 実行中（約3時間予定）
+  - ✅ フェーズ6-5完了: テクニカル指標計算バッチ完了（約1100万件）
+  - ✅ Phase 1特徴量構成確定: 169項目
+
+- **次回セッション**:
+  - フェーズ7: 機械学習実装（Phase 1 MVP）
+    - Jupyter Notebookでデータ探索
+    - 特徴量エンジニアリング（169項目）
+    - LightGBMモデル学習・評価
+    - Walk-Forward Validationでバックテスト

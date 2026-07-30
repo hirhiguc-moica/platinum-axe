@@ -1,6 +1,6 @@
 """日次データ更新ワークフロー
 
-株価取得 → テクニカル指標計算を順次実行する統合ワークフロー。
+株価取得 → 財務データ取得 → テクニカル指標計算を順次実行する統合ワークフロー。
 各ステップは冪等なので、何度実行しても同じ結果。
 
 使用例:
@@ -13,7 +13,7 @@
     - 差分がない場合は自動的にスキップ
 
 所要時間見積もり:
-    - 1日分: 約15-30分（株価取得5-10分 + テクニカル計算10-20分）
+    - 1日分: 約15-30分（株価取得5-10分 + 財務取得1-5分 + テクニカル計算10-20分）
 
 GCP Cloud Scheduler設定例:
     - 実行タイミング: 毎営業日 17:30（市場クローズ後）
@@ -46,6 +46,9 @@ from sqlalchemy.orm import Session  # noqa: E402
 from app.usecase.calculate_technical_indicators_usecase import (  # noqa: E402
     CalculateTechnicalIndicatorsUseCase,
 )
+from app.usecase.fetch_financial_statements_usecase import (  # noqa: E402
+    FetchFinancialStatementsUseCase,
+)
 from app.usecase.fetch_stock_prices_usecase import FetchStockPricesUseCase  # noqa: E402
 
 
@@ -53,7 +56,8 @@ def main() -> None:
     """日次データ更新ワークフローを実行する。
 
     ステップ1: 株価データ取得（差分）
-    ステップ2: テクニカル指標計算（差分）
+    ステップ2: 財務データ取得（差分）
+    ステップ3: テクニカル指標計算（差分）
     """
 
     print("=" * 80)
@@ -84,12 +88,24 @@ def main() -> None:
             stock_result = stock_usecase.execute_incremental(wait_seconds=2)
 
             if stock_result["total_saved"] == 0:
-                print("\n⚠️  新規株価データなし。未計算の指標がないかステップ2で確認します。")
+                print("\n⚠️  新規株価データなし。未計算の指標がないかステップ3で確認します。")
 
             # ========================================
-            # ステップ2: テクニカル指標計算（常に実行、UseCase側で差分判定）
+            # ステップ2: 財務データ取得
             # ========================================
-            print("\n[ステップ2] テクニカル指標計算")
+            print("\n[ステップ2] 財務データ取得")
+            print("-" * 80)
+
+            financial_usecase = FetchFinancialStatementsUseCase(session)
+            financial_result = financial_usecase.execute_incremental(wait_seconds=1)
+
+            if financial_result["total_saved"] == 0:
+                print("\n⚠️  新規財務データなし（最新です）")
+
+            # ========================================
+            # ステップ3: テクニカル指標計算（常に実行、UseCase側で差分判定）
+            # ========================================
+            print("\n[ステップ3] テクニカル指標計算")
             print("-" * 80)
 
             tech_usecase = CalculateTechnicalIndicatorsUseCase(session)
@@ -102,6 +118,7 @@ def main() -> None:
             print("✅ 全ステップ完了")
             print("=" * 80)
             print(f"📊 株価データ保存: {stock_result['total_saved']:,}件")
+            print(f"📊 財務データ保存: {financial_result['total_saved']:,}件")
             print(f"📊 テクニカル指標計算: {tech_result['total_calculated']:,}件")
             print("=" * 80)
 

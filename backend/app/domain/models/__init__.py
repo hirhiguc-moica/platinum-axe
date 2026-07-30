@@ -1,6 +1,7 @@
 """ドメインモデル"""
 
 from app.domain.models.base import Base, TimestampMixin
+from app.domain.models.financial_statement import FinancialStatement
 from app.domain.models.market import Market
 from app.domain.models.round import Round, RoundRecommendation
 from app.domain.models.round_result import RoundResult
@@ -22,4 +23,5 @@ __all__ = [
     "RoundResult",
     "StockPriceDaily",
     "TechnicalIndicator",
+    "FinancialStatement",
 ]

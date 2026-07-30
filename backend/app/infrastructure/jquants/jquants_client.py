@@ -108,6 +108,63 @@ class JQuantsClient:
         else:
             return self.client.get_eq_bars_daily()
 
+    def get_fin_summary(self, code: str | None = None, date: str | None = None) -> pd.DataFrame:
+        """財務サマリーデータ取得
+
+        Args:
+            code: 銘柄コード（省略時は全銘柄）
+            date: 開示日（YYYY-MM-DD形式、省略時は最新）
+
+        Returns:
+            pd.DataFrame: 財務サマリーデータ
+
+        カラム:
+            - DiscDate (str): 開示日
+            - DiscTime (str): 開示時刻
+            - Code (str): 銘柄コード
+            - DiscNo (str): 開示番号
+            - TypeOfDocument (str): 開示書類種別
+            - CurPerType (str): 会計期間種別
+            - Sales, OP, OdP, NP, EPS等: 財務データ（約140項目）
+
+        参考:
+            - API仕様: docs/batch/apis/fin-summary.md
+            - DBテーブル: docs/database/schemas/financial_statements.md
+
+        レート制限:
+            - 60req/分（株価APIとは独立したカウント）
+        """
+        if code and date:
+            return self.client.get_fin_summary(code=code, date=date)
+        elif code:
+            return self.client.get_fin_summary(code=code)
+        elif date:
+            return self.client.get_fin_summary(date=date)
+        else:
+            return self.client.get_fin_summary()
+
+    def get_fin_summary_range(
+        self, start_dt: Any, end_dt: Any, code: str | None = None
+    ) -> pd.DataFrame:
+        """財務サマリーデータ取得（期間指定）
+
+        Args:
+            start_dt: 開始日（datetime型）
+            end_dt: 終了日（datetime型）
+            code: 銘柄コード（省略時は全銘柄）
+
+        Returns:
+            pd.DataFrame: 財務サマリーデータ
+
+        注意:
+            - 内部で並列処理を行うため、レート制限に注意（60req/分）
+            - 長期間を一度に取得する場合は、期間を分割すること
+        """
+        if code:
+            return self.client.get_fin_summary_range(start_dt=start_dt, end_dt=end_dt, code=code)
+        else:
+            return self.client.get_fin_summary_range(start_dt=start_dt, end_dt=end_dt)
+
     def get_daily_quotes_range(
         self, start_dt: Any, end_dt: Any, code: str | None = None
     ) -> pd.DataFrame:
