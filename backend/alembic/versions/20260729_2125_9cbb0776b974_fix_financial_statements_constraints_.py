@@ -54,7 +54,16 @@ def upgrade() -> None:
         existing_comment="期中平均株式数（千株）",
     )
 
-    # 3. 新しいUNIQUE制約を追加（ナチュラルキー: 冪等性担保）
+    # 3. disc_timeをNOT NULLに変更（データ整合性担保）
+    op.alter_column(
+        "financial_statements",
+        "disc_time",
+        existing_type=sa.String(length=20),
+        nullable=False,
+        existing_comment="開示時刻",
+    )
+
+    # 4. 新しいUNIQUE制約を追加（ナチュラルキー: 冪等性担保）
     op.create_unique_constraint(
         "uq_financial_statements_natural_key",
         "financial_statements",
@@ -71,7 +80,16 @@ def downgrade() -> None:
         type_="unique",
     )
 
-    # 2. 株式数カラムをINTEGERに戻す
+    # 2. disc_timeをNULL許容に戻す
+    op.alter_column(
+        "financial_statements",
+        "disc_time",
+        existing_type=sa.String(length=20),
+        nullable=True,
+        existing_comment="開示時刻",
+    )
+
+    # 3. 株式数カラムをINTEGERに戻す
     op.alter_column(
         "financial_statements",
         "sh_out_fy",
@@ -97,7 +115,7 @@ def downgrade() -> None:
         existing_comment="期中平均株式数（千株）",
     )
 
-    # 3. 元のUNIQUE制約を復元
+    # 4. 元のUNIQUE制約を復元
     op.create_unique_constraint(
         "uq_financial_statements_code_date_type",
         "financial_statements",

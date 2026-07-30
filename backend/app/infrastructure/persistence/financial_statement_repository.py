@@ -80,9 +80,9 @@ class FinancialStatementRepository:
         # デバッグ: カラム名を確認
         print(f"  📋 取得したカラム名（先頭20項目）: {list(df_copy.columns[:20])}")
 
-        # 主キー（Code, DiscDate, DocType）が存在しないレコードを除外
+        # 必須カラム（ナチュラルキー: Code, DiscDate, DocType, DiscTime）が存在しないレコードを除外
         # 注: APIドキュメントでは TypeOfDocument だが、実際のレスポンスは DocType
-        required_keys = ["Code", "DiscDate", "DocType"]
+        required_keys = ["Code", "DiscDate", "DocType", "DiscTime"]
         for key in required_keys:
             if key not in df_copy.columns:
                 print(f"  ⚠️  必須カラム '{key}' が見つかりません")
@@ -172,7 +172,13 @@ class FinancialStatementRepository:
             stmt = insert(FinancialStatement).values(chunk)
 
             # UPSERT時の更新対象カラムを動的に生成（主キー以外）
-            update_dict = {col: getattr(stmt.excluded, col) for col in available_columns if col not in ["stock_code", "disc_date", "type_of_document"]}
+            update_dict = {
+                col: getattr(stmt.excluded, col)
+                for col in available_columns
+                if col not in ["stock_code", "disc_date", "type_of_document", "disc_time"]
+            }
+            # updated_atを明示的に更新（CURRENT_TIMESTAMPで上書き）
+            update_dict["updated_at"] = func.current_timestamp()
 
             stmt = stmt.on_conflict_do_update(
                 constraint="uq_financial_statements_natural_key",

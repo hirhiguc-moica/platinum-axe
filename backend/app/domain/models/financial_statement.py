@@ -19,7 +19,7 @@ class FinancialStatement(TimestampMixin, Base):
     # === 基本情報 ===
     stock_code: Mapped[str] = mapped_column(String(10), nullable=False, comment="銘柄コード")
     disc_date: Mapped[date] = mapped_column(Date, nullable=False, comment="開示日")
-    disc_time: Mapped[str | None] = mapped_column(String(20), comment="開示時刻")
+    disc_time: Mapped[str] = mapped_column(String(20), nullable=False, comment="開示時刻")
     disc_no: Mapped[str | None] = mapped_column(String(50), comment="開示番号")
     type_of_document: Mapped[str] = mapped_column(String(100), nullable=False, comment="開示書類種別")
 
