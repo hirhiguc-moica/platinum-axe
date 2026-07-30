@@ -54,7 +54,7 @@ def generate_realistic_ohlc(
 
     # OHLC生成
     data = []
-    for i, (dt, close) in enumerate(zip(dates, closes)):
+    for i, (dt, close) in enumerate(zip(dates, closes, strict=True)):
         # 前日終値を基準に当日の値動きを生成
         prev_close = closes[i - 1] if i > 0 else initial_price
 

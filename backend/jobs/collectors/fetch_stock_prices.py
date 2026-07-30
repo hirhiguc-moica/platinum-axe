@@ -4,7 +4,7 @@ J-Quants API から株価日次データ（四本値）を全件取得してDB�
 
 コマンドライン引数:
     --start-date: 取得開始日（YYYY-MM-DD形式）
-        デフォルト: 2016-07-28（J-Quants Standardプランの開始日）
+        デフォルト: 現在から10年前（J-Quants Standardプランの利用可能範囲）
 
     --end-date: 取得終了日（YYYY-MM-DD形式）
         デフォルト: 今日
@@ -84,11 +84,16 @@ def main() -> None:
     """
 
     parser = argparse.ArgumentParser(description="株価データ取得スクリプト（全件取得）")
+
+    # デフォルト開始日: Standardプラン（現在から10年前）
+    ten_years_ago = datetime.now() - timedelta(days=365 * 10)
+    default_start_date = ten_years_ago.strftime("%Y-%m-%d")
+
     parser.add_argument(
         "--start-date",
         type=str,
-        default="2016-07-28",
-        help="取得開始日（YYYY-MM-DD形式、デフォルト: 2016-07-28 ※Standardプランの開始日）",
+        default=default_start_date,
+        help=f"取得開始日（YYYY-MM-DD形式、デフォルト: {default_start_date} ※Standardプラン: 現在から10年前）",
     )
     parser.add_argument(
         "--end-date",

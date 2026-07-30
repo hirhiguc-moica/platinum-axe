@@ -89,9 +89,11 @@ class TechnicalIndicatorRepository:
         df_copy["calculated_at"] = date.today()
 
         # 変数名とDBカラム名のマッピング（Python変数名 → DBカラム名）
-        df_copy = df_copy.rename(columns={
-            "vwap_20d": "vwap",  # VWAP（20日ローリング）
-        })
+        df_copy = df_copy.rename(
+            columns={
+                "vwap_20d": "vwap",  # VWAP（20日ローリング）
+            }
+        )
 
         # DataFrameをdict形式に変換（一括変換、高速）
         records = df_copy.to_dict("records")

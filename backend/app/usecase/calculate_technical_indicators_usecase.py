@@ -5,7 +5,7 @@
 """
 
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,9 @@ from sqlalchemy.orm import Session
 
 from app.domain.models.stock import StockMaster
 from app.domain.models.stock_price import StockPriceDaily
+from app.infrastructure.persistence.stock_price_daily_repository import (
+    StockPriceDailyRepository,
+)
 from app.infrastructure.persistence.technical_indicator_repository import (
     TechnicalIndicatorRepository,
 )
@@ -30,15 +33,18 @@ class CalculateTechnicalIndicatorsUseCase:
         self,
         session: Session,
         tech_repo: TechnicalIndicatorRepository | None = None,
+        stock_price_repo: StockPriceDailyRepository | None = None,
     ):
         """初期化
 
         Args:
             session: SQLAlchemyの同期セッション
             tech_repo: テクニカル指標リポジトリ（省略時は自動生成）
+            stock_price_repo: 株価リポジトリ（省略時は自動生成）
         """
         self.session = session
         self.tech_repo = tech_repo or TechnicalIndicatorRepository(session)
+        self.stock_price_repo = stock_price_repo or StockPriceDailyRepository(session)
 
     def execute_full(
         self,
@@ -79,23 +85,41 @@ class CalculateTechnicalIndicatorsUseCase:
         }
 
     def execute_incremental(self, batch_size: int = 100) -> dict:
-        """差分計算モード"""
+        """差分計算モード（株価データとテクニカル指標の差分を検出）"""
         print("=" * 80)
         print("🔄 テクニカル指標計算開始（差分計算モード）")
         print("=" * 80)
 
-        latest_date = self.tech_repo.get_latest_date()
+        # 株価データの最新日付を取得
+        stock_latest_date = self.stock_price_repo.get_latest_date()
+        if not stock_latest_date:
+            print("❌ エラー: 株価データが存在しません。先に株価データを取得してください。")
+            return {
+                "total_stocks": 0,
+                "total_calculated": 0,
+                "elapsed_seconds": 0,
+                "start_date": None,
+                "end_date": None,
+            }
 
-        if latest_date:
-            start_date = latest_date + timedelta(days=1)
-            print(f"📂 DB最新日付: {latest_date}")
+        # テクニカル指標の最新日付を取得
+        tech_latest_date = self.tech_repo.get_latest_date()
+
+        if tech_latest_date:
+            start_date = tech_latest_date + timedelta(days=1)
+            print(f"📂 株価データ最新日付: {stock_latest_date}")
+            print(f"📂 テクニカル指標最新日付: {tech_latest_date}")
             print(f"📅 計算開始日: {start_date}")
         else:
-            start_date = date(2016, 7, 28)
-            print("⚠️  DBにデータが存在しません。初回計算を開始します。")
-            print(f"📅 計算開始日: {start_date}")
+            # Standardプラン: 現在から10年前
+            ten_years_ago = datetime.now().date() - timedelta(days=365 * 10)
+            start_date = ten_years_ago
+            print(f"📂 株価データ最新日付: {stock_latest_date}")
+            print("⚠️  テクニカル指標データが存在しません。初回計算を開始します。")
+            print(f"📅 計算開始日: {start_date} （Standardプラン: 現在から10年前）")
 
-        end_date = date.today()
+        # 終了日は株価データの最新日付（株価データがある範囲内でのみ計算）
+        end_date = stock_latest_date
         print(f"📅 計算終了日: {end_date}")
 
         if start_date > end_date:
