@@ -202,8 +202,19 @@ df = cli.get_fin_summary(code="7203")
 
 ### 1. 主キー設計
 
-**候補**:
-- `(Code, DiscDate, TypeOfDocument)` - 同日に複数の開示がある場合を考慮
+**実装仕様** (`financial_statements` テーブル):
+
+- **主キー**: `id` (UUID, auto-generated)
+- **自然キー（UNIQUE制約）**: `(stock_code, disc_date, type_of_document, disc_time)`
+  - `stock_code`: 銘柄コード（5桁）
+  - `disc_date`: 開示日（DATE型）
+  - `type_of_document`: 開示書類種別
+  - `disc_time`: 開示時刻（NOT NULL）- 同日の訂正開示を区別
+
+**冪等性の保証**:
+- `disc_time`は実データで全件に値が存在（NULL: 0件確認済み）
+- `disc_time`をNOT NULLに設定し、4カラムのUNIQUE制約でデータ重複を完全に防止
+- UPSERT処理（ON CONFLICT DO UPDATE）により、同一自然キーのデータは更新される
 
 ### 2. データ型選択
 

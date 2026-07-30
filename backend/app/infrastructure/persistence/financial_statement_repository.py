@@ -87,7 +87,9 @@ class FinancialStatementRepository:
             if key not in df_copy.columns:
                 print(f"  ⚠️  必須カラム '{key}' が見つかりません")
                 print(f"  📋 利用可能なカラム: {list(df_copy.columns)}")
-                raise ValueError(f"Required column '{key}' not found in DataFrame. Available columns: {list(df_copy.columns)}")
+                raise ValueError(
+                    f"Required column '{key}' not found in DataFrame. Available columns: {list(df_copy.columns)}"
+                )
             df_copy = df_copy[df_copy[key].notna()]
 
         if len(df_copy) == 0:
@@ -120,7 +122,11 @@ class FinancialStatementRepository:
         for col in decimal_columns:
             if col in df_copy.columns:
                 df_copy[col] = df_copy[col].apply(
-                    lambda x: Decimal(str(x)) if pd.notna(x) and x is not None and str(x).strip() != "" else None
+                    lambda x: (
+                        Decimal(str(x))
+                        if pd.notna(x) and x is not None and str(x).strip() != ""
+                        else None
+                    )
                 )
 
         # 整数型に変換（株式数）
@@ -128,7 +134,9 @@ class FinancialStatementRepository:
         for col in int_columns:
             if col in df_copy.columns:
                 df_copy[col] = df_copy[col].apply(
-                    lambda x: int(x) if pd.notna(x) and x is not None and str(x).strip() != "" else None
+                    lambda x: (
+                        int(x) if pd.notna(x) and x is not None and str(x).strip() != "" else None
+                    )
                 )
 
         # fetched_at を追加
@@ -332,25 +340,94 @@ class FinancialStatementRepository:
         """
         return [
             # 財務実績
-            "sales", "op", "od_p", "np", "eps", "deps", "ta", "eq", "eq_ar", "bps",
-            "cfo", "cfi", "cff", "cash_eq",
+            "sales",
+            "op",
+            "od_p",
+            "np",
+            "eps",
+            "deps",
+            "ta",
+            "eq",
+            "eq_ar",
+            "bps",
+            "cfo",
+            "cfi",
+            "cff",
+            "cash_eq",
             # 配当
-            "div_1q", "div_2q", "div_3q", "div_fy", "div_ann", "div_total_ann", "payout_ratio_ann",
-            "f_div_1q", "f_div_2q", "f_div_3q", "f_div_fy", "f_div_ann", "f_div_total_ann", "f_payout_ratio_ann",
+            "div_1q",
+            "div_2q",
+            "div_3q",
+            "div_fy",
+            "div_ann",
+            "div_total_ann",
+            "payout_ratio_ann",
+            "f_div_1q",
+            "f_div_2q",
+            "f_div_3q",
+            "f_div_fy",
+            "f_div_ann",
+            "f_div_total_ann",
+            "f_payout_ratio_ann",
             # 当期予想
-            "f_sales_2q", "f_op_2q", "f_od_p_2q", "f_np_2q", "f_eps_2q",
-            "f_sales", "f_op", "f_od_p", "f_np", "f_eps",
+            "f_sales_2q",
+            "f_op_2q",
+            "f_od_p_2q",
+            "f_np_2q",
+            "f_eps_2q",
+            "f_sales",
+            "f_op",
+            "f_od_p",
+            "f_np",
+            "f_eps",
             # 翌期予想
-            "nx_f_sales_2q", "nx_f_op_2q", "nx_f_od_p_2q", "nx_f_np_2q", "nx_f_eps_2q",
-            "nx_f_sales", "nx_f_op", "nx_f_od_p", "nx_f_np", "nx_f_eps",
-            "nx_f_div_1q", "nx_f_div_2q", "nx_f_div_3q", "nx_f_div_fy", "nx_f_div_ann", "nx_f_payout_ratio_ann",
+            "nx_f_sales_2q",
+            "nx_f_op_2q",
+            "nx_f_od_p_2q",
+            "nx_f_np_2q",
+            "nx_f_eps_2q",
+            "nx_f_sales",
+            "nx_f_op",
+            "nx_f_od_p",
+            "nx_f_np",
+            "nx_f_eps",
+            "nx_f_div_1q",
+            "nx_f_div_2q",
+            "nx_f_div_3q",
+            "nx_f_div_fy",
+            "nx_f_div_ann",
+            "nx_f_payout_ratio_ann",
             # 非連結
-            "nc_sales", "nc_op", "nc_od_p", "nc_np", "nc_eps", "nc_ta", "nc_eq", "nc_eq_ar", "nc_bps",
+            "nc_sales",
+            "nc_op",
+            "nc_od_p",
+            "nc_np",
+            "nc_eps",
+            "nc_ta",
+            "nc_eq",
+            "nc_eq_ar",
+            "nc_bps",
             # 非連結予想
-            "nc_f_sales_2q", "nc_f_op_2q", "nc_f_od_p_2q", "nc_f_np_2q", "nc_f_eps_2q",
-            "nc_f_sales", "nc_f_op", "nc_f_od_p", "nc_f_np", "nc_f_eps",
-            "nc_nx_f_sales_2q", "nc_nx_f_op_2q", "nc_nx_f_od_p_2q", "nc_nx_f_np_2q", "nc_nx_f_eps_2q",
-            "nc_nx_f_sales", "nc_nx_f_op", "nc_nx_f_od_p", "nc_nx_f_np", "nc_nx_f_eps",
+            "nc_f_sales_2q",
+            "nc_f_op_2q",
+            "nc_f_od_p_2q",
+            "nc_f_np_2q",
+            "nc_f_eps_2q",
+            "nc_f_sales",
+            "nc_f_op",
+            "nc_f_od_p",
+            "nc_f_np",
+            "nc_f_eps",
+            "nc_nx_f_sales_2q",
+            "nc_nx_f_op_2q",
+            "nc_nx_f_od_p_2q",
+            "nc_nx_f_np_2q",
+            "nc_nx_f_eps_2q",
+            "nc_nx_f_sales",
+            "nc_nx_f_op",
+            "nc_nx_f_od_p",
+            "nc_nx_f_np",
+            "nc_nx_f_eps",
         ]
 
     def _get_required_columns(self) -> list[str]:
@@ -361,34 +438,123 @@ class FinancialStatementRepository:
         """
         return [
             # 基本情報
-            "stock_code", "disc_date", "disc_time", "disc_no", "type_of_document",
+            "stock_code",
+            "disc_date",
+            "disc_time",
+            "disc_no",
+            "type_of_document",
             # 会計期間
-            "cur_per_type", "cur_per_st", "cur_per_en", "cur_fy_st", "cur_fy_en", "nxt_fy_st", "nxt_fy_en",
+            "cur_per_type",
+            "cur_per_st",
+            "cur_per_en",
+            "cur_fy_st",
+            "cur_fy_en",
+            "nxt_fy_st",
+            "nxt_fy_en",
             # 財務実績
-            "sales", "op", "od_p", "np", "eps", "deps", "ta", "eq", "eq_ar", "bps",
-            "cfo", "cfi", "cff", "cash_eq",
+            "sales",
+            "op",
+            "od_p",
+            "np",
+            "eps",
+            "deps",
+            "ta",
+            "eq",
+            "eq_ar",
+            "bps",
+            "cfo",
+            "cfi",
+            "cff",
+            "cash_eq",
             # 株式数
-            "sh_out_fy", "tr_sh_fy", "avg_sh",
+            "sh_out_fy",
+            "tr_sh_fy",
+            "avg_sh",
             # 配当実績
-            "div_1q", "div_2q", "div_3q", "div_fy", "div_ann", "div_unit", "div_total_ann", "payout_ratio_ann",
+            "div_1q",
+            "div_2q",
+            "div_3q",
+            "div_fy",
+            "div_ann",
+            "div_unit",
+            "div_total_ann",
+            "payout_ratio_ann",
             # 配当予想
-            "f_div_1q", "f_div_2q", "f_div_3q", "f_div_fy", "f_div_ann", "f_div_unit", "f_div_total_ann", "f_payout_ratio_ann",
+            "f_div_1q",
+            "f_div_2q",
+            "f_div_3q",
+            "f_div_fy",
+            "f_div_ann",
+            "f_div_unit",
+            "f_div_total_ann",
+            "f_payout_ratio_ann",
             # 当期予想
-            "f_sales_2q", "f_op_2q", "f_od_p_2q", "f_np_2q", "f_eps_2q",
-            "f_sales", "f_op", "f_od_p", "f_np", "f_eps",
+            "f_sales_2q",
+            "f_op_2q",
+            "f_od_p_2q",
+            "f_np_2q",
+            "f_eps_2q",
+            "f_sales",
+            "f_op",
+            "f_od_p",
+            "f_np",
+            "f_eps",
             # 翌期予想
-            "nx_f_sales_2q", "nx_f_op_2q", "nx_f_od_p_2q", "nx_f_np_2q", "nx_f_eps_2q",
-            "nx_f_sales", "nx_f_op", "nx_f_od_p", "nx_f_np", "nx_f_eps",
-            "nx_f_div_1q", "nx_f_div_2q", "nx_f_div_3q", "nx_f_div_fy", "nx_f_div_ann", "nx_f_div_unit", "nx_f_payout_ratio_ann",
+            "nx_f_sales_2q",
+            "nx_f_op_2q",
+            "nx_f_od_p_2q",
+            "nx_f_np_2q",
+            "nx_f_eps_2q",
+            "nx_f_sales",
+            "nx_f_op",
+            "nx_f_od_p",
+            "nx_f_np",
+            "nx_f_eps",
+            "nx_f_div_1q",
+            "nx_f_div_2q",
+            "nx_f_div_3q",
+            "nx_f_div_fy",
+            "nx_f_div_ann",
+            "nx_f_div_unit",
+            "nx_f_payout_ratio_ann",
             # 非連結
-            "nc_sales", "nc_op", "nc_od_p", "nc_np", "nc_eps", "nc_ta", "nc_eq", "nc_eq_ar", "nc_bps",
+            "nc_sales",
+            "nc_op",
+            "nc_od_p",
+            "nc_np",
+            "nc_eps",
+            "nc_ta",
+            "nc_eq",
+            "nc_eq_ar",
+            "nc_bps",
             # 非連結予想
-            "nc_f_sales_2q", "nc_f_op_2q", "nc_f_od_p_2q", "nc_f_np_2q", "nc_f_eps_2q",
-            "nc_f_sales", "nc_f_op", "nc_f_od_p", "nc_f_np", "nc_f_eps",
-            "nc_nx_f_sales_2q", "nc_nx_f_op_2q", "nc_nx_f_od_p_2q", "nc_nx_f_np_2q", "nc_nx_f_eps_2q",
-            "nc_nx_f_sales", "nc_nx_f_op", "nc_nx_f_od_p", "nc_nx_f_np", "nc_nx_f_eps",
+            "nc_f_sales_2q",
+            "nc_f_op_2q",
+            "nc_f_od_p_2q",
+            "nc_f_np_2q",
+            "nc_f_eps_2q",
+            "nc_f_sales",
+            "nc_f_op",
+            "nc_f_od_p",
+            "nc_f_np",
+            "nc_f_eps",
+            "nc_nx_f_sales_2q",
+            "nc_nx_f_op_2q",
+            "nc_nx_f_od_p_2q",
+            "nc_nx_f_np_2q",
+            "nc_nx_f_eps_2q",
+            "nc_nx_f_sales",
+            "nc_nx_f_op",
+            "nc_nx_f_od_p",
+            "nc_nx_f_np",
+            "nc_nx_f_eps",
             # 会計処理
-            "mat_chg_sub", "sig_chg_in_c", "chg_by_as_rev", "chg_no_as_rev", "chg_ac_est", "retro_rst",
+            "mat_chg_sub",
+            "sig_chg_in_c",
+            "chg_by_as_rev",
+            "chg_no_as_rev",
+            "chg_ac_est",
+            "retro_rst",
             # メタ
             "fetched_at",
         ]

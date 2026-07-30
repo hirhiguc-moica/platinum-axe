@@ -439,12 +439,14 @@ uv run python backend/jobs/collectors/fetch_daily_stock_prices.py
 
 **成果物**:
 - ✅ **DBテーブル作成**: `financial_statements`（Alembic管理）
-  - 主キー: `(stock_code, disc_date, type_of_document, disc_time)`
+  - **主キー**: `id` (UUID, auto-generated)
+  - **自然キー（UNIQUE制約）**: `(stock_code, disc_date, type_of_document, disc_time)`
+    - `disc_time`はNOT NULL（実データ全件で値が存在、NULL: 0件確認済み）
   - カラム: 売上高、利益、EPS、BPS、CF、配当等（約110カラム）
-  - UNIQUE制約: ナチュラルキー（冪等性担保）
+  - 冪等性: UPSERT（ON CONFLICT DO UPDATE）で自然キー重複を更新
   - Alembicマイグレーション2本実行完了
     - `20260729_2051`: テーブル作成（全カラム定義）
-    - `20260729_2125`: UNIQUE制約修正（disc_time追加） + BIGINT化
+    - `20260729_2125`: UNIQUE制約修正（disc_time追加 + NOT NULL化） + BIGINT化
 
 - ✅ **DDD構造でデータ取得機能実装**
   - Infrastructure層: `JQuantsFinancialRepository`（API呼び出し）

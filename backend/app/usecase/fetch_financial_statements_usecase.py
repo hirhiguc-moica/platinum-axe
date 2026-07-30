@@ -11,7 +11,9 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.infrastructure.jquants import JQuantsFinancialRepository
-from app.infrastructure.persistence.financial_statement_repository import FinancialStatementRepository
+from app.infrastructure.persistence.financial_statement_repository import (
+    FinancialStatementRepository,
+)
 
 
 class FetchFinancialStatementsUseCase:

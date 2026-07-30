@@ -41,7 +41,9 @@ load_dotenv(env_path)
 from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from app.usecase.fetch_financial_statements_usecase import FetchFinancialStatementsUseCase  # noqa: E402
+from app.usecase.fetch_financial_statements_usecase import (  # noqa: E402
+    FetchFinancialStatementsUseCase,  # noqa: E402
+)
 
 
 def main():
@@ -124,7 +126,9 @@ def main():
         )
 
         print(f"\n✅ 全件取得完了: {result['total_saved']}件")
-        print(f"⏱️  所要時間: {result['elapsed_seconds']:.1f}秒 ({result['elapsed_seconds'] / 60:.1f}分)")
+        print(
+            f"⏱️  所要時間: {result['elapsed_seconds']:.1f}秒 ({result['elapsed_seconds'] / 60:.1f}分)"
+        )
 
 
 if __name__ == "__main__":

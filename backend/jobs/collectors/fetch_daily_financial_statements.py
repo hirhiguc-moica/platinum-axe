@@ -42,7 +42,9 @@ load_dotenv(env_path)
 from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from app.usecase.fetch_financial_statements_usecase import FetchFinancialStatementsUseCase  # noqa: E402
+from app.usecase.fetch_financial_statements_usecase import (  # noqa: E402
+    FetchFinancialStatementsUseCase,  # noqa: E402
+)
 
 
 def main():
