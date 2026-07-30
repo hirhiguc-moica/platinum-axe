@@ -111,10 +111,12 @@ class CalculateTechnicalIndicatorsUseCase:
             print(f"📂 テクニカル指標最新日付: {tech_latest_date}")
             print(f"📅 計算開始日: {start_date}")
         else:
-            start_date = date(2016, 7, 28)
+            # Standardプラン: 現在から10年前
+            ten_years_ago = datetime.now().date() - timedelta(days=365 * 10)
+            start_date = ten_years_ago
             print(f"📂 株価データ最新日付: {stock_latest_date}")
             print("⚠️  テクニカル指標データが存在しません。初回計算を開始します。")
-            print(f"📅 計算開始日: {start_date}")
+            print(f"📅 計算開始日: {start_date} （Standardプラン: 現在から10年前）")
 
         # 終了日は株価データの最新日付（株価データがある範囲内でのみ計算）
         end_date = stock_latest_date

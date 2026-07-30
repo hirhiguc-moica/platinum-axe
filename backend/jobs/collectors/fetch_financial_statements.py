@@ -6,7 +6,7 @@ J-Quants APIから財務サマリーデータ（決算短信・業績予想・�
     # テストモード（直近1ヶ月のみ取得）
     $ uv run python backend/jobs/collectors/fetch_financial_statements.py --test
 
-    # 過去10年分全量取得（2016-07-30〜、wait=1秒で約1時間）
+    # 過去10年分全量取得（Standardプラン: 現在から10年前〜、wait=1秒で約1時間）
     $ uv run python backend/jobs/collectors/fetch_financial_statements.py
 
     # 期間指定取得
@@ -56,7 +56,7 @@ def main():
         "--start-date",
         type=str,
         default=None,
-        help="取得開始日（YYYY-MM-DD形式、デフォルト: 2016-07-30）",
+        help="取得開始日（YYYY-MM-DD形式、デフォルト: 現在から10年前 ※Standardプラン利用可能範囲）",
     )
     parser.add_argument(
         "--end-date",
@@ -91,8 +91,9 @@ def main():
         if args.start_date:
             start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
         else:
-            # デフォルト: J-Quants Standardプランの開始日（2016-07-30）
-            start_date = datetime(2016, 7, 30)
+            # デフォルト: J-Quants Standardプラン（現在から10年前）
+            ten_years_ago = datetime.now() - timedelta(days=365 * 10)
+            start_date = ten_years_ago
 
         if args.end_date:
             end_date = datetime.strptime(args.end_date, "%Y-%m-%d")

@@ -172,10 +172,11 @@ class FetchFinancialStatementsUseCase:
             print(f"📂 DB最新開示日: {latest_date}")
             print(f"📅 取得開始日: {start_date.date()} （最新日-1日から再取得）")
         else:
-            # DBが空の場合はデフォルト開始日（Standardプランの開始日）
-            start_date = datetime(2016, 7, 1)
+            # DBが空の場合はデフォルト開始日（Standardプラン: 現在から10年前）
+            ten_years_ago = datetime.now() - timedelta(days=365 * 10)
+            start_date = ten_years_ago
             print("⚠️  DBにデータが存在しません。初回取得を開始します。")
-            print(f"📅 取得開始日: {start_date.date()}")
+            print(f"📅 取得開始日: {start_date.date()} （Standardプラン: 現在から10年前）")
 
         # 終了日は今日
         end_date = datetime.now()
