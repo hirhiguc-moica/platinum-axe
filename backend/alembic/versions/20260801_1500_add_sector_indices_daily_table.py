@@ -46,7 +46,7 @@ def upgrade() -> None:
         # UNIQUE制約
         sa.UniqueConstraint('index_code', 'date', name='uq_sector_indices_daily_code_date'),
 
-        comment='セクター指数日次データ（全38指数、Phase 1では18指数を機械学習に使用）'
+        comment='セクター指数日次データ（全47指数、Phase 1では34指数を機械学習に使用）'
     )
 
     # インデックス作成

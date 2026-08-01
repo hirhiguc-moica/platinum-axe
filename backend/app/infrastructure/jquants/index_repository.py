@@ -65,7 +65,7 @@ class JQuantsIndexRepository:
             - レート制限: 60req/分（1req/秒）
             - 株価APIとは独立したレート制限
             - 長期間を一度に取得する場合は、適切な待機時間を設けること
-            - index_code=Noneで全38指数をまとめて取得可能
+            - index_code=Noneで全47指数をまとめて取得可能
         """
         return self.client.get_index_bars_daily_range(
             code=index_code,

@@ -12,8 +12,8 @@ from app.domain.models.base import Base, TimestampMixin
 class SectorIndexDaily(TimestampMixin, Base):
     """セクター指数日次データ
 
-    全38指数を保存（TOPIX関連9 + 市場別4 + TOPIX-17業種別17 + REIT 1）
-    Phase 1では18指数（TOPIX + TOPIX-17業種別17）を機械学習に使用
+    全47指数を保存（TOPIX関連9 + 市場別4 + 東証33業種 + REIT 1）
+    Phase 1では34指数（TOPIX + 東証33業種）を機械学習に使用
     """
 
     __tablename__ = "sector_indices_daily"
@@ -41,7 +41,7 @@ class SectorIndexDaily(TimestampMixin, Base):
         Index("ix_sector_indices_daily_index_code", "index_code"),
         Index("ix_sector_indices_daily_date", "date"),
         Index("ix_sector_indices_daily_code_date", "index_code", "date"),
-        {"comment": "セクター指数日次データ（全38指数、Phase 1では18指数を機械学習に使用）"},
+        {"comment": "セクター指数日次データ（全47指数、Phase 1では34指数を機械学習に使用）"},
     )
 
     def __repr__(self) -> str:

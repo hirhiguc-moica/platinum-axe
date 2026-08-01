@@ -1,10 +1,10 @@
 """セクター指数データ取得スクリプト（全件取得）
 
-J-Quants API からセクター指数日次データ（TOPIX、TOPIX-17等、全38指数）を全件取得してDBに保存する。
+J-Quants API からセクター指数日次データ（TOPIX、東証33業種等、全47指数）を全件取得してDBに保存する。
 
 コマンドライン引数:
     --start-date: 取得開始日（YYYY-MM-DD形式）
-        デフォルト: 2009-02-02（J-Quants API取得可能開始日）
+        デフォルト: 実行日から10年前（J-Quants Standardプランの取得可能期間）
 
     --end-date: 取得終了日（YYYY-MM-DD形式）
         デフォルト: 今日
@@ -21,24 +21,24 @@ J-Quants API からセクター指数日次データ（TOPIX、TOPIX-17等、全
     # テストモード（1ヶ月のみ取得）
     $ uv run python backend/jobs/collectors/fetch_sector_indices.py --test
 
-    # 過去15年分取得（デフォルトwait=1秒で約40分）
+    # 過去10年分取得（デフォルトwait=1秒で約1時間）
     $ uv run python backend/jobs/collectors/fetch_sector_indices.py
 
-    # wait時間なし（約38分、rate limit注意）
+    # wait時間なし（約50分、rate limit注意）
     $ uv run python backend/jobs/collectors/fetch_sector_indices.py --wait 0
 
-    # 期間指定
+    # 期間指定（2009年2月2日以降を指定可能）
     $ uv run python backend/jobs/collectors/fetch_sector_indices.py \
         --start-date 2024-01-01 --end-date 2024-12-31
 
 実装詳細:
     - UseCase層を使用した実装（DDD構造）
-    - 日単位で分割（38指数を1日ずつ取得）
+    - 日単位で分割（47指数を1日ずつ取得）
     - 各日取得後1秒待機（--waitで調整可能）
     - PostgreSQL UPSERT で高速保存（重複実行OK）
     - 進捗保存なし（エラー時は最初から再実行）
 
-所要時間見積もり（全38指数×約3700営業日）:
+所要時間見積もり（全47指数×約3700営業日）:
     - wait=1秒: 約3700秒（約1時間、推奨）
     - wait=0秒: 約30分（rate limit注意）
 """
@@ -81,7 +81,7 @@ def main() -> None:
         "--start-date",
         type=str,
         default=None,
-        help="取得開始日（YYYY-MM-DD形式）。デフォルト: 2009-02-02",
+        help="取得開始日（YYYY-MM-DD形式）。デフォルト: 実行日から10年前",
     )
     parser.add_argument(
         "--end-date",

@@ -89,8 +89,9 @@ class CalculateSectorIndexChangesUseCase:
             print("  ⚠️  更新対象なし（すべて計算済み）")
             return {"total_calculated": 0, "total_updated": 0}
 
-        # 90日前から取得（60営業日前までカバー）
-        data_start_date = latest_date - timedelta(days=90)
+        # 計算対象開始日の90日前から取得（60営業日前までカバー）
+        # target_start_dateを基準にすることで、バッチ停止期間が長い場合も正しく動作
+        data_start_date = target_start_date - timedelta(days=90)
 
         # 計算実行
         return self._calculate_and_update(
@@ -304,7 +305,13 @@ class CalculateSectorIndexChangesUseCase:
         # 営業日数をカウント
         if len(past_df) >= target_days:
             # target_days営業日前のデータを取得（後ろからtarget_days番目）
-            return past_df.iloc[-target_days]["date"]
+            candidate = past_df.iloc[-target_days]["date"]
+
+            # 暦日での上限チェック（想定外に古い日付を参照しないため）
+            if (current_date - candidate).days > max_search_days:
+                return None
+
+            return candidate
 
         # 見つからない場合はNone
         return None
@@ -336,73 +343,44 @@ class CalculateSectorIndexChangesUseCase:
         if len(updates) == 0:
             return 0
 
-        # バッチサイズ（1000件ずつ更新）
+        # バインドパラメータを使ったUPDATE文
+        update_query = text("""
+            UPDATE sector_indices_daily
+            SET
+                change_rate_1d = :change_rate_1d,
+                change_rate_5d = :change_rate_5d,
+                change_rate_20d = :change_rate_20d,
+                change_rate_60d = :change_rate_60d,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :id
+        """)
+
+        # NaN値をNoneに変換（pandasのNaNがSQL構文エラーを起こすのを防ぐ）
+        sanitized_updates = []
+        for item in updates:
+            sanitized_item = {"id": item["id"]}
+            for key in ["change_rate_1d", "change_rate_5d", "change_rate_20d", "change_rate_60d"]:
+                value = item[key]
+                # NaNまたはInfinityをNoneに変換
+                if value is not None and (pd.isna(value) or not pd.api.types.is_finite(value)):
+                    sanitized_item[key] = None
+                else:
+                    sanitized_item[key] = value
+            sanitized_updates.append(sanitized_item)
+
+        # バッチサイズ（1000件ずつ更新してコミット）
         batch_size = 1000
         total_updated = 0
 
-        for i in range(0, len(updates), batch_size):
-            batch = updates[i : i + batch_size]
+        for i in range(0, len(sanitized_updates), batch_size):
+            batch = sanitized_updates[i : i + batch_size]
 
-            # UPDATE文を生成（CASE文で一括更新）
-            when_clauses_1d = []
-            when_clauses_5d = []
-            when_clauses_20d = []
-            when_clauses_60d = []
-
-            for item in batch:
-                id_str = f"'{item['id']}'"
-
-                # change_rate_1d
-                if item["change_rate_1d"] is not None:
-                    when_clauses_1d.append(f"WHEN {id_str} THEN {item['change_rate_1d']}")
-                else:
-                    when_clauses_1d.append(f"WHEN {id_str} THEN NULL")
-
-                # change_rate_5d
-                if item["change_rate_5d"] is not None:
-                    when_clauses_5d.append(f"WHEN {id_str} THEN {item['change_rate_5d']}")
-                else:
-                    when_clauses_5d.append(f"WHEN {id_str} THEN NULL")
-
-                # change_rate_20d
-                if item["change_rate_20d"] is not None:
-                    when_clauses_20d.append(f"WHEN {id_str} THEN {item['change_rate_20d']}")
-                else:
-                    when_clauses_20d.append(f"WHEN {id_str} THEN NULL")
-
-                # change_rate_60d
-                if item["change_rate_60d"] is not None:
-                    when_clauses_60d.append(f"WHEN {id_str} THEN {item['change_rate_60d']}")
-                else:
-                    when_clauses_60d.append(f"WHEN {id_str} THEN NULL")
-
-            # ID一覧
-            ids = [f"'{item['id']}'" for item in batch]
-
-            update_query = f"""
-                UPDATE sector_indices_daily
-                SET
-                    change_rate_1d = CASE id
-                        {' '.join(when_clauses_1d)}
-                    END,
-                    change_rate_5d = CASE id
-                        {' '.join(when_clauses_5d)}
-                    END,
-                    change_rate_20d = CASE id
-                        {' '.join(when_clauses_20d)}
-                    END,
-                    change_rate_60d = CASE id
-                        {' '.join(when_clauses_60d)}
-                    END,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id IN ({', '.join(ids)})
-            """
-
-            self.session.execute(text(update_query))
+            # executemanyで一括実行
+            self.session.execute(update_query, batch)
             self.session.commit()
 
             total_updated += len(batch)
-            print(f"  DB更新進捗: {total_updated:,} / {len(updates):,}件", end="\r")
+            print(f"  DB更新進捗: {total_updated:,} / {len(sanitized_updates):,}件", end="\r")
 
         print()  # 改行
 
