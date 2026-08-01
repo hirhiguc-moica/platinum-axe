@@ -41,10 +41,12 @@ env_path = project_root / ".env"
 load_dotenv(env_path)
 
 import pandas as pd  # noqa: E402
-from sqlalchemy import create_engine, select  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from app.domain.models.financial_statement import FinancialStatement  # noqa: E402
+from app.infrastructure.persistence.financial_statement_repository import (  # noqa: E402
+    FinancialStatementRepository,
+)
 from app.usecase.calculate_fundamental_indicators_usecase import (  # noqa: E402
     CalculateFundamentalIndicatorsUseCase,
 )
@@ -58,56 +60,26 @@ from app.usecase.fetch_stock_prices_usecase import FetchStockPricesUseCase  # no
 
 
 def load_all_financial_data(database_url: str) -> pd.DataFrame:
-    """財務データ全件をメモリにロード（約19万件、500MB）
+    """財務データ全件をメモリにロード（約19万件、列選択により約300MB）
 
     Args:
         database_url: データベースURL
 
     Returns:
         pd.DataFrame: 財務データ全件
+
+    Note:
+        - ORM生成を回避し、列選択で直接DataFrameに変換
+        - ファンダメンタル指標計算に必要な24列のみ抽出
+        - メモリ使用量: 約300MB（ORM経由の約500MBから削減）
     """
     print("  📦 財務データ全件ロード中...")
     engine = create_engine(database_url, echo=False, echo_pool=False, hide_parameters=True)
 
     try:
         with Session(engine) as session:
-            stmt = select(FinancialStatement)
-            result = session.execute(stmt)
-            all_fins = result.scalars().all()
-
-            # DataFrameに変換
-            records = []
-            for fin in all_fins:
-                # 必要なカラムのみ抽出（メモリ効率化）
-                records.append({
-                    "stock_code": fin.stock_code,
-                    "disc_date": fin.disc_date,
-                    "disc_time": fin.disc_time,
-                    "type_of_document": fin.type_of_document,
-                    "cur_per_type": fin.cur_per_type,
-                    "cur_per_st": fin.cur_per_st,
-                    "cur_per_en": fin.cur_per_en,
-                    # 財務データ
-                    "sales": fin.sales,
-                    "op": fin.op,
-                    "od_p": fin.od_p,
-                    "np": fin.np,
-                    "eps": fin.eps,
-                    "bps": fin.bps,
-                    "cfo": fin.cfo,
-                    "ta": fin.ta,
-                    "eq": fin.eq,
-                    "sh_out_fy": fin.sh_out_fy,
-                    # 配当
-                    "div_ann": fin.div_ann,
-                    # 予想データ
-                    "f_eps": fin.f_eps,
-                    "nx_f_eps": fin.nx_f_eps,
-                    "f_div_ann": fin.f_div_ann,
-                    "nx_f_div_ann": fin.nx_f_div_ann,
-                })
-
-            df = pd.DataFrame(records)
+            repo = FinancialStatementRepository(session)
+            df = repo.load_all_as_dataframe()
             print(f"  ✅ 財務データロード完了: {len(df):,}件\n")
             return df
     finally:

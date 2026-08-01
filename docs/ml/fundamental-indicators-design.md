@@ -20,7 +20,7 @@
 
 **問題**: 決算発表日と株価取引日のタイムラグによる未来情報混入
 
-```
+```text
 例：トヨタの2024年3月期決算
   - 決算期末: 2024年3月31日
   - 決算発表日: 2024年5月10日
@@ -57,7 +57,7 @@ def get_latest_financial_data(stock_code, target_date):
 
 **問題**: J-Quants APIには株式分割情報のAPIがなく、株価とEPSの整合性が崩れる
 
-```
+```text
 例：ソニーの株式分割（2024年10月1日、1株→5株）
 
 【分割直前】2024年9月30日（2Q決算発表）
@@ -91,7 +91,7 @@ def get_latest_financial_data(stock_code, target_date):
 
 **問題**: 同一企業が会計基準を変更すると、前年同期比（YoY）が計算できない？
 
-```
+```text
 例：ソニーの会計基準変更（2021年、米国基準 → IFRS）
 
 2021年4月（FY決算、米国基準）
@@ -151,7 +151,7 @@ YoY = (9,921,513 - 8,999,360) / 8,999,360 = 10.2%
 
 **問題**: J-Quants APIの財務データは四半期累計のため、そのまま使うとPERが大きく歪む
 
-```
+```text
 例：トヨタ自動車（実データ）
 
 【2024年11月6日：2Q決算発表】
@@ -242,7 +242,7 @@ forward_per_fy = 株価 / current_fin.f_eps  # 通期予想EPS
 
 **問題**: 異なる累計期間同士を比較すると誤差が大きい
 
-```
+```text
 ❌ 間違い:
 2024年2Q（6ヶ月累計）vs 2023年4Q（12ヶ月累計）
 → 累計期間が違うので比較不可
@@ -447,15 +447,15 @@ def detect_recent_split_and_adjust(stock_code, target_date):
         return 1.0  # データ不足
 
     adj_factor_at_fin = price_at_fin.close / price_at_fin.adjusted_close
-    # = 15,000 / 15,000 = 1.0（分割前）
+    # = 15,000 / 3,000 = 5.0（分割前、adjusted_closeは遡って÷5調整済み）
 
     adj_factor_today = price_today.close / price_today.adjusted_close
-    # = 3,000 / 600 = 5.0（分割後、adjusted_closeは分割考慮済み）
+    # = 3,000 / 3,000 = 1.0（分割後）
 
-    if adj_factor_at_fin == 0:
+    if adj_factor_today == 0:
         return 1.0
 
-    split_ratio = adj_factor_today / adj_factor_at_fin
+    split_ratio = adj_factor_at_fin / adj_factor_today
     # = 5.0 / 1.0 = 5.0
 
     # 5. 分割の妥当性チェック
@@ -1001,7 +1001,7 @@ def filter_outliers(indicators):
 
 ### 制約1: 株式分割直後の推定精度
 
-```
+```text
 分割後〜次の決算発表までの期間（最大3ヶ月）:
   - 推定EPSは分割前EPSを元にしている
   - 実際の業績が急変すると誤差が出る
@@ -1010,7 +1010,7 @@ def filter_outliers(indicators):
 
 ### 制約2: 会計基準変更の影響
 
-```
+```text
 会計基準変更後のYoY成長率:
   - 会計基準が違うので「完全に正確」ではない
   - 多くの場合、誤差は ±数%程度
@@ -1019,7 +1019,7 @@ def filter_outliers(indicators):
 
 ### 制約3: 四半期データの累計方式
 
-```
+```text
 四半期決算のデータは「期首からの累計」:
   - 1Q: 3ヶ月累計
   - 2Q: 6ヶ月累計
@@ -1033,7 +1033,7 @@ def filter_outliers(indicators):
 
 ### 制約4: 欠損値
 
-```
+```text
 以下の場合、指標がNULLになる:
   - 財務データが未発表（新規上場直後等）
   - EPS、BPS等が0またはマイナス（PER、PBR等が計算不可）

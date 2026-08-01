@@ -485,12 +485,16 @@ class CalculateFundamentalIndicatorsUseCase:
         adj_factor_at_fin = float(price_at_fin.close) / float(price_at_fin.adjusted_close)
         adj_factor_today = float(price_today.close) / float(price_today.adjusted_close)
 
-        if adj_factor_at_fin == 0:
+        if adj_factor_today == 0:
             return 1.0
 
-        # 分割比率 = 今日のadjustment_factor / 財務発表日のadjustment_factor
-        # 例: 発表日1.0 → 今日5.0 なら、1→5の分割があった
-        split_ratio = adj_factor_today / adj_factor_at_fin
+        # 分割比率 = 財務発表日のadjustment_factor / 今日のadjustment_factor
+        # J-Quants APIのadjusted_closeは分割前の過去データを遡って調整する
+        # 例: 1→5分割の場合
+        #   分割前: close=15,000, adjusted_close=3,000（遡って÷5） → factor=5.0
+        #   分割後: close=3,000,  adjusted_close=3,000               → factor=1.0
+        #   分割比率 = 5.0 / 1.0 = 5.0
+        split_ratio = adj_factor_at_fin / adj_factor_today
 
         # 一般的な分割比率（1:2, 1:3, 1:5, 1:10等）
         if 1.5 <= split_ratio <= 20:
@@ -880,6 +884,7 @@ class CalculateFundamentalIndicatorsUseCase:
 
             df_filtered = self.financial_df[
                 (self.financial_df["stock_code"].isin(stock_codes))
+                & (self.financial_df["disc_date"] < target_date)  # Point-in-Time
                 & (self.financial_df["cur_per_en"] >= prev_year_start)
                 & (self.financial_df["cur_per_en"] <= prev_year_end)
                 & (
@@ -902,6 +907,13 @@ class CalculateFundamentalIndicatorsUseCase:
                 )
             ]
 
+            # (stock_code, cur_per_type) で事前にグループ化し、disc_date 降順で保持
+            # これにより O(n²) → O(n) に改善
+            df_filtered = df_filtered.sort_values("disc_date", ascending=False)
+            candidates_by_key = {
+                key: group for key, group in df_filtered.groupby(["stock_code", "cur_per_type"])
+            }
+
             # 銘柄ごとに前年同期をマッチング
             previous_fins_map = {}
             for stock_code, current_fin in current_fins_map.items():
@@ -919,13 +931,12 @@ class CalculateFundamentalIndicatorsUseCase:
                         year=current_fin.cur_per_en.year - 1, day=28
                     )
 
-                # 同じ銘柄・同じ四半期のデータを検索
-                df_candidate = df_filtered[
-                    (df_filtered["stock_code"] == stock_code)
-                    & (df_filtered["cur_per_type"] == current_fin.cur_per_type)
-                ]
+                # 同じ銘柄・同じ四半期のデータをインデックスから取得
+                df_candidate = candidates_by_key.get((stock_code, current_fin.cur_per_type))
+                if df_candidate is None:
+                    continue
 
-                # ±15日の許容範囲でフィルタ
+                # ±15日の許容範囲でフィルタ（disc_date降順で処理されるため、最新の訂正開示が優先される）
                 for _, row in df_candidate.iterrows():
                     if pd.isna(row["cur_per_en"]):
                         continue
@@ -934,7 +945,7 @@ class CalculateFundamentalIndicatorsUseCase:
                     if days_diff <= 15:
                         prev_fin = self._row_to_financial_statement(row)
                         previous_fins_map[stock_code] = prev_fin
-                        break  # 最初に見つかった1件のみ
+                        break  # 最初に見つかった1件のみ（disc_date降順なので最新）
 
             return previous_fins_map
 
@@ -960,6 +971,7 @@ class CalculateFundamentalIndicatorsUseCase:
             .where(
                 and_(
                     FinancialStatement.stock_code.in_(stock_codes),
+                    FinancialStatement.disc_date < target_date,  # Point-in-Time
                     FinancialStatement.cur_per_en.between(prev_year_start, prev_year_end),
                     or_(
                         *[
@@ -1356,9 +1368,9 @@ class CalculateFundamentalIndicatorsUseCase:
             else None
         )
 
-        # === 結果を返す ===
+        # === 異常値フィルタリング ===
 
-        return {
+        indicators = {
             "stock_code": stock_code,
             "date": target_date,
             "per": per,
@@ -1382,6 +1394,11 @@ class CalculateFundamentalIndicatorsUseCase:
             "forward_div_yield_fy": forward_div_yield_fy,
             "forward_div_yield_nx": forward_div_yield_nx,
         }
+
+        # 異常値フィルタリング（DB精度制約 + ビジネスロジック）
+        indicators = self._filter_outliers(indicators)
+
+        return indicators
 
     def _row_to_financial_statement(self, row: pd.Series) -> FinancialStatement:
         """pandasのDataFrame行をFinancialStatementオブジェクトに変換

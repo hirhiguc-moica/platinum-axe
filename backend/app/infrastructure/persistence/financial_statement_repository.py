@@ -52,6 +52,64 @@ class FinancialStatementRepository:
         result = self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    def load_all_as_dataframe(self) -> pd.DataFrame:
+        """財務データ全件をDataFrameとして取得（メモリキャッシュ用）
+
+        ファンダメンタル指標計算で使用する財務データを、
+        必要な列のみ選択してDataFrameで返す。
+
+        Returns:
+            pd.DataFrame: 財務データ全件（約19万件、列選択により約300MB）
+
+        Note:
+            - ORM生成を回避し、列選択で直接DataFrameに変換
+            - ファンダメンタル指標計算に必要な24列のみ抽出
+            - メモリ使用量: 約300MB（ORM経由の約500MBから削減）
+
+        Example:
+            >>> repo = FinancialStatementRepository(session)
+            >>> df = repo.load_all_as_dataframe()
+            >>> print(len(df))
+            189882
+        """
+        # ファンダメンタル指標計算に必要な列のみ選択
+        columns = [
+            FinancialStatement.stock_code,
+            FinancialStatement.disc_date,
+            FinancialStatement.disc_time,
+            FinancialStatement.type_of_document,
+            FinancialStatement.cur_per_type,
+            FinancialStatement.cur_per_st,
+            FinancialStatement.cur_per_en,
+            # 財務データ
+            FinancialStatement.sales,
+            FinancialStatement.op,
+            FinancialStatement.od_p,
+            FinancialStatement.np,
+            FinancialStatement.eps,
+            FinancialStatement.bps,
+            FinancialStatement.cfo,
+            FinancialStatement.ta,
+            FinancialStatement.eq,
+            FinancialStatement.sh_out_fy,
+            # 配当
+            FinancialStatement.div_ann,
+            FinancialStatement.payout_ratio_ann,
+            # 予想データ
+            FinancialStatement.f_eps,
+            FinancialStatement.nx_f_eps,
+            FinancialStatement.f_div_ann,
+            FinancialStatement.nx_f_div_ann,
+        ]
+
+        # 列選択でクエリ実行（ORM生成を回避）
+        result = self.session.execute(select(*columns))
+
+        # DataFrameに変換
+        df = pd.DataFrame(result.mappings().all())
+
+        return df
+
     def bulk_upsert(self, df: pd.DataFrame) -> int:
         """財務DataFrameをPostgreSQL UPSERTでDB保存
 

@@ -64,66 +64,38 @@ env_path = project_root / ".env"
 load_dotenv(env_path)
 
 import pandas as pd  # noqa: E402
-from sqlalchemy import create_engine, select  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from app.domain.models.financial_statement import FinancialStatement  # noqa: E402
+from app.infrastructure.persistence.financial_statement_repository import (  # noqa: E402
+    FinancialStatementRepository,
+)
 from app.usecase.calculate_fundamental_indicators_usecase import (  # noqa: E402
     CalculateFundamentalIndicatorsUseCase,
 )
 
 
 def load_all_financial_data(database_url: str) -> pd.DataFrame:
-    """財務データ全件をメモリにロード（約19万件、500MB）
+    """財務データ全件をメモリにロード（約19万件、列選択により約300MB）
 
     Args:
         database_url: データベースURL
 
     Returns:
         pd.DataFrame: 財務データ全件
+
+    Note:
+        - ORM生成を回避し、列選択で直接DataFrameに変換
+        - ファンダメンタル指標計算に必要な24列のみ抽出
+        - メモリ使用量: 約300MB（ORM経由の約500MBから削減）
     """
     print("  📦 財務データ全件ロード中...")
     engine = create_engine(database_url, echo=False, echo_pool=False, hide_parameters=True)
 
     try:
         with Session(engine) as session:
-            stmt = select(FinancialStatement)
-            result = session.execute(stmt)
-            all_fins = result.scalars().all()
-
-            # DataFrameに変換
-            records = []
-            for fin in all_fins:
-                # 必要なカラムのみ抽出（メモリ効率化）
-                records.append({
-                    "stock_code": fin.stock_code,
-                    "disc_date": fin.disc_date,
-                    "disc_time": fin.disc_time,
-                    "type_of_document": fin.type_of_document,
-                    "cur_per_type": fin.cur_per_type,
-                    "cur_per_st": fin.cur_per_st,
-                    "cur_per_en": fin.cur_per_en,
-                    # 財務データ
-                    "sales": fin.sales,
-                    "op": fin.op,
-                    "od_p": fin.od_p,
-                    "np": fin.np,
-                    "eps": fin.eps,
-                    "bps": fin.bps,
-                    "cfo": fin.cfo,
-                    "ta": fin.ta,
-                    "eq": fin.eq,
-                    "sh_out_fy": fin.sh_out_fy,
-                    # 配当
-                    "div_ann": fin.div_ann,
-                    # 予想データ
-                    "f_eps": fin.f_eps,
-                    "nx_f_eps": fin.nx_f_eps,
-                    "f_div_ann": fin.f_div_ann,
-                    "nx_f_div_ann": fin.nx_f_div_ann,
-                })
-
-            df = pd.DataFrame(records)
+            repo = FinancialStatementRepository(session)
+            df = repo.load_all_as_dataframe()
             print(f"  ✅ 財務データロード完了: {len(df):,}件")
             return df
     finally:
@@ -134,12 +106,16 @@ def process_date_range(args_tuple: tuple) -> int:
     """日付範囲を処理するワーカー関数（並列処理用）
 
     Args:
-        args_tuple: (start_date, end_date, stock_codes, database_url, worker_id, financial_df)
+        args_tuple: (start_date, end_date, stock_codes, database_url, worker_id)
 
     Returns:
         int: 保存件数
+
+    Note:
+        - 各ワーカーで独立してfinancial_dfをロード（メモリ効率化）
+        - マルチプロセスで financial_df を渡すと複製コストが高い
     """
-    start_date, end_date, stock_codes, database_url, worker_id, financial_df = args_tuple
+    start_date, end_date, stock_codes, database_url, worker_id = args_tuple
 
     # 各ワーカーで独立したDB接続を作成
     engine = create_engine(database_url, echo=False, echo_pool=False, hide_parameters=True)
@@ -147,6 +123,9 @@ def process_date_range(args_tuple: tuple) -> int:
     print(f"  🔨 Worker {worker_id}: {start_date} 〜 {end_date} 開始")
 
     try:
+        # 各ワーカーで財務データをロード（約300MB、約5-10秒）
+        financial_df = load_all_financial_data(database_url)
+
         with Session(engine) as session:
             usecase = CalculateFundamentalIndicatorsUseCase(session, financial_df=financial_df)
             saved = usecase.calculate_and_save(
@@ -237,29 +216,30 @@ def main() -> None:
     start_time = datetime.now()
 
     try:
-        # 財務データ全件ロード（メモリキャッシュ、約500MB）
-        financial_df = load_all_financial_data(database_url)
-        print()
-
         if args.workers > 1:
             # 並列処理モード
             print(f"  🚀 並列処理モード: {args.workers}ワーカー")
+            print()
 
             # 営業日リストを取得（一時的にSessionを作成）
             with Session(engine) as session:
-                usecase = CalculateFundamentalIndicatorsUseCase(session, financial_df=financial_df)
+                usecase = CalculateFundamentalIndicatorsUseCase(session)
                 trading_dates = usecase._get_trading_dates(start_date, end_date)
 
             if not trading_dates:
                 print("  ⚠️  指定期間に営業日が見つかりません")
                 sys.exit(0)
 
-            # 営業日リストをワーカー数で分割
-            chunk_size = len(trading_dates) // args.workers
+            # 営業日リストをワーカー数で分割（営業日数がワーカー数未満の場合に対応）
+            effective_workers = min(args.workers, len(trading_dates))
+            if effective_workers < args.workers:
+                print(f"  ⚠️  営業日数（{len(trading_dates)}）がワーカー数（{args.workers}）未満のため、実効ワーカー数を{effective_workers}に制限します")
+
+            chunk_size = len(trading_dates) // effective_workers
             date_chunks = []
-            for i in range(args.workers):
+            for i in range(effective_workers):
                 chunk_start_idx = i * chunk_size
-                if i == args.workers - 1:
+                if i == effective_workers - 1:
                     # 最後のワーカーは残り全部
                     chunk_end_idx = len(trading_dates)
                 else:
@@ -268,17 +248,21 @@ def main() -> None:
                 chunk_start_date = trading_dates[chunk_start_idx]
                 chunk_end_date = trading_dates[chunk_end_idx - 1]
                 date_chunks.append(
-                    (chunk_start_date, chunk_end_date, stock_codes, database_url, i + 1, financial_df)
+                    (chunk_start_date, chunk_end_date, stock_codes, database_url, i + 1)
                 )
 
             # 並列実行
-            with Pool(processes=args.workers) as pool:
+            with Pool(processes=effective_workers) as pool:
                 results = pool.map(process_date_range, date_chunks)
 
             saved = sum(results)
 
         else:
             # 非並列処理モード（既存のロジック）
+            # 財務データ全件ロード（メモリキャッシュ、約300MB）
+            financial_df = load_all_financial_data(database_url)
+            print()
+
             with Session(engine) as session:
                 usecase = CalculateFundamentalIndicatorsUseCase(session, financial_df=financial_df)
                 saved = usecase.calculate_and_save(
