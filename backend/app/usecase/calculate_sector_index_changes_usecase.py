@@ -90,9 +90,9 @@ class CalculateSectorIndexChangesUseCase:
             print("  ⚠️  更新対象なし（すべて計算済み）")
             return {"total_calculated": 0, "total_updated": 0}
 
-        # 計算対象開始日の90日前から取得（60営業日前までカバー）
+        # 計算対象開始日の300日前から取得（60営業日前までカバー、max_search_days=300に対応）
         # target_start_dateを基準にすることで、バッチ停止期間が長い場合も正しく動作
-        data_start_date = target_start_date - timedelta(days=90)
+        data_start_date = target_start_date - timedelta(days=300)
 
         # 計算実行
         return self._calculate_and_update(
@@ -292,7 +292,7 @@ class CalculateSectorIndexChangesUseCase:
             df: 該当指数のDataFrame（date列でソート済み）
             current_date: 基準日
             target_days: 目標営業日数（1, 5, 20, 60）
-            max_search_days: 最大遡及日数（10, 10, 30, 90）
+            max_search_days: 最大遡及日数（28, 28, 80, 300）※2倍安全マージン
 
         Returns:
             見つかった場合は日付、見つからない場合はNone
