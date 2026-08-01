@@ -81,9 +81,8 @@ class FundamentalIndicatorRepository:
         # numpy.nan, numpy.inf, pd.NA をすべて None に変換
         df_copy = df_copy.replace([np.nan, np.inf, -np.inf, pd.NA], None)
 
-        # date列を date 型に変換（必要に応じて）
-        if not isinstance(df_copy["date"].iloc[0], date):
-            df_copy["date"] = pd.to_datetime(df_copy["date"]).dt.date
+        # date列を date 型に正規化（Timestamp/datetime/文字列すべて対応）
+        df_copy["date"] = pd.to_datetime(df_copy["date"]).dt.date
 
         # calculated_at を追加（現在日付）
         df_copy["calculated_at"] = date.today()

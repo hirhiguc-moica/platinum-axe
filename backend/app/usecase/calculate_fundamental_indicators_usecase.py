@@ -153,258 +153,6 @@ class CalculateFundamentalIndicatorsUseCase:
         print(f"  ✅ 計算完了・DB保存完了: {total_saved:,}件")
         return total_saved
 
-    def _calculate_indicators_for_stock_and_date(
-        self, stock_code: str, target_date: date
-    ) -> dict | None:
-        """指定銘柄・指定日のファンダメンタル指標を計算
-
-        Args:
-            stock_code: 銘柄コード
-            target_date: 計算対象日
-
-        Returns:
-            dict | None: 計算結果（20項目 + stock_code, date）。
-                         データ不足の場合はNone。
-        """
-        # === ステップ1: データ取得 ===
-
-        # 1-1. 株価データ
-        price_today = self._get_stock_price(stock_code, target_date)
-        if not price_today:
-            return None  # 株価データがない（非営業日、上場廃止等）
-
-        # 1-2. FY実績データ（実績PER、PBR、PSR、PCFR用）
-        fy_fin = self._get_latest_fy_financial_data(stock_code, target_date)
-        # fy_finがNoneでも予想PER等は計算可能
-
-        # 1-3. 直近四半期データ（予想PER、ROE/ROA等用）
-        current_fin = self._get_latest_financial_data(stock_code, target_date)
-        if not current_fin:
-            return None  # 財務データがない（新規上場直後、未発表等）
-
-        # 1-4. 前年同期の財務データ（YoY成長率用）
-        previous_fin = self._get_same_quarter_previous_year(stock_code, current_fin)
-        # previous_finがNoneでもYoY以外は計算可能
-
-        # 1-5. 最新の予想データ（決算短信 + 予想修正）
-        f_eps, nx_f_eps, f_div_ann, nx_f_div_ann = self._get_latest_forecast_data(
-            stock_code, target_date
-        )
-
-        # === ステップ2: 株式分割の検出と調整 ===
-
-        # 2-1. 直近の分割検出（時価総額チェック）
-        price_at_fin = self._get_stock_price(stock_code, current_fin.disc_date)
-        split_ratio_recent = self._detect_recent_split(
-            price_at_fin, price_today, current_fin.sh_out_fy
-        )
-
-        # 2-2. 前年同期との分割検出（発行済株式数チェック）
-        split_ratio_yoy = 1.0
-        if previous_fin and previous_fin.sh_out_fy and current_fin.sh_out_fy:
-            ratio = float(current_fin.sh_out_fy) / float(previous_fin.sh_out_fy)
-            if 1.5 <= ratio <= 20:
-                split_ratio_yoy = ratio
-
-        # === ステップ3: バリュエーション指標 ===
-
-        # 3-1. PER（実績、FY実績EPS、分割調整済み）
-        if fy_fin and fy_fin.eps:
-            adjusted_eps = float(fy_fin.eps) / split_ratio_recent
-            per = (
-                float(price_today.close) / adjusted_eps
-                if adjusted_eps > 0
-                else None
-            )
-        else:
-            per = None
-
-        # 3-2. PBR（FY実績BPS、分割調整済み）
-        if fy_fin and fy_fin.bps:
-            adjusted_bps = float(fy_fin.bps) / split_ratio_recent
-            pbr = (
-                float(price_today.close) / adjusted_bps
-                if adjusted_bps > 0
-                else None
-            )
-        else:
-            pbr = None
-
-        # 3-3. PSR（時価総額ベース、FY実績売上高）
-        if fy_fin and fy_fin.sh_out_fy:
-            # 時価総額（円） = 株価（円） × 発行済株式数（株）
-            # 注: sh_out_fyは株単位で格納されている（千株ではない）
-            market_cap = float(price_today.close) * float(fy_fin.sh_out_fy)
-            psr = (
-                market_cap / float(fy_fin.sales)
-                if fy_fin.sales and fy_fin.sales > 0
-                else None
-            )
-        else:
-            market_cap = None
-            psr = None
-
-        # 3-4. PCFR（時価総額ベース、FY実績営業CF）
-        if market_cap and fy_fin and fy_fin.cfo:
-            pcfr = market_cap / float(fy_fin.cfo) if fy_fin.cfo > 0 else None
-        else:
-            pcfr = None
-
-        # 3-5. 予想PER（当期、分割調整済み）
-        adjusted_f_eps = f_eps / split_ratio_recent if f_eps else None
-        forward_per_fy = (
-            float(price_today.close) / adjusted_f_eps
-            if adjusted_f_eps and adjusted_f_eps > 0
-            else None
-        )
-
-        # 3-6. 予想PER（翌期、分割調整済み）
-        adjusted_nx_f_eps = nx_f_eps / split_ratio_recent if nx_f_eps else None
-        forward_per_nx = (
-            float(price_today.close) / adjusted_nx_f_eps
-            if adjusted_nx_f_eps and adjusted_nx_f_eps > 0
-            else None
-        )
-
-        # === ステップ4: 収益性指標 ===
-
-        roe = float(current_fin.np) / float(current_fin.eq) if current_fin.np and current_fin.eq and current_fin.eq > 0 else None
-        roa = float(current_fin.np) / float(current_fin.ta) if current_fin.np and current_fin.ta and current_fin.ta > 0 else None
-        operating_margin = (
-            float(current_fin.op) / float(current_fin.sales)
-            if current_fin.op and current_fin.sales and current_fin.sales > 0
-            else None
-        )
-        net_margin = (
-            float(current_fin.np) / float(current_fin.sales)
-            if current_fin.np and current_fin.sales and current_fin.sales > 0
-            else None
-        )
-
-        # === ステップ5: 成長性指標（YoY、分割調整済み） ===
-
-        if previous_fin:
-            # 過去の値を分割係数で調整
-            adj_prev_sales = float(previous_fin.sales) if previous_fin.sales else None
-            adj_prev_op = float(previous_fin.op) if previous_fin.op else None
-            adj_prev_np = float(previous_fin.np) if previous_fin.np else None
-            adj_prev_eps = (
-                float(previous_fin.eps) / split_ratio_yoy if previous_fin.eps else None
-            )
-            adj_prev_cfo = float(previous_fin.cfo) if previous_fin.cfo else None
-
-            sales_growth_yoy = (
-                (float(current_fin.sales) - adj_prev_sales) / adj_prev_sales
-                if current_fin.sales and adj_prev_sales and adj_prev_sales > 0
-                else None
-            )
-            op_growth_yoy = (
-                (float(current_fin.op) - adj_prev_op) / adj_prev_op
-                if current_fin.op and adj_prev_op and adj_prev_op != 0
-                else None
-            )
-            np_growth_yoy = (
-                (float(current_fin.np) - adj_prev_np) / adj_prev_np
-                if current_fin.np and adj_prev_np and adj_prev_np != 0
-                else None
-            )
-            eps_growth_yoy = (
-                (float(current_fin.eps) - adj_prev_eps) / adj_prev_eps
-                if current_fin.eps and adj_prev_eps and adj_prev_eps != 0
-                else None
-            )
-            cfo_growth_yoy = (
-                (float(current_fin.cfo) - adj_prev_cfo) / adj_prev_cfo
-                if current_fin.cfo and adj_prev_cfo and adj_prev_cfo != 0
-                else None
-            )
-        else:
-            sales_growth_yoy = None
-            op_growth_yoy = None
-            np_growth_yoy = None
-            eps_growth_yoy = None
-            cfo_growth_yoy = None
-
-        # === ステップ6: 安全性指標 ===
-
-        equity_ratio = (
-            float(current_fin.eq) / float(current_fin.ta)
-            if current_fin.eq and current_fin.ta and current_fin.ta > 0
-            else None
-        )
-
-        # === ステップ7: 配当指標 ===
-
-        # 7-1. 配当利回り（実績、FY実績配当、分割調整済み）
-        if fy_fin and fy_fin.div_ann:
-            adjusted_div_ann = float(fy_fin.div_ann) / split_ratio_recent
-            dividend_yield = (
-                adjusted_div_ann / float(price_today.close)
-                if price_today.close > 0
-                else None
-            )
-        else:
-            dividend_yield = None
-
-        # 7-2. 配当性向（実績、FY実績）
-        payout_ratio = (
-            float(fy_fin.payout_ratio_ann)
-            if fy_fin and fy_fin.payout_ratio_ann
-            else None
-        )
-
-        # 7-3. 予想配当利回り（当期、分割調整済み）
-        adjusted_f_div_ann = f_div_ann / split_ratio_recent if f_div_ann else None
-        forward_div_yield_fy = (
-            adjusted_f_div_ann / float(price_today.close)
-            if adjusted_f_div_ann and price_today.close > 0
-            else None
-        )
-
-        # 7-4. 予想配当利回り（翌期、分割調整済み）
-        adjusted_nx_f_div_ann = nx_f_div_ann / split_ratio_recent if nx_f_div_ann else None
-        forward_div_yield_nx = (
-            adjusted_nx_f_div_ann / float(price_today.close)
-            if adjusted_nx_f_div_ann and price_today.close > 0
-            else None
-        )
-
-        # === ステップ8: 異常値フィルタリング ===
-
-        indicators = {
-            "stock_code": stock_code,
-            "date": target_date,
-            # バリュエーション
-            "per": per,
-            "pbr": pbr,
-            "psr": psr,
-            "pcfr": pcfr,
-            "forward_per_fy": forward_per_fy,
-            "forward_per_nx": forward_per_nx,
-            # 収益性
-            "roe": roe,
-            "roa": roa,
-            "operating_margin": operating_margin,
-            "net_margin": net_margin,
-            # 成長性
-            "sales_growth_yoy": sales_growth_yoy,
-            "op_growth_yoy": op_growth_yoy,
-            "np_growth_yoy": np_growth_yoy,
-            "eps_growth_yoy": eps_growth_yoy,
-            "cfo_growth_yoy": cfo_growth_yoy,
-            # 安全性
-            "equity_ratio": equity_ratio,
-            # 配当
-            "dividend_yield": dividend_yield,
-            "payout_ratio": payout_ratio,
-            "forward_div_yield_fy": forward_div_yield_fy,
-            "forward_div_yield_nx": forward_div_yield_nx,
-        }
-
-        indicators = self._filter_outliers(indicators)
-
-        return indicators
-
     def _get_stock_price(self, stock_code: str, target_date: date) -> StockPriceDaily | None:
         """指定銘柄・指定日の株価データを取得
 
@@ -704,49 +452,71 @@ class CalculateFundamentalIndicatorsUseCase:
         self,
         price_at_fin: StockPriceDaily | None,
         price_today: StockPriceDaily,
-        sh_out_fy: Decimal | None,
     ) -> float:
-        """直近の株式分割を検出（時価総額整合性チェック）
+        """直近の株式分割を検出（adjustment_factor比較）
 
         Args:
             price_at_fin: 財務データ発表日時点の株価
             price_today: 今日の株価
-            sh_out_fy: 発行済株式数（千株）
 
         Returns:
             float: 分割比率（1.0 = 分割なし、5.0 = 1→5分割）
 
         Note:
-            - 時価総額の整合性チェックで分割を検出
+            - adjustment_factorの比率から株式分割を検出
             - 妥当な分割比率（1.5〜20倍）のみ採用
+            - adjustment_factor = close / adjusted_close
         """
-        if not price_at_fin or not sh_out_fy or sh_out_fy == 0:
+        if not price_at_fin:
             return 1.0  # データ不足、分割なしとみなす
 
-        market_cap_at_fin = float(price_at_fin.close) * float(sh_out_fy)
-        market_cap_today_naive = float(price_today.close) * float(sh_out_fy)
+        # adjustment_factorを計算（close / adjusted_close）
+        # adjustment_factorが大きいほど、過去に分割があったことを意味する
+        if (
+            not price_at_fin.close
+            or not price_at_fin.adjusted_close
+            or price_at_fin.adjusted_close == 0
+            or not price_today.close
+            or not price_today.adjusted_close
+            or price_today.adjusted_close == 0
+        ):
+            return 1.0  # データ不足
 
-        if market_cap_today_naive == 0:
+        adj_factor_at_fin = float(price_at_fin.close) / float(price_at_fin.adjusted_close)
+        adj_factor_today = float(price_today.close) / float(price_today.adjusted_close)
+
+        if adj_factor_at_fin == 0:
             return 1.0
 
-        split_ratio = market_cap_at_fin / market_cap_today_naive
+        # 分割比率 = 今日のadjustment_factor / 財務発表日のadjustment_factor
+        # 例: 発表日1.0 → 今日5.0 なら、1→5の分割があった
+        split_ratio = adj_factor_today / adj_factor_at_fin
 
         # 一般的な分割比率（1:2, 1:3, 1:5, 1:10等）
         if 1.5 <= split_ratio <= 20:
             return split_ratio
         else:
-            # 比率が異常 → 分割ではなく、業績変化や株価急変とみなす
+            # 比率が異常 → 分割ではなく、データ不整合とみなす
             return 1.0
 
     def _filter_outliers(self, indicators: dict) -> dict:
-        """異常値をフィルタリング（株式分割の検出漏れ等）
+        """異常値をフィルタリング（DB精度制約 + ビジネスロジック）
 
         Args:
             indicators: 計算済み指標
 
         Returns:
             dict: フィルタリング後の指標
+
+        Note:
+            - Numeric(10, 2)列: 最大 99,999,999.99
+            - Numeric(10, 4)列: 最大 999,999.9999
+            - 債務超過直前の銘柄等でROE/ROAが極大値になる可能性あり
         """
+        # ==========================================
+        # 1. バリュエーション指標（Numeric(10, 2)）
+        # ==========================================
+
         # PERの妥当な範囲（-100 〜 1000）
         if indicators["per"] is not None:
             if indicators["per"] < -100 or indicators["per"] > 1000:
@@ -757,11 +527,68 @@ class CalculateFundamentalIndicatorsUseCase:
             if indicators["pbr"] < 0 or indicators["pbr"] > 100:
                 indicators["pbr"] = None
 
+        # PSR/PCFR/予想PER/配当性向（Numeric(10, 2)）
+        # DB制約: 最大 99,999,999.99
+        # 現実的な上限: 10,000（売上極小銘柄対策）
+        numeric_10_2_fields = ["psr", "pcfr", "forward_per_fy", "forward_per_nx", "payout_ratio"]
+        for field in numeric_10_2_fields:
+            value = indicators[field]
+            if value is not None:
+                if abs(value) > 10_000:
+                    indicators[field] = None
+
+        # ==========================================
+        # 2. 収益性指標（Numeric(10, 4)）
+        # ==========================================
+
+        # ROE/ROA/利益率（Numeric(10, 4)）
+        # DB制約: 最大 999,999.9999
+        # 現実的な上限: ROE/ROA 1000%、利益率 100%（債務超過直前対策）
+        if indicators["roe"] is not None:
+            if abs(indicators["roe"]) > 10.0:  # 1000%
+                indicators["roe"] = None
+
+        if indicators["roa"] is not None:
+            if abs(indicators["roa"]) > 10.0:  # 1000%
+                indicators["roa"] = None
+
+        if indicators["operating_margin"] is not None:
+            if abs(indicators["operating_margin"]) > 1.0:  # 100%
+                indicators["operating_margin"] = None
+
+        if indicators["net_margin"] is not None:
+            if abs(indicators["net_margin"]) > 1.0:  # 100%
+                indicators["net_margin"] = None
+
+        # ==========================================
+        # 3. 成長性指標（Numeric(10, 4)）
+        # ==========================================
+
         # YoY成長率の妥当な範囲（-100% 〜 +1000%）
         growth_fields = ["sales_growth_yoy", "op_growth_yoy", "np_growth_yoy", "eps_growth_yoy", "cfo_growth_yoy"]
         for field in growth_fields:
             if indicators[field] is not None:
                 if indicators[field] < -1.0 or indicators[field] > 10.0:
+                    indicators[field] = None
+
+        # ==========================================
+        # 4. 安全性指標（Numeric(10, 4)）
+        # ==========================================
+
+        # 自己資本比率（0% 〜 100%、債務超過の場合は負）
+        if indicators["equity_ratio"] is not None:
+            if indicators["equity_ratio"] < -1.0 or indicators["equity_ratio"] > 1.0:
+                indicators["equity_ratio"] = None
+
+        # ==========================================
+        # 5. 配当指標（Numeric(10, 4)）
+        # ==========================================
+
+        # 配当利回り（0% 〜 100%、現実的には〜20%）
+        dividend_yield_fields = ["dividend_yield", "forward_div_yield_fy", "forward_div_yield_nx"]
+        for field in dividend_yield_fields:
+            if indicators[field] is not None:
+                if indicators[field] < 0 or indicators[field] > 1.0:  # 100%
                     indicators[field] = None
 
         return indicators
@@ -1365,9 +1192,7 @@ class CalculateFundamentalIndicatorsUseCase:
 
         # 株式分割の検出（一括取得した株価データを使用）
         price_at_fin = split_detection_prices.get((stock_code, current_fin.disc_date))
-        split_ratio_recent = self._detect_recent_split(
-            price_at_fin, price_today, current_fin.sh_out_fy
-        )
+        split_ratio_recent = self._detect_recent_split(price_at_fin, price_today)
 
         split_ratio_yoy = 1.0
         if previous_fin and previous_fin.sh_out_fy and current_fin.sh_out_fy:

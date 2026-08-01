@@ -432,28 +432,38 @@ def detect_recent_split_and_adjust(stock_code, target_date):
     price_today = get_stock_price(stock_code, target_date)
     # close: 3,000円（分割後）
 
-    # 4. 時価総額の整合性チェック
-    if not price_at_fin or not latest_fin.sh_out_fy:
+    # 4. adjustment_factorによる分割検出
+    if not price_at_fin:
         return 1.0  # データ不足、分割なしとみなす
 
-    market_cap_at_fin = price_at_fin.close * latest_fin.sh_out_fy
-    # = 15,000円 × 1,261,231,889千株 = 約18.9兆円
+    # adjustment_factor = close / adjusted_close
+    # J-Quants APIのadjusted_closeは株式分割を考慮した調整後株価
+    if (
+        not price_at_fin.adjusted_close
+        or price_at_fin.adjusted_close == 0
+        or not price_today.adjusted_close
+        or price_today.adjusted_close == 0
+    ):
+        return 1.0  # データ不足
 
-    market_cap_today_naive = price_today.close * latest_fin.sh_out_fy
-    # = 3,000円 × 1,261,231,889千株 = 約3.8兆円（おかしい！）
+    adj_factor_at_fin = price_at_fin.close / price_at_fin.adjusted_close
+    # = 15,000 / 15,000 = 1.0（分割前）
 
-    if market_cap_today_naive == 0:
+    adj_factor_today = price_today.close / price_today.adjusted_close
+    # = 3,000 / 600 = 5.0（分割後、adjusted_closeは分割考慮済み）
+
+    if adj_factor_at_fin == 0:
         return 1.0
 
-    split_ratio = market_cap_at_fin / market_cap_today_naive
-    # = 18.9兆円 / 3.8兆円 = 5.0
+    split_ratio = adj_factor_today / adj_factor_at_fin
+    # = 5.0 / 1.0 = 5.0
 
     # 5. 分割の妥当性チェック
     if 1.5 <= split_ratio <= 20:
         # 一般的な分割比率（1:2, 1:3, 1:5, 1:10等）
         return split_ratio
     else:
-        # 比率が異常 → 分割ではなく、業績変化や株価急変とみなす
+        # 比率が異常 → 分割ではなく、データ不整合とみなす
         return 1.0
 
 # 使用例
