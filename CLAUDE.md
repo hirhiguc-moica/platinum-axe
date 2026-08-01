@@ -189,7 +189,7 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
 
 ### データベース
 
-- ✅ 11テーブル作成完了
+- ✅ 12テーブル作成完了
   - `markets` (市場区分マスタ **10件** - JPX公式コード、Alembic管理)
   - `sectors` (33業種マスタ **34件** - 33業種+9999、Alembic管理)
   - `sector17s` (17業種マスタ18件 - Alembic管理)
@@ -200,7 +200,8 @@ J-Quants APIを活用した機械学習による**日本株銘柄推奨システ
   - `technical_indicators` (テクニカル指標 **約1100万件** - 125項目、全銘柄×10年分完了)
   - `financial_statements` (財務データ **189,882件** - 全銘柄×10年分完了)
   - `fundamental_indicators` (ファンダメンタル指標 **約900万件** - 20項目、全銘柄×10年分完了)
-  - `sector_indices_daily` (セクター指数 **108,888件** - 47指数×10年分、騰落率4項目完了) ✨NEW
+  - `sector_indices_daily` (セクター指数 **108,888件** - 47指数×10年分、騰落率4項目完了)
+  - `margin_trading_balance` (信用取引残高 **1,827,812件** - 4257銘柄×10年分、信用倍率5項目完了) ✨NEW
   - `round_results` (結果データ300件)
 
 ### Backend API（13エンドポイント）
@@ -269,17 +270,21 @@ backend/
     │   ├── fetch_daily_stock_prices.py        # 株価差分取得（日次）
     │   ├── fetch_financial_statements.py      # 財務全量取得（初回のみ）
     │   ├── fetch_daily_financial_statements.py # 財務差分取得（日次）
-    │   ├── fetch_sector_indices.py            # セクター指数全量取得（初回のみ） ✨NEW
-    │   └── fetch_daily_sector_indices.py      # セクター指数差分取得（日次） ✨NEW
+    │   ├── fetch_sector_indices.py            # セクター指数全量取得（初回のみ）
+    │   ├── fetch_daily_sector_indices.py      # セクター指数差分取得（日次）
+    │   ├── fetch_margin_interest.py           # 信用残高全量取得（初回のみ） ✨NEW
+    │   └── fetch_daily_margin_interest.py     # 信用残高差分取得（日次） ✨NEW
     ├── preprocessors/              # 前処理・指標計算
     │   ├── calculate_technical_indicators.py         # テクニカル指標全量計算
     │   ├── calculate_daily_technical_indicators.py   # テクニカル指標差分計算
     │   ├── calculate_fundamental_indicators.py       # ファンダメンタル指標全量計算
     │   ├── calculate_daily_fundamental_indicators.py # ファンダメンタル指標差分計算
-    │   ├── calculate_sector_index_changes.py         # セクター指数騰落率全量計算 ✨NEW
-    │   └── calculate_daily_sector_index_changes.py   # セクター指数騰落率差分計算 ✨NEW
-    ├── workflows/                  # ワークフロー統合 ✨NEW
-    │   └── daily_data_update.py   # 日次データ更新（株価→財務→テクニカル） ✨NEW
+    │   ├── calculate_sector_index_changes.py         # セクター指数騰落率全量計算
+    │   ├── calculate_daily_sector_index_changes.py   # セクター指数騰落率差分計算
+    │   ├── calculate_margin_ratios.py                # 信用倍率全量計算 ✨NEW
+    │   └── calculate_daily_margin_ratios.py          # 信用倍率差分計算 ✨NEW
+    ├── workflows/                  # ワークフロー統合
+    │   └── daily_data_update.py   # 日次データ更新（8ステップ完成） ✨NEW
     └── predictors/                 # 推論
         └── .gitkeep
 
@@ -312,7 +317,9 @@ ml/                                 # 機械学習開発
 **✅ フェーズ6-6完了: 財務データ取得完了（189,882件、10年分）** 🎉
 **✅ フェーズ6-7完了: ファンダメンタル指標計算完了（20項目、約900万件）** 🎉
 **✅ フェーズ6-8完了: セクター指数取得・騰落率計算完了（47指数、108,888件、騰落率4項目）** 🎉
-**✅ 日次データ更新ワークフロー完成（6ステップ）: 株価→財務→テクニカル→ファンダメンタル→セクター指数→騰落率計算** 🎉
+**✅ フェーズ6-9完了: 信用倍率取得・計算完了（1,827,812件、信用倍率5項目）** 🎉
+**✅ 日次データ更新ワークフロー完成（8ステップ）: 株価→財務→テクニカル→ファンダメンタル→セクター指数→騰落率→信用残高→信用倍率計算** 🎉
+**✅ Phase 1 MVP特徴量完成（180項目）** 🎉
 
 ### 🎯 フェーズ6: J-Quants API連携 + データ蓄積バッチ（進行中）
 
@@ -731,7 +738,86 @@ uv run python backend/jobs/workflows/daily_data_update.py
 
 ---
 
-#### 6-9. GCPデプロイ
+#### ✅ 6-9. 信用倍率取得・計算（完了）
+
+**目的**: Phase 1の特徴量（1項目）として機械学習に使用
+
+**成果物**:
+- ✅ **DBテーブル作成**: `margin_trading_balance`（Alembic管理）
+  - **主キー**: `id` (UUID, auto-generated)
+  - **自然キー（UNIQUE制約）**: `(stock_code, date)`
+  - カラム: 生データ8項目（short_vol, long_vol等）+ 計算項目5項目
+  - 計算項目: margin_ratio（信用倍率）、long/short_vol_change（前週比増減）、long/short_vol_change_rate（前週比増減率）
+  - Alembicマイグレーション実行完了: `20260801_2100`
+
+- ✅ **DDD構造でデータ取得・計算機能実装**
+  - Infrastructure層: `JQuantsMarginRepository`（API呼び出し）
+  - Infrastructure層: `MarginTradingBalanceRepository`（DB保存、UPSERT、銘柄フィルタリング）
+  - UseCase層: `FetchMarginInterestUseCase`（日単位分割、差分取得）
+  - UseCase層: `CalculateMarginRatiosUseCase`（信用倍率計算、全量・差分、銘柄ごと分割処理）
+  - Jobs層: `fetch_margin_interest.py`（全量取得バッチ）
+  - Jobs層: `fetch_daily_margin_interest.py`（差分取得バッチ）
+  - Jobs層: `calculate_margin_ratios.py`（全量計算）
+  - Jobs層: `calculate_daily_margin_ratios.py`（差分計算）
+
+- ✅ **日次ワークフロー統合**
+  - `jobs/workflows/daily_data_update.py` 更新（8ステップ完成）
+  - 株価取得 → 財務取得 → テクニカル指標計算 → ファンダメンタル指標計算 → セクター指数取得 → 騰落率計算 → **信用残高取得** → **信用倍率計算**
+
+**実装の特徴**:
+- ✅ **日単位分割**: 信用残高は週末（金曜日）のみデータ存在、全日付を試行
+- ✅ **wait=1秒**: 1日ごとに1秒待機（60件/分を確実に回避）
+- ✅ **差分取得**: 最新日+1から取得（冪等性担保）
+- ✅ **銘柄ごと分割処理**: 4,257銘柄を1銘柄ずつ処理（メモリ効率化）
+- ✅ **異常値フィルタリング**: short_vol < 100 → NULL、ratio > 100,000 → NULL、change_rate > ±10,000% → NULL
+- ✅ **外部キー制約対策**: stock_masterに存在しない銘柄コードをスキップ（キャッシュ使用）
+- ✅ **UPSERT制御**: 生データ（vol）のみ更新、計算済み指標は別UseCaseで計算
+
+**動作確認**:
+- ✅ 全量取得成功: **1,827,812件**（約183万件、10年分、4257銘柄）
+- ✅ 全量計算成功: 5項目すべて正常に計算（銘柄ごと分割処理でメモリ効率化）
+- ✅ 差分取得・計算成功: 日次ワークフロー8ステップすべて正常動作
+- ✅ データ検証: トヨタ7203の信用倍率22.03倍（買い残が売り残の22倍、強気相場）
+
+**使用例**:
+```bash
+# 全量取得（過去10年分、wait=1秒で約1時間）
+uv run python backend/jobs/collectors/fetch_margin_interest.py
+
+# テストモード（1ヶ月のみ、待機なし）
+uv run python backend/jobs/collectors/fetch_margin_interest.py --test
+
+# 差分取得（DBの最新日+1から自動取得）
+uv run python backend/jobs/collectors/fetch_daily_margin_interest.py
+
+# 信用倍率全量計算（初回のみ、銘柄ごと分割処理）
+uv run python backend/jobs/preprocessors/calculate_margin_ratios.py
+
+# 信用倍率差分計算（日次実行）
+uv run python backend/jobs/preprocessors/calculate_daily_margin_ratios.py
+
+# 日次ワークフロー（株価→財務→テクニカル→ファンダメンタル→セクター指数→騰落率→信用残高→信用倍率）
+uv run python backend/jobs/workflows/daily_data_update.py
+```
+
+**データソース**: `/v2/markets/margin-interest`（信用取引週末残高API）
+
+**計算項目（5項目）**:
+- `margin_ratio`: 信用倍率（買い残 ÷ 売り残）← **Phase 1特徴量**
+- `long_vol_change`: 買い残前週比増減（株数）
+- `short_vol_change`: 売り残前週比増減（株数）
+- `long_vol_change_rate`: 買い残前週比増減率（%）
+- `short_vol_change_rate`: 売り残前週比増減率（%）
+
+**レート制限**: 60件/分（株価・財務APIとは独立）
+
+**対象期間**: 2016-08-05 〜 現在（Standardプランの取得可能期間、週末データのみ）
+
+**データ量**: **1,827,812件**（約4,257銘柄 × 約430週）
+
+---
+
+#### 6-10. GCPデプロイ（未実施）
 
 **タイミング**: ローカルで動作確認後
 
@@ -887,39 +973,48 @@ Cloud Scheduler
      - DDD構造実装（Repository/UseCase/Jobs層、取得・計算両対応）
      - 日次ワークフロー統合完了（6ステップ完成）
 
-🎯 次のセッション（Phase 1完成へ）:
- 10. フェーズ6-9: 信用倍率取得（オプション）
-     - J-Quants API /v2/markets/margin から取得
-     - 信用買い残/売り残、倍率等のデータ
-     - Phase 1特徴量180項目で十分な場合はスキップ可能
-     - 必要に応じて追加（週次予測の精度次第）
+ 10. フェーズ6-9: 信用倍率取得・計算完了（1,827,812件、信用倍率5項目） 🎉
+     - J-Quants API /v2/markets/margin-interest から全量取得完了
+     - 生データ8項目（short_vol, long_vol等）+ 計算項目5項目
+     - 計算項目: margin_ratio（信用倍率）、long/short_vol_change（前週比増減）、long/short_vol_change_rate（前週比増減率）
+     - DBテーブル `margin_trading_balance` 作成（Alembic管理）
+     - DDD構造実装（Repository/UseCase/Jobs層、取得・計算両対応）
+     - 銘柄ごと分割処理でメモリ効率化（4,257銘柄を1銘柄ずつ処理）
+     - 日次ワークフロー統合完了（8ステップ完成）
+     - **Phase 1 MVP特徴量180項目完成！** 🎉
 
-⏭️ フェーズ7: 機械学習実装（Phase 1 MVP）:
- 11. フェーズ7-1: Jupyter Notebookでモデル構築
-     - 特徴量180項目（テクニカル125 + ファンダメンタル20 + セクター指数34 + 信用倍率1）
-     - Train/Validation/Test分割（2016-2022/2023/2024）
-     - Walk-Forward Validation（2024年12月〜2025年1月、4週間）
-     - 精度評価 → 目標達成ならPhase 2スキップ
- 12. フェーズ7-3: 週次推論パイプライン実装
-     - 学習済みモデルで翌週予測
-     - 買い/売り推奨Top10抽出
-     - `rounds`, `round_recommendations` 保存
+🎯 次のセッション:
+ 11. フェーズ7: 機械学習実装（Phase 1 MVP）
+     - フェーズ7-1: Jupyter Notebookでモデル構築
+       - 特徴量180項目（テクニカル125 + ファンダメンタル20 + セクター指数34 + 信用倍率1）
+       - データ探索・特徴量エンジニアリング
+       - Train/Validation/Test分割（2016-2022/2023/2024）
+       - LightGBMで翌週騰落率予測（回帰）
+       - Walk-Forward Validation（2024年12月〜2025年1月、4週間）
+       - 精度評価（R²≥0.05, Top10適中率≥30%, 累積リターン>TOPIX）
+     - フェーズ7-2: Phase 2（精度向上）実施判断
+       - 目標精度達成 → Phase 2スキップ、運用開始
+       - 目標精度未達 → Phase 2実施（海外データ追加）
+     - フェーズ7-3: 週次推論パイプライン実装
+       - 学習済みモデルで翌週予測
+       - 買い/売り推奨Top10抽出
+       - `rounds`, `round_recommendations` 保存
 
 ⏭️ フェーズ8: 法令遵守対応（重要）:
- 13. フェーズ8-1: J-Quants API利用規約対応
+ 12. フェーズ8-1: J-Quants API利用規約対応
      - FE: TradingView Widget統合（株価・チャート表示）
      - BE: 生データ除外（APIレスポンスから株価・財務生データ削除）
      - FE: 計算済み指標のみ表示
- 14. フェーズ8-2: 金融商品取引法対応
+ 13. フェーズ8-2: 金融商品取引法対応
      - 利用規約・免責事項の整備
      - 投資助言業でないことの明記
      - 弁護士レビュー（必須）
 
 ⏭️ フェーズ9: 本番デプロイ:
- 15. フェーズ9-1: GCPデプロイ（自動化）
+ 14. フェーズ9-1: GCPデプロイ（自動化）
      - Cloud Run Jobs（日次データ更新）
      - Cloud Scheduler（毎営業日17:30）
- 16. フェーズ9-2: 運用開始
+ 15. フェーズ9-2: 運用開始
 ```
 
 **特徴量の全体像**:
@@ -1000,49 +1095,47 @@ Cloud Scheduler
 
 ## 最終更新
 
-- **日時**: 2026-08-01 夕方（フェーズ6-8完了：セクター指数取得・騰落率計算完了）
+- **日時**: 2026-08-02 昼（フェーズ6-9完了：信用倍率取得・計算完了、Phase 1 MVP特徴量180項目完成）
 - **作業者**: Claude Code
 - **ブランチ**: main
 - **変更内容**:
-  - ✅ **フェーズ6-8完了: セクター指数取得・騰落率計算完了（47指数、108,888件）** 🎉
-    - DBテーブル作成: `sector_indices_daily`（四本値 + 騰落率4項目、Alembic管理）
-    - DDD構造実装: Repository/UseCase/Jobs層（取得・騰落率計算両対応）
-    - 全量取得完了: 108,888件（47指数 × 約2,317日 × 10年分）
-    - 取得指数: TOPIX 9 + 市場別 4 + 東証33業種 33 + REIT 1 = 47指数
-    - Phase 1特徴量: 34指数（TOPIX + 東証33業種）使用
-    - 設計方針: 東証33業種を採用（データベースsectorsテーブルと整合）
-    - 騰落率計算完了: change_rate_1d/5d/20d/60d（営業日ベース、%形式）
-    - max_search_days最適化: 1d=28, 5d=28, 20d=80, 60d=300日（2倍安全マージン）
-    - 計算カバー率: 2025年以降100%達成（全期間97.41%）
-    - UPSERT制御: 生データ（OHLC）のみ更新、計算済み騰落率は保持
-    - 差分取得実装: 最新日+1から自動取得（冪等性担保）
-    - レート制限対策: 日単位分割 + wait=1秒
+  - ✅ **フェーズ6-9完了: 信用倍率取得・計算完了（1,827,812件、信用倍率5項目）** 🎉
+    - DBテーブル作成: `margin_trading_balance`（生データ8項目 + 計算項目5項目、Alembic管理）
+    - DDD構造実装: Repository/UseCase/Jobs層（取得・計算両対応）
+    - 全量取得完了: 1,827,812件（約4,257銘柄 × 約430週 × 10年分）
+    - データソース: J-Quants API /v2/markets/margin-interest（信用取引週末残高）
+    - 計算項目: margin_ratio（信用倍率）、long/short_vol_change（前週比増減）、long/short_vol_change_rate（前週比増減率）
+    - 銘柄ごと分割処理: 4,257銘柄を1銘柄ずつ処理（メモリ効率化、183万件を安全に処理）
+    - 異常値フィルタリング: short_vol < 100 → NULL、ratio > 100,000 → NULL、change_rate > ±10,000% → NULL
+    - 外部キー制約対策: stock_masterに存在しない銘柄コードをスキップ（キャッシュ使用）
+    - データ検証: トヨタ7203の信用倍率22.03倍（買い残が売り残の22倍、強気相場）
 
-  - ✅ **日次データ更新ワークフロー6ステップ完成** 🎉
+  - ✅ **日次データ更新ワークフロー8ステップ完成** 🎉
     - `jobs/workflows/daily_data_update.py` 更新完了
-    - フロー: 株価取得 → 財務取得 → テクニカル指標計算 → ファンダメンタル指標計算 → **セクター指数取得** → **騰落率計算**
-    - 動作確認: 全ステップ正常動作（2026-07-31の差分計算で47件成功）
+    - フロー: 株価取得 → 財務取得 → テクニカル指標計算 → ファンダメンタル指標計算 → セクター指数取得 → 騰落率計算 → **信用残高取得** → **信用倍率計算**
+    - 動作確認: 全8ステップ正常動作（信用残高4,256件、信用倍率計算4,256件成功）
 
-  - ✅ **Phase 1特徴量構成確定: 180項目** 🎉
-    - テクニカル指標: 125項目
-    - ファンダメンタル指標: 20項目
-    - セクター指数: 34項目（TOPIX + 東証33業種）← 19項目から+15項目
-    - 信用倍率: 1項目
+  - ✅ **Phase 1 MVP特徴量180項目完成！** 🎉🎉🎉
+    - テクニカル指標: 125項目（移動平均、RSI、MACD等）
+    - ファンダメンタル指標: 20項目（PER、PBR、ROE等）
+    - セクター指数: 34項目（TOPIX + 東証33業種）
+    - 信用倍率: 1項目（margin_ratio）← NEW!
 
   - ✅ **CLAUDE.md全面更新**
-    - データベース: 10テーブル → 11テーブル（sector_indices_daily追加）
-    - フェーズ6-8セクション: 完了版に更新（詳細ドキュメント化）
-    - 特徴量: 169項目 → 180項目に全箇所更新
-    - ディレクトリ構成: セクター指数関連スクリプト追加
-    - 次回タスク: フェーズ6-9（信用倍率取得、オプション）→ フェーズ7（機械学習実装）
+    - データベース: 11テーブル → 12テーブル（margin_trading_balance追加）
+    - フェーズ6-9セクション: 完了版に追加（詳細ドキュメント化）
+    - ディレクトリ構成: 信用残高関連スクリプト追加
+    - 実装優先順位まとめ: フェーズ6完了、フェーズ7（機械学習実装）へ
+    - 次回タスク: フェーズ7-1（Jupyter Notebookでモデル構築）
 
 - **前回の完了内容**:
-  - ✅ フェーズ6-7完了: ファンダメンタル指標計算完了（20項目、約900万件）
-  - ✅ 日次ワークフロー4ステップ完成
+  - ✅ フェーズ6-8完了: セクター指数取得・騰落率計算完了（47指数、108,888件）
+  - ✅ 日次ワークフロー6ステップ完成
 
 - **次回セッション**:
-  - フェーズ7: 機械学習実装（Phase 1 MVP、180項目完成）
-    - Jupyter Notebookでモデル構築
-    - 特徴量エンジニアリング
-    - Walk-Forward Validation
-  - フェーズ6-9（信用倍率取得）は精度次第でオプション
+  - **フェーズ7: 機械学習実装（Phase 1 MVP）** 🚀
+    - データ探索（Jupyter Notebook）
+    - 特徴量エンジニアリング（180項目）
+    - LightGBMでモデル構築（翌週騰落率予測）
+    - Walk-Forward Validation（精度評価）
+    - 目標: R²≥0.05, Top10適中率≥30%, 累積リターン>TOPIX

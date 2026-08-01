@@ -270,3 +270,102 @@ class JQuantsClient:
             df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
         return df
+
+    def get_margin_interest_range(
+        self,
+        code: str | None,
+        start_dt: Any,
+        end_dt: Any,
+    ) -> pd.DataFrame:
+        """信用取引週末残高データを期間指定で取得
+
+        Args:
+            code: 銘柄コード（例: "7203"）。Noneの場合は全銘柄取得。
+            start_dt: 開始日（datetime型）
+            end_dt: 終了日（datetime型）
+
+        Returns:
+            pd.DataFrame: 信用取引週末残高データ
+
+        カラム:
+            - Code (str): 銘柄コード
+            - Date (datetime64): 週末日付（通常金曜日）
+            - ShrtVol (int): 売合計信用残高
+            - LongVol (int): 買合計信用残高
+            - ShrtNegVol (int): 一般信用取引売残高
+            - LongNegVol (int): 一般信用取引買残高
+            - ShrtStdVol (int): 制度信用取引売残高
+            - LongStdVol (int): 制度信用取引買残高
+            - IssType (str): 銘柄区分（1:信用、2:貸借、3:その他）
+
+        レート制限:
+            - 60req/分（株価APIとは独立したカウント）
+
+        参考:
+            - API仕様: https://jpx-jquants.com/ja/spec/mkt-margin-int
+            - DBテーブル: margin_trading_balance
+
+        Note:
+            - 週末時点のデータ（通常金曜日）
+            - 年末年始など営業日が2日以下の週はデータなし
+        """
+        # 直接HTTPリクエストを送る（greenletエラー回避）
+        from_date = start_dt.strftime("%Y-%m-%d")
+        to_date = end_dt.strftime("%Y-%m-%d")
+
+        # J-Quants API v2のエンドポイント
+        url = f"{self.client.JQUANTS_API_BASE}/markets/margin-interest"
+
+        # ⚠️ このAPIは期間指定（from/to）の場合、codeパラメータが必須
+        # 全銘柄取得する場合は、dateパラメータ（1日指定）のみ使用可能
+        # そのため、期間指定の場合は日ごとにループで取得する必要がある
+
+        # 1日のみの場合
+        if from_date == to_date:
+            params = {"date": from_date}
+            # codeが指定されている場合は追加
+            if code is not None:
+                params["code"] = code
+        else:
+            # 期間指定 + 銘柄指定の場合のみ from/to が使える
+            if code is not None:
+                params = {
+                    "code": code,
+                    "from": from_date,
+                    "to": to_date,
+                }
+            else:
+                # 全銘柄取得では期間指定（from/to）は使えない
+                # 呼び出し側で日ごとにループする必要がある
+                raise ValueError(
+                    "全銘柄取得（code=None）では期間指定（from/to）は使用できません。"
+                    "日ごとにループして取得してください（start_date == end_date で呼び出す）。"
+                )
+
+        # HTTPリクエストを送信（ページネーション対応）
+        all_data = []
+        while True:
+            resp = self.client._get(url, params=params)
+            payload = resp.json()
+
+            batch = payload.get("data", [])
+            if isinstance(batch, list):
+                all_data.extend(batch)
+
+            # ページネーションキーがなければ終了
+            pagination_key = payload.get("pagination_key")
+            if not pagination_key:
+                break
+            params["pagination_key"] = pagination_key
+
+        # DataFrameに変換
+        if not all_data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(all_data)
+
+        # Date列をdatetimeに変換
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+        return df
