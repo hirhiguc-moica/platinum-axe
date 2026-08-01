@@ -24,6 +24,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -89,9 +90,9 @@ class CalculateSectorIndexChangesUseCase:
             print("  ⚠️  更新対象なし（すべて計算済み）")
             return {"total_calculated": 0, "total_updated": 0}
 
-        # 計算対象開始日の90日前から取得（60営業日前までカバー）
+        # 計算対象開始日の300日前から取得（60営業日前までカバー、max_search_days=300に対応）
         # target_start_dateを基準にすることで、バッチ停止期間が長い場合も正しく動作
-        data_start_date = target_start_date - timedelta(days=90)
+        data_start_date = target_start_date - timedelta(days=300)
 
         # 計算実行
         return self._calculate_and_update(
@@ -232,29 +233,29 @@ class CalculateSectorIndexChangesUseCase:
                 current_close = row["close"]
                 record_id = row["id"]
 
-                # 1営業日前
-                prev_1d = self._find_previous_business_day(all_group, current_date, 1, 10)
+                # 1営業日前（最大28日まで遡る：安全マージン2倍）
+                prev_1d = self._find_previous_business_day(all_group, current_date, 1, 28)
                 change_rate_1d = None
                 if prev_1d:
                     prev_close = all_group[all_group["date"] == prev_1d]["close"].iloc[0]
                     change_rate_1d = self._calculate_change_rate(current_close, prev_close)
 
-                # 5営業日前
-                prev_5d = self._find_previous_business_day(all_group, current_date, 5, 10)
+                # 5営業日前（最大28日まで遡る：安全マージン2倍）
+                prev_5d = self._find_previous_business_day(all_group, current_date, 5, 28)
                 change_rate_5d = None
                 if prev_5d:
                     prev_close = all_group[all_group["date"] == prev_5d]["close"].iloc[0]
                     change_rate_5d = self._calculate_change_rate(current_close, prev_close)
 
-                # 20営業日前
-                prev_20d = self._find_previous_business_day(all_group, current_date, 20, 30)
+                # 20営業日前（最大80日まで遡る：安全マージン2倍）
+                prev_20d = self._find_previous_business_day(all_group, current_date, 20, 80)
                 change_rate_20d = None
                 if prev_20d:
                     prev_close = all_group[all_group["date"] == prev_20d]["close"].iloc[0]
                     change_rate_20d = self._calculate_change_rate(current_close, prev_close)
 
-                # 60営業日前
-                prev_60d = self._find_previous_business_day(all_group, current_date, 60, 90)
+                # 60営業日前（最大300日まで遡る：安全マージン2倍）
+                prev_60d = self._find_previous_business_day(all_group, current_date, 60, 300)
                 change_rate_60d = None
                 if prev_60d:
                     prev_close = all_group[all_group["date"] == prev_60d]["close"].iloc[0]
@@ -291,7 +292,7 @@ class CalculateSectorIndexChangesUseCase:
             df: 該当指数のDataFrame（date列でソート済み）
             current_date: 基準日
             target_days: 目標営業日数（1, 5, 20, 60）
-            max_search_days: 最大遡及日数（10, 10, 30, 90）
+            max_search_days: 最大遡及日数（28, 28, 80, 300）※2倍安全マージン
 
         Returns:
             見つかった場合は日付、見つからない場合はNone
@@ -362,10 +363,13 @@ class CalculateSectorIndexChangesUseCase:
             for key in ["change_rate_1d", "change_rate_5d", "change_rate_20d", "change_rate_60d"]:
                 value = item[key]
                 # NaNまたはInfinityをNoneに変換
-                if value is not None and (pd.isna(value) or not pd.api.types.is_finite(value)):
+                if value is not None and (pd.isna(value) or not np.isfinite(value)):
                     sanitized_item[key] = None
+                elif value is not None:
+                    # numpy型をPython標準型に変換（SQLAlchemyのため）
+                    sanitized_item[key] = float(value)
                 else:
-                    sanitized_item[key] = value
+                    sanitized_item[key] = None
             sanitized_updates.append(sanitized_item)
 
         # バッチサイズ（1000件ずつ更新してコミット）
