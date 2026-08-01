@@ -126,7 +126,20 @@ class MarginTradingBalanceRepository:
         int_columns = ["short_vol", "long_vol", "short_neg_vol", "long_neg_vol", "short_std_vol", "long_std_vol"]
         for col in int_columns:
             if col in df_copy.columns:
+                # 欠損値の件数をログ出力
+                na_count = int(df_copy[col].isna().sum())
+                if na_count > 0:
+                    print(f"   ⚠️  {col} の欠損 {na_count}件を0で補完しました")
                 df_copy[col] = df_copy[col].apply(lambda x: int(x) if pd.notna(x) and x is not None else 0)
+
+        # iss_type は NOT NULL のため欠損レコードを除外
+        iss_type_na_count = int(df_copy["iss_type"].isna().sum())
+        if iss_type_na_count > 0:
+            print(f"   ⚠️  iss_type の欠損 {iss_type_na_count}件を除外しました")
+            df_copy = df_copy[df_copy["iss_type"].notna()]
+
+        if len(df_copy) == 0:
+            return 0
 
         # 計算項目は初期値NULL（後で計算）
         df_copy["margin_ratio"] = None
@@ -152,7 +165,20 @@ class MarginTradingBalanceRepository:
             "long_vol_change_rate",
             "short_vol_change_rate",
         ]
+
+        # カラム存在チェック（防御的プログラミング）
+        missing_columns = [col for col in required_columns if col not in df_copy.columns]
+        if missing_columns:
+            print(f"   ⚠️  必須カラム不足: {missing_columns}")
+            return 0
+
         df_copy = df_copy[required_columns]
+
+        # 同一キーの重複を除去（ON CONFLICT DO UPDATE の二重更新エラー対策）
+        duplicate_count = len(df_copy) - len(df_copy.drop_duplicates(subset=["stock_code", "date"], keep="last"))
+        if duplicate_count > 0:
+            print(f"   ⚠️  重複レコード {duplicate_count}件を除去しました")
+            df_copy = df_copy.drop_duplicates(subset=["stock_code", "date"], keep="last")
 
         # DataFrameをdict形式に変換（一括変換、高速）
         records = df_copy.to_dict("records")

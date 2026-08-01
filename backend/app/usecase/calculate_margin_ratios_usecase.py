@@ -49,6 +49,7 @@ class CalculateMarginRatiosUseCase:
         Returns:
             実行結果の辞書
             {
+                'status': 実行ステータス（'success', 'no_data', 'full_calculation_required', 'up_to_date'）,
                 'total_calculated': 計算件数,
                 'total_updated': 更新件数,
             }
@@ -65,7 +66,7 @@ class CalculateMarginRatiosUseCase:
 
         if latest_calculated_date is None:
             print("  ⚠️  全量計算が未実施です。先に全量計算を実行してください。")
-            return {"total_calculated": 0, "total_updated": 0}
+            return {"status": "full_calculation_required", "total_calculated": 0, "total_updated": 0}
 
         # 信用取引残高データの最新週末日を取得
         latest_date_query = text("""
@@ -78,7 +79,7 @@ class CalculateMarginRatiosUseCase:
 
         if not latest_date:
             print("  ⚠️  データが存在しません")
-            return {"total_calculated": 0, "total_updated": 0}
+            return {"status": "no_data", "total_calculated": 0, "total_updated": 0}
 
         # 最新計算日の翌週から現在までを対象
         target_start_date = latest_calculated_date + timedelta(days=1)
@@ -88,7 +89,7 @@ class CalculateMarginRatiosUseCase:
 
         if target_start_date > latest_date:
             print("  ⚠️  更新対象なし（すべて計算済み）")
-            return {"total_calculated": 0, "total_updated": 0}
+            return {"status": "up_to_date", "total_calculated": 0, "total_updated": 0}
 
         # 計算対象開始日の14日前から取得（前週比計算のため）
         data_start_date = target_start_date - timedelta(days=14)
@@ -152,7 +153,7 @@ class CalculateMarginRatiosUseCase:
             実行結果の辞書
         """
         # 銘柄リストを取得
-        print(f"  📋 銘柄リスト取得中...")
+        print("  📋 銘柄リスト取得中...")
         stock_codes_query = text("""
             SELECT DISTINCT stock_code
             FROM margin_trading_balance
@@ -323,14 +324,11 @@ class CalculateMarginRatiosUseCase:
                 )
                 total_updated += 1
 
-            # 100銘柄ごとにコミット
-            if idx % 100 == 0:
-                self.session.commit()
-
-        # 最終コミット
+        # 全銘柄処理完了後に一括コミット（アトミック性確保）
+        # 部分的なコミットは差分計算のチェックポイント誤検知を引き起こすため廃止
         self.session.commit()
 
         print(f"\n  ✅ 計算完了: {total_calculated:,}件")
         print(f"  ✅ DB更新完了: {total_updated:,}件")
 
-        return {"total_calculated": total_calculated, "total_updated": total_updated}
+        return {"status": "success", "total_calculated": total_calculated, "total_updated": total_updated}

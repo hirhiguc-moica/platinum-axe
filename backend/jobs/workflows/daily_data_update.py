@@ -238,8 +238,15 @@ def main() -> None:
             margin_ratio_usecase = CalculateMarginRatiosUseCase(session)
             margin_ratio_result = margin_ratio_usecase.execute_incremental()
 
-            if margin_ratio_result["total_updated"] == 0:
+            # ステータスに応じたメッセージ表示
+            if margin_ratio_result.get("status") == "full_calculation_required":
+                print("\n⚠️  全量計算が未実施です")
+                print("💡 先に全量計算を実行してください:")
+                print("   uv run python backend/jobs/preprocessors/calculate_margin_ratios.py")
+            elif margin_ratio_result.get("status") == "up_to_date":
                 print("\n⚠️  計算対象なし（すべて計算済み）")
+            elif margin_ratio_result.get("status") == "no_data":
+                print("\n⚠️  データが存在しません")
 
             # ========================================
             # 完了

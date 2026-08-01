@@ -18,7 +18,7 @@ class FetchMarginInterestUseCase:
     """信用取引週末残高データ取得UseCase
 
     J-Quants APIから信用取引週末残高データを取得してDBに保存する。
-    週単位分割、差分取得に対応。
+    日単位分割、差分取得に対応。
 
     使用例:
         >>> usecase = FetchMarginInterestUseCase(session)
@@ -58,16 +58,20 @@ class FetchMarginInterestUseCase:
         """全件取得モード（期間指定）
 
         指定期間の信用取引週末残高データを全件取得してDBに保存。
-        週単位分割、レート制限対策として各週取得後に待機。
+        日単位でループ、レート制限対策として各日取得後に待機。
+
+        Note:
+            週末データは通常金曜日に存在するが、祝日・JPX停止等でずれる可能性があるため、
+            全日付をループして確実に取得する設計。初回全量取得は約1時間（10年分）。
 
         Args:
             start_date: 取得開始日
             end_date: 取得終了日
-            wait_seconds: 各週取得後の待機秒数（デフォルト: 1.0秒）
+            wait_seconds: 各日取得後の待機秒数（デフォルト: 1.0秒）
 
         Returns:
             dict: 実行結果
-                - total_weeks: 取得週数
+                - total_weeks: 取得日数（互換性のため変数名はweeks）
                 - total_saved: 保存件数
                 - elapsed_seconds: 所要時間（秒）
 
@@ -79,7 +83,7 @@ class FetchMarginInterestUseCase:
             ...     wait_seconds=1
             ... )
             >>> print(result['total_saved'])
-            230000  # 約4444銘柄 × 520週分
+            1827812  # 約4257銘柄 × 約430週分
         """
         print("=" * 80)
         print("🔄 信用取引週末残高データ取得開始（全件取得モード）")
@@ -93,7 +97,7 @@ class FetchMarginInterestUseCase:
         print(f"📅 取得期間: {start_date.date()} 〜 {end_date.date()}")
         total_days = (end_date - start_date).days
         print(f"📊 取得日数: {total_days}日（約{total_days // 7}週間）")
-        print(f"⏱️  待機時間: {wait_seconds}秒/週")
+        print(f"⏱️  待機時間: {wait_seconds}秒/日")
         print("")
 
         # 実行
@@ -108,7 +112,7 @@ class FetchMarginInterestUseCase:
         print("\n" + "=" * 80)
         print("🎉 信用取引週末残高データ取得完了!")
         print("=" * 80)
-        print(f"📊 取得週数: {result['total_weeks']}週")
+        print(f"📊 取得日数: {result['total_weeks']}日")
         print(f"📊 DB保存件数: {result['total_saved']:,}件")
         print(f"⏱️  所要時間: {elapsed_seconds:.1f}秒")
         print("=" * 80)
@@ -192,7 +196,7 @@ class FetchMarginInterestUseCase:
         print("\n" + "=" * 80)
         print("🎉 信用取引週末残高データ取得完了!")
         print("=" * 80)
-        print(f"📊 取得週数: {result['total_weeks']}週")
+        print(f"📊 取得日数: {result['total_weeks']}日")
         print(f"📊 DB保存件数: {result['total_saved']:,}件")
         print(f"⏱️  所要時間: {elapsed_seconds:.1f}秒")
         print("=" * 80)

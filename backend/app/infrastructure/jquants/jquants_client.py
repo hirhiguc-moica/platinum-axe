@@ -335,9 +335,12 @@ class JQuantsClient:
                     "to": to_date,
                 }
             else:
-                # 全銘柄取得の場合は、日ごとにループで取得（呼び出し側で制御）
-                # ここでは1日のみの取得として扱う
-                params = {"date": from_date}
+                # 全銘柄取得では期間指定（from/to）は使えない
+                # 呼び出し側で日ごとにループする必要がある
+                raise ValueError(
+                    "全銘柄取得（code=None）では期間指定（from/to）は使用できません。"
+                    "日ごとにループして取得してください（start_date == end_date で呼び出す）。"
+                )
 
         # HTTPリクエストを送信（ページネーション対応）
         all_data = []
