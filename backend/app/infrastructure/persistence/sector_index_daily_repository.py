@@ -157,14 +157,14 @@ class SectorIndexDailyRepository:
             stmt = stmt.on_conflict_do_update(
                 constraint="uq_sector_indices_daily_code_date",
                 set_={
+                    # 生データ（OHLC）のみ更新
                     "open": stmt.excluded.open,
                     "high": stmt.excluded.high,
                     "low": stmt.excluded.low,
                     "close": stmt.excluded.close,
-                    "change_rate_1d": stmt.excluded.change_rate_1d,
-                    "change_rate_5d": stmt.excluded.change_rate_5d,
-                    "change_rate_20d": stmt.excluded.change_rate_20d,
-                    "change_rate_60d": stmt.excluded.change_rate_60d,
+                    # 騰落率は別途計算するため更新しない（計算済み値を保持）
+                    # 更新日時を記録
+                    "updated_at": func.CURRENT_TIMESTAMP(),
                 },
             )
 
