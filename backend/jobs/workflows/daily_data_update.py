@@ -1,6 +1,6 @@
 """日次データ更新ワークフロー
 
-株価取得 → 財務データ取得 → テクニカル指標計算 → ファンダメンタル指標計算を順次実行する統合ワークフロー。
+株価取得 → 財務データ取得 → テクニカル指標計算 → ファンダメンタル指標計算 → セクター指数取得 → セクター指数騰落率計算を順次実行する統合ワークフロー。
 各ステップは冪等なので、何度実行しても同じ結果。
 
 使用例:
@@ -13,7 +13,7 @@
     - 差分がない場合は自動的にスキップ
 
 所要時間見積もり:
-    - 1日分: 約15-30分（株価5-10分 + 財務1-5分 + テクニカル10-20分 + ファンダメンタル0.5-1分）
+    - 1日分: 約15-30分（株価5-10分 + 財務1-5分 + テクニカル10-20分 + ファンダメンタル0.5-1分 + セクター指数0.5-1分 + 騰落率0.5-1分）
 
 GCP Cloud Scheduler設定例:
     - 実行タイミング: 毎営業日 17:30（市場クローズ後）
@@ -50,12 +50,16 @@ from app.infrastructure.persistence.financial_statement_repository import (  # n
 from app.usecase.calculate_fundamental_indicators_usecase import (  # noqa: E402
     CalculateFundamentalIndicatorsUseCase,
 )
+from app.usecase.calculate_sector_index_changes_usecase import (  # noqa: E402
+    CalculateSectorIndexChangesUseCase,
+)
 from app.usecase.calculate_technical_indicators_usecase import (  # noqa: E402
     CalculateTechnicalIndicatorsUseCase,
 )
 from app.usecase.fetch_financial_statements_usecase import (  # noqa: E402
     FetchFinancialStatementsUseCase,
 )
+from app.usecase.fetch_sector_indices_usecase import FetchSectorIndicesUseCase  # noqa: E402
 from app.usecase.fetch_stock_prices_usecase import FetchStockPricesUseCase  # noqa: E402
 
 
@@ -93,6 +97,8 @@ def main() -> None:
     ステップ2: 財務データ取得（差分）
     ステップ3: テクニカル指標計算（差分）
     ステップ4: ファンダメンタル指標計算（差分）
+    ステップ5: セクター指数取得（差分）
+    ステップ6: セクター指数騰落率計算（差分）
     """
 
     print("=" * 80)
@@ -182,6 +188,30 @@ def main() -> None:
                 fundamental_saved = 0
 
             # ========================================
+            # ステップ5: セクター指数取得（差分）
+            # ========================================
+            print("\n[ステップ5] セクター指数取得")
+            print("-" * 80)
+
+            sector_usecase = FetchSectorIndicesUseCase(session)
+            sector_result = sector_usecase.execute_incremental(wait_seconds=1)
+
+            if sector_result["total_saved"] == 0:
+                print("\n⚠️  新規セクター指数データなし（最新です）")
+
+            # ========================================
+            # ステップ6: セクター指数騰落率計算（差分）
+            # ========================================
+            print("\n[ステップ6] セクター指数騰落率計算")
+            print("-" * 80)
+
+            sector_change_usecase = CalculateSectorIndexChangesUseCase(session)
+            sector_change_result = sector_change_usecase.execute_incremental()
+
+            if sector_change_result["total_updated"] == 0:
+                print("\n⚠️  計算対象なし（すべて計算済み）")
+
+            # ========================================
             # 完了
             # ========================================
             print("\n" + "=" * 80)
@@ -191,6 +221,8 @@ def main() -> None:
             print(f"📊 財務データ保存: {financial_result['total_saved']:,}件")
             print(f"📊 テクニカル指標計算: {tech_result['total_calculated']:,}件")
             print(f"📊 ファンダメンタル指標計算: {fundamental_saved:,}件")
+            print(f"📊 セクター指数保存: {sector_result['total_saved']:,}件")
+            print(f"📊 セクター指数騰落率計算: {sector_change_result['total_updated']:,}件")
             print("=" * 80)
 
             sys.exit(0)
