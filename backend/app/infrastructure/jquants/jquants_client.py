@@ -189,3 +189,84 @@ class JQuantsClient:
             return self.client.get_eq_bars_daily_range(start_dt=start_dt, end_dt=end_dt, code=code)
         else:
             return self.client.get_eq_bars_daily_range(start_dt=start_dt, end_dt=end_dt)
+
+    def get_index_bars_daily_range(
+        self, code: str | None, start_dt: Any, end_dt: Any
+    ) -> pd.DataFrame:
+        """指数四本値データ取得（期間指定）
+
+        Args:
+            code: 指数コード（例: "0000", "0080"）。Noneの場合は全指数取得。
+            start_dt: 開始日（datetime型）
+            end_dt: 終了日（datetime型）
+
+        Returns:
+            pd.DataFrame: 指数四本値データ
+
+        カラム:
+            - Code (str): 指数コード
+            - Date (datetime64): 日付
+            - O (float): 始値
+            - H (float): 高値
+            - L (float): 安値
+            - C (float): 終値
+
+        レート制限:
+            - 60req/分（株価APIとは独立したカウント）
+
+        参考:
+            - API仕様: docs/batch/apis/indices.md
+            - DBテーブル: docs/database/schemas/sector_indices_daily.md (未作成)
+
+        Note:
+            - jquantsapi公式クライアントのget_idx_bars_dailyがgreenletエラーを起こすため、
+              直接HTTPリクエストを送る実装に変更
+        """
+        # 直接HTTPリクエストを送る（greenletエラー回避）
+        from_date = start_dt.strftime("%Y-%m-%d")
+        to_date = end_dt.strftime("%Y-%m-%d")
+
+        # J-Quants API v2のエンドポイント
+        url = f"{self.client.JQUANTS_API_BASE}/indices/bars/daily"
+
+        # 1日のみの場合はdateパラメータを使用（全指数取得に必須）
+        if from_date == to_date:
+            params = {"date": from_date}
+            # codeが指定されている場合は追加
+            if code is not None:
+                params["code"] = code
+        else:
+            # 期間指定の場合はfrom/toとcodeを使用
+            params = {
+                "code": code,
+                "from": from_date,
+                "to": to_date,
+            }
+
+        # HTTPリクエストを送信（ページネーション対応）
+        all_data = []
+        while True:
+            resp = self.client._get(url, params=params)
+            payload = resp.json()
+
+            batch = payload.get("data", [])
+            if isinstance(batch, list):
+                all_data.extend(batch)
+
+            # ページネーションキーがなければ終了
+            pagination_key = payload.get("pagination_key")
+            if not pagination_key:
+                break
+            params["pagination_key"] = pagination_key
+
+        # DataFrameに変換
+        if not all_data:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(all_data)
+
+        # Date列をdatetimeに変換
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+        return df
