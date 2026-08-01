@@ -542,9 +542,11 @@ uv run python batch/predict.py       # 週次推論
 
 | ドキュメント | 内容 | 重要度 |
 |------------|------|--------|
-| [batch/data-collection.md](./batch/data-collection.md) | データ収集バッチ（J-Quants API取得） | ⭐⭐ |
-| [batch/preprocessing.md](./batch/preprocessing.md) | 前処理バッチ（テクニカル指標計算） | ⭐⭐ |
-| [batch/prediction.md](./batch/prediction.md) | 予測バッチ（ラウンド推奨・シグナル検出） | ⭐⭐ |
+| [batch/execution-guide.md](./batch/execution-guide.md) | **バッチ処理実行ガイド（全量・日次コマンド、GCP設定）** | ⭐⭐⭐ |
+| [batch/jquants-api.md](./batch/jquants-api.md) | J-Quants API仕様（V2、Standardプラン全17種） | ⭐⭐⭐ |
+| [batch/data-collection.md](./batch/data-collection.md) | データ収集バッチ詳細（J-Quants API取得） | ⭐⭐ |
+| [batch/preprocessing.md](./batch/preprocessing.md) | 前処理バッチ詳細（テクニカル指標計算） | ⭐⭐ |
+| [batch/prediction.md](./batch/prediction.md) | 予測バッチ詳細（ラウンド推奨・シグナル検出） | ⭐⭐ |
 
 ### インフラストラクチャ
 

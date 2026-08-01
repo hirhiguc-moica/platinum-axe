@@ -265,6 +265,7 @@ pnpm dev
 - **Frontend仕様**: [docs/frontend/](./docs/frontend/)
 - **機械学習**: [docs/ml/](./docs/ml/)
 - **バッチ処理**: [docs/batch/](./docs/batch/)
+  - **[バッチ処理実行ガイド](./docs/batch/execution-guide.md)** - 全量取得・日次差分コマンド、GCP設定例
 - **インフラ**: [docs/infrastructure/](./docs/infrastructure/)
 
 ---
