@@ -1,6 +1,6 @@
 """日次データ更新ワークフロー
 
-株価取得 → 財務データ取得 → テクニカル指標計算 → ファンダメンタル指標計算 → セクター指数取得 → セクター指数騰落率計算を順次実行する統合ワークフロー。
+株価取得 → 財務データ取得 → テクニカル指標計算 → ファンダメンタル指標計算 → セクター指数取得 → セクター指数騰落率計算 → 信用取引残高取得 → 信用倍率計算を順次実行する統合ワークフロー。
 各ステップは冪等なので、何度実行しても同じ結果。
 
 使用例:
@@ -13,7 +13,7 @@
     - 差分がない場合は自動的にスキップ
 
 所要時間見積もり:
-    - 1日分: 約15-30分（株価5-10分 + 財務1-5分 + テクニカル10-20分 + ファンダメンタル0.5-1分 + セクター指数0.5-1分 + 騰落率0.5-1分）
+    - 1日分: 約15-35分（株価5-10分 + 財務1-5分 + テクニカル10-20分 + ファンダメンタル0.5-1分 + セクター指数0.5-1分 + 騰落率0.5-1分 + 信用残高0.5-1分 + 信用倍率0.5-1分）
 
 GCP Cloud Scheduler設定例:
     - 実行タイミング: 毎営業日 17:30（市場クローズ後）
@@ -50,6 +50,9 @@ from app.infrastructure.persistence.financial_statement_repository import (  # n
 from app.usecase.calculate_fundamental_indicators_usecase import (  # noqa: E402
     CalculateFundamentalIndicatorsUseCase,
 )
+from app.usecase.calculate_margin_ratios_usecase import (  # noqa: E402
+    CalculateMarginRatiosUseCase,
+)
 from app.usecase.calculate_sector_index_changes_usecase import (  # noqa: E402
     CalculateSectorIndexChangesUseCase,
 )
@@ -59,6 +62,7 @@ from app.usecase.calculate_technical_indicators_usecase import (  # noqa: E402
 from app.usecase.fetch_financial_statements_usecase import (  # noqa: E402
     FetchFinancialStatementsUseCase,
 )
+from app.usecase.fetch_margin_interest_usecase import FetchMarginInterestUseCase  # noqa: E402
 from app.usecase.fetch_sector_indices_usecase import FetchSectorIndicesUseCase  # noqa: E402
 from app.usecase.fetch_stock_prices_usecase import FetchStockPricesUseCase  # noqa: E402
 
@@ -99,6 +103,8 @@ def main() -> None:
     ステップ4: ファンダメンタル指標計算（差分）
     ステップ5: セクター指数取得（差分）
     ステップ6: セクター指数騰落率計算（差分）
+    ステップ7: 信用取引残高取得（差分）
+    ステップ8: 信用倍率計算（差分）
     """
 
     print("=" * 80)
@@ -212,6 +218,30 @@ def main() -> None:
                 print("\n⚠️  計算対象なし（すべて計算済み）")
 
             # ========================================
+            # ステップ7: 信用取引残高取得（差分）
+            # ========================================
+            print("\n[ステップ7] 信用取引残高取得")
+            print("-" * 80)
+
+            margin_usecase = FetchMarginInterestUseCase(session)
+            margin_result = margin_usecase.execute_incremental(wait_seconds=1)
+
+            if margin_result["total_saved"] == 0:
+                print("\n⚠️  新規信用取引残高データなし（最新です）")
+
+            # ========================================
+            # ステップ8: 信用倍率計算（差分）
+            # ========================================
+            print("\n[ステップ8] 信用倍率計算")
+            print("-" * 80)
+
+            margin_ratio_usecase = CalculateMarginRatiosUseCase(session)
+            margin_ratio_result = margin_ratio_usecase.execute_incremental()
+
+            if margin_ratio_result["total_updated"] == 0:
+                print("\n⚠️  計算対象なし（すべて計算済み）")
+
+            # ========================================
             # 完了
             # ========================================
             print("\n" + "=" * 80)
@@ -223,6 +253,8 @@ def main() -> None:
             print(f"📊 ファンダメンタル指標計算: {fundamental_saved:,}件")
             print(f"📊 セクター指数保存: {sector_result['total_saved']:,}件")
             print(f"📊 セクター指数騰落率計算: {sector_change_result['total_updated']:,}件")
+            print(f"📊 信用取引残高保存: {margin_result['total_saved']:,}件")
+            print(f"📊 信用倍率計算: {margin_ratio_result['total_updated']:,}件")
             print("=" * 80)
 
             sys.exit(0)
